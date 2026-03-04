@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "app_name" {
   description = "Application name (used in resource names)"
   type        = string
-  default     = "loan-engine"
+  default     = "intrepid-poc"
 }
 
 variable "environment" {
@@ -20,20 +20,20 @@ variable "environment" {
 variable "s3_bucket_name" {
   description = "S3 bucket name for QA (inputs/outputs/archive)"
   type        = string
-  default     = "loan-engine-qa"
+  default     = "intrepid-poc-qa"
 }
 
 # --- RDS ---
 variable "db_instance_identifier" {
   description = "RDS instance identifier"
   type        = string
-  default     = "loan-engine-qa"
+  default     = "intrepid-poc-qa"
 }
 
 variable "db_name" {
   description = "PostgreSQL database name"
   type        = string
-  default     = "loan_engine"
+  default     = "intrepid_poc"
 }
 
 variable "db_username" {
@@ -58,19 +58,19 @@ variable "db_instance_class" {
 variable "ecs_cluster_name" {
   description = "ECS cluster name (referred to as EC2/compute for QA)"
   type        = string
-  default     = "loan-engine-qa"
+  default     = "intrepid-poc-qa"
 }
 
 variable "ecs_service_name" {
   description = "ECS service name"
   type        = string
-  default     = "loan-engine-qa"
+  default     = "intrepid-poc-qa"
 }
 
 variable "ecr_repository_name" {
   description = "ECR repository name for QA images"
   type        = string
-  default     = "loan-engine-qa"
+  default     = "intrepid-poc-qa"
 }
 
 variable "ecs_cpu" {
@@ -89,6 +89,24 @@ variable "ecs_desired_count" {
   description = "Number of ECS tasks to run"
   type        = number
   default     = 1
+}
+
+variable "cashflow_worker_cpu" {
+  description = "CPU units for dedicated cashflow worker tasks"
+  type        = string
+  default     = "4096"
+}
+
+variable "cashflow_worker_memory" {
+  description = "Memory (MB) for dedicated cashflow worker tasks"
+  type        = string
+  default     = "16384"
+}
+
+variable "cashflow_worker_max_workers" {
+  description = "Max worker-process count for current-assets cashflow runs on AWS"
+  type        = number
+  default     = 4
 }
 
 # --- Optional: build/push image as part of apply (leave empty to skip) ---

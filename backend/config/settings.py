@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = None
     DATABASE_HOST: str = "localhost"
     DATABASE_PORT: str = "5432"
-    DATABASE_NAME: str = "loan_engine"
+    DATABASE_NAME: str = "intrepid_poc"
     DATABASE_USER: str = "postgres"
     DATABASE_PASSWORD: str = ""
     DATABASE_SSLMODE: Optional[str] = None  # e.g. "require" for RDS

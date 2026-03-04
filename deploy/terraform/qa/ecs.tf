@@ -49,10 +49,22 @@ resource "aws_ecs_task_definition" "app" {
         { name = "STORAGE_TYPE", value = "s3" },
         { name = "S3_BUCKET_NAME", value = aws_s3_bucket.app.id },
         { name = "S3_REGION", value = var.aws_region },
+        { name = "AWS_REGION", value = var.aws_region },
         # Explicit S3 prefixes for app config and input sync
         { name = "S3_INPUT", value = "input" },
         { name = "S3_OUTPUT", value = "outputs" },
-        { name = "S3_OUTPUT_SHARED", value = "output_share" }
+        { name = "S3_OUTPUT_SHARED", value = "output_share" },
+        # Dedicated cashflow worker launch configuration
+        { name = "CASHFLOW_S3_BUCKET", value = aws_s3_bucket.app.id },
+        { name = "CASHFLOW_S3_PREFIX", value = "" },
+        { name = "CASHFLOW_EXECUTION_MODE", value = "ecs_task" },
+        { name = "CASHFLOW_MAX_WORKERS", value = tostring(var.cashflow_worker_max_workers) },
+        { name = "CASHFLOW_ECS_CLUSTER", value = aws_ecs_cluster.main.name },
+        { name = "CASHFLOW_ECS_TASK_DEFINITION", value = aws_ecs_task_definition.cashflow_worker.arn },
+        { name = "CASHFLOW_ECS_CONTAINER_NAME", value = "cashflow-worker" },
+        { name = "CASHFLOW_ECS_SUBNETS", value = join(",", aws_subnet.public[*].id) },
+        { name = "CASHFLOW_ECS_SECURITY_GROUPS", value = aws_security_group.ecs.id },
+        { name = "CASHFLOW_ECS_ASSIGN_PUBLIC_IP", value = "true" }
       ]
     )
     secrets = [
@@ -76,6 +88,41 @@ resource "aws_ecs_task_definition" "app" {
     }
   }])
   tags = { Name = local.name_prefix }
+}
+
+resource "aws_ecs_task_definition" "cashflow_worker" {
+  family                   = "${local.name_prefix}-cashflow-worker"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.cashflow_worker_cpu
+  memory                   = var.cashflow_worker_memory
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name      = "cashflow-worker"
+    image     = local.ecr_image
+    essential = true
+    environment = [
+      { name = "AWS_REGION", value = var.aws_region },
+      { name = "CASHFLOW_S3_BUCKET", value = aws_s3_bucket.app.id },
+      { name = "CASHFLOW_S3_PREFIX", value = "" },
+      { name = "CASHFLOW_EXECUTION_MODE", value = "worker" },
+      { name = "CASHFLOW_MAX_WORKERS", value = tostring(var.cashflow_worker_max_workers) }
+    ]
+    secrets = [
+      { name = "DATABASE_URL", valueFrom = aws_secretsmanager_secret.database_url.arn }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.ecs.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "cashflow-worker"
+      }
+    }
+  }])
+  tags = { Name = "${local.name_prefix}-cashflow-worker" }
 }
 
 # ECS service

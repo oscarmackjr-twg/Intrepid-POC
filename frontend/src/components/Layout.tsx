@@ -12,6 +12,7 @@ export default function Layout() {
     { path: '/exceptions', label: 'Exceptions' },
     { path: '/rejected-loans', label: 'Rejected Loans' },
     { path: '/files', label: 'File Manager' },
+    { path: '/cashflow', label: 'Cash Flow' },
   ]
 
   const adminNavItems =

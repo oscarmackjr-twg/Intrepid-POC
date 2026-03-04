@@ -12,6 +12,7 @@ import yaml
 from config.settings import settings
 from api.routes import router as api_router
 from api.files import router as files_router
+from cashflow.routes import router as cashflow_router
 from auth.routes import router as auth_router
 from scheduler.job_scheduler import scheduler, schedule_daily_runs
 
@@ -81,8 +82,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(api_router)
 app.include_router(files_router)
-app.include_router(files_router)
-app.include_router(files_router)
+app.include_router(cashflow_router)
 
 # Serve frontend static files when present (e.g. in Docker / production build)
 _static_dir = Path(__file__).resolve().parent.parent / "static"

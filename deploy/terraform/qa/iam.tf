@@ -95,3 +95,33 @@ resource "aws_iam_role_policy" "ecs_task_s3" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "ecs_task_cashflow_ecs" {
+  name_prefix = "cashflow-ecs-"
+  role        = aws_iam_role.ecs_task.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = ["ecs:RunTask"]
+        Resource = [
+          aws_ecs_task_definition.cashflow_worker.arn
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = ["ecs:StopTask", "ecs:DescribeTasks"]
+        Resource = "arn:aws:ecs:${var.aws_region}:${local.account_id}:task/${aws_ecs_cluster.main.name}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = ["iam:PassRole"]
+        Resource = [
+          aws_iam_role.ecs_execution.arn,
+          aws_iam_role.ecs_task.arn
+        ]
+      }
+    ]
+  })
+}
