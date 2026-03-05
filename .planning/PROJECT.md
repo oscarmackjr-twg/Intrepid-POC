@@ -12,7 +12,11 @@ Ops can take a loan tape from email to executed wire instructions in a single, a
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ File upload and S3 storage — existing
+- ✓ Suitability pipeline execution (PipelineExecutor, background thread) — existing
+- ✓ LoanFact and LoanException persistence in PostgreSQL — existing
+- ✓ Cashflow computation (subprocess/ECS mode) — existing
+- ✓ Dashboard, RunDetail, ProgramRuns, CashFlow, Exceptions, FileManager UI pages — existing
 
 ### Active
 
@@ -24,6 +28,9 @@ Ops can take a loan tape from email to executed wire instructions in a single, a
 - [ ] PDFs are sent via email to the appropriate counterparty
 - [ ] Ops team triggers each workflow step manually through the dashboard
 - [ ] Full visibility into processing status at each stage
+- [ ] All monetary values use Decimal (not float) throughout the pipeline
+- [ ] Processing runs are idempotent (safe to retry without duplicate side effects)
+- [ ] Full audit trail: user, timestamp, and Python version recorded per run step
 
 ### Out of Scope
 
@@ -33,27 +40,31 @@ Ops can take a loan tape from email to executed wire instructions in a single, a
 
 ## Context
 
-- **Existing work:** Python scripts for suitability and cashflow logic already exist; the application wraps them with a React/Node UI layer
+- **Existing work:** Substantial codebase already built — React SPA + Python FastAPI + PostgreSQL + S3. Core pipeline stages (upload, suitability, cashflow) are implemented. Remaining: wire instruction PDFs, email delivery, tagging integration, and hardening.
+- **Actual stack (corrected from initial brief):** React 19 + Python FastAPI (no Node.js layer) + PostgreSQL via SQLAlchemy + S3 + ECS Fargate
 - **Frequency:** Runs approximately twice per working week when loan tapes arrive via email
 - **Volume:** ~1,000 loans per processing run (two spreadsheets of ~500 each)
 - **Counterparties:** Two — "prime" and "SFY" — loans may be tagged to one or both
-- **Current pain:** No dashboard means no visibility into processing state; steps are run manually via scripts with no audit trail
+- **Current state:** Dashboard exists but Stage 5 (wire instructions + email) is not yet built; tagging script is a stub awaiting integration
 
 ## Constraints
 
-- **Tech Stack:** React (frontend), Node.js (API/middleware), Python (processing logic), PostgreSQL (persistence) — stack is fixed
-- **Infrastructure:** AWS via Terraform — deployment target is established
-- **Processing:** Python workflow must remain the suitability/cashflow engine; Node orchestrates it
+- **Tech Stack:** React 19 + Python FastAPI + PostgreSQL (SQLAlchemy/Alembic) + S3 — no Node.js layer
+- **Infrastructure:** AWS ECS Fargate + RDS + ALB via Terraform — established
+- **Processing:** Python FastAPI handles both API and business logic orchestration
+- **Financial accuracy:** All monetary values must use `decimal.Decimal` / `NUMERIC(18,6)` — never float
 - **Users:** Internal Ops team only — no external access required for v1
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| React/Node/Python/Postgres stack | Pre-existing scaffolding | — Pending |
-| AWS + Terraform deployment | Established infra approach | — Pending |
+| React 19 + Python FastAPI (no Node) | Actual scaffolding discovered in codebase | ✓ Confirmed |
+| AWS ECS Fargate + Terraform | Established infra approach | ✓ Confirmed |
 | Manual step-by-step UI control | Ops needs to review and approve at each stage | — Pending |
-| PDF wire instructions via email | Existing counterparty process — no API integration needed | — Pending |
+| PDF wire instructions via email (AWS SES) | Existing counterparty process; financial data stays inside AWS perimeter | — Pending |
+| Cashflow as subprocess / ECS task | CPU-heavy computation supports horizontal scaling | ✓ Confirmed |
+| Decimal arithmetic throughout | Float accumulates error across 1,000 loans | — Pending (verify in existing code) |
 
 ---
-*Last updated: 2026-03-04 after initialization*
+*Last updated: 2026-03-04 after research — stack corrected (React + Python FastAPI, no Node.js)*
