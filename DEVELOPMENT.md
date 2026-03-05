@@ -88,7 +88,7 @@ psql -U postgres -c "DROP DATABASE IF EXISTS intrepid_poc; CREATE DATABASE intre
 The backend starts at `http://localhost:8000`. Verify it is running in a second terminal:
 
 ```powershell
-curl http://localhost:8000/api/health
+curl http://localhost:8000/health
 ```
 
 Expected: HTTP 200 response with no startup errors.
