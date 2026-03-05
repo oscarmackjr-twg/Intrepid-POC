@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Clean backend/.env and create backend/.env.example (LOCAL-03, LOCAL-04)
+- [x] 01-01-PLAN.md — Clean backend/.env and create backend/.env.example (LOCAL-03, LOCAL-04)
 - [ ] 01-02-PLAN.md — Synthetic sample data and initial Alembic migration (LOCAL-05, LOCAL-06)
 - [ ] 01-03-PLAN.md — Makefile and DEVELOPMENT.md onboarding guide (LOCAL-01, LOCAL-02, LOCAL-04)
 - [ ] 01-04-PLAN.md — Human smoke test: full stack end-to-end verification (all LOCAL requirements)
@@ -87,7 +87,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Dev | 0/4 | Not started | - |
+| 1. Local Dev | 1/4 | In progress | - |
 | 2. Docker Local Dev | 0/TBD | Not started | - |
 | 3. AWS Infrastructure | 0/TBD | Not started | - |
 | 4. CI/CD Pipeline | 0/TBD | Not started | - |
