@@ -10,8 +10,8 @@ Requirements for local dev → Docker → AWS staging deployment.
 
 ### Local Dev
 
-- [ ] **LOCAL-01**: Developer can run backend locally with `uvicorn` against local Postgres
-- [ ] **LOCAL-02**: React frontend runs locally with `npm run dev` (hot reload)
+- [x] **LOCAL-01**: Developer can run backend locally with `uvicorn` against local Postgres
+- [x] **LOCAL-02**: React frontend runs locally with `npm run dev` (hot reload)
 - [x] **LOCAL-03**: `backend/.env` config separates local vs S3 mode cleanly (no hardcoded Windows paths)
 - [x] **LOCAL-04**: `.env.example` template exists so any developer can onboard
 - [ ] **LOCAL-05**: Alembic migrations run cleanly against local Postgres
@@ -86,8 +86,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LOCAL-01 | Phase 1 | Pending |
-| LOCAL-02 | Phase 1 | Pending |
+| LOCAL-01 | Phase 1 | Complete |
+| LOCAL-02 | Phase 1 | Complete |
 | LOCAL-03 | Phase 1 | Complete — 01-01 |
 | LOCAL-04 | Phase 1 | Complete — 01-01 |
 | LOCAL-05 | Phase 1 | Pending |

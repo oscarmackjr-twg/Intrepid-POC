@@ -3,11 +3,27 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
+stopped_at: Completed 01-03-PLAN.md (Makefile and DEVELOPMENT.md)
+last_updated: "2026-03-05T19:29:38.381Z"
+last_activity: 2026-03-05 — Plan 01-01 complete (env config cleanup, .env.example onboarding template)
+progress:
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 4
+  completed_plans: 2
+  percent: 50
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: in-progress
 stopped_at: Completed 01-01-PLAN.md (env config cleanup)
 last_updated: "2026-03-05T19:24:34Z"
 last_activity: 2026-03-05 — Plan 01-01 complete (env cleanup, .env.example created)
 progress:
-  total_phases: 5
+  [█████░░░░░] 50%
   completed_phases: 0
   total_plans: 4
   completed_plans: 1
@@ -50,6 +66,7 @@ Progress: [█░░░░░░░░░] 5%
 - Trend: Baseline
 
 *Updated after each plan completion*
+| Phase 01-local-dev P03 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -64,6 +81,8 @@ Recent decisions affecting current work:
 - [01-01] STORAGE_TYPE=local set as active default in backend/.env; all S3 vars commented out
 - [01-01] DEV_INPUT kept commented in .env (users set own paths); active in .env.example pointing at sample data
 - [01-01] DATABASE_URL reset to generic local credentials; real password removed
+- [Phase 01-03]: venv/bin/ (Unix path) used in Makefile; Windows venv\Scripts\ alternative documented in DEVELOPMENT.md
+- [Phase 01-03]: --host 0.0.0.0 included in run-backend target for Phase 2 Docker access without Makefile changes
 
 ### Pending Todos
 
@@ -77,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-05T19:24:34Z
-Stopped at: Completed 01-01-PLAN.md (env config cleanup)
-Resume file: .planning/phases/01-local-dev/01-02-PLAN.md
+Last session: 2026-03-05T19:29:38.376Z
+Stopped at: Completed 01-03-PLAN.md (Makefile and DEVELOPMENT.md)
+Resume file: None
