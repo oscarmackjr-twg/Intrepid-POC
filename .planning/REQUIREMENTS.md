@@ -14,8 +14,8 @@ Requirements for local dev → Docker → AWS staging deployment.
 - [x] **LOCAL-02**: React frontend runs locally with `npm run dev` (hot reload)
 - [x] **LOCAL-03**: `backend/.env` config separates local vs S3 mode cleanly (no hardcoded Windows paths)
 - [x] **LOCAL-04**: `.env.example` template exists so any developer can onboard
-- [ ] **LOCAL-05**: Alembic migrations run cleanly against local Postgres
-- [ ] **LOCAL-06**: Core loan pipeline executes end-to-end locally (upload → suitability → cashflow)
+- [x] **LOCAL-05**: Alembic migrations run cleanly against local Postgres
+- [x] **LOCAL-06**: Core loan pipeline executes end-to-end locally (upload → suitability → cashflow)
 
 ### Docker
 
@@ -90,8 +90,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOCAL-02 | Phase 1 | Complete |
 | LOCAL-03 | Phase 1 | Complete — 01-01 |
 | LOCAL-04 | Phase 1 | Complete — 01-01 |
-| LOCAL-05 | Phase 1 | Pending |
-| LOCAL-06 | Phase 1 | Pending |
+| LOCAL-05 | Phase 1 | Complete |
+| LOCAL-06 | Phase 1 | Complete |
 | DOCKER-01 | Phase 2 | Pending |
 | DOCKER-02 | Phase 2 | Pending |
 | DOCKER-03 | Phase 2 | Pending |
