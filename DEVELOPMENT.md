@@ -46,7 +46,7 @@ cd ..\frontend
 npm install
 ```
 
-> Note: On Windows, `venv/bin/` in the Makefile corresponds to `venv\Scripts\` on Windows paths. The Makefile targets use the Unix path — if you run `make` on Windows via Git Bash or WSL, they work as-is.
+> **WSL2 users:** `make` runs correctly in WSL2, but the Makefile auto-detects the environment (`venv/bin/` on WSL/Linux, `venv\Scripts\` on native Windows). If you run `make setup` from WSL2, run all other `make` targets from WSL2 as well. See [WSL2 and PostgreSQL](#wsl2-and-postgresql) below for the database connection caveat.
 
 ---
 
@@ -85,6 +85,8 @@ This runs `alembic upgrade head` from the `backend/` directory.
 psql -U postgres -c "DROP DATABASE IF EXISTS intrepid_poc; CREATE DATABASE intrepid_poc;"
 make migrate
 ```
+
+**WSL2 users:** If `make migrate` fails with `Connection refused` — see [WSL2 and PostgreSQL](#wsl2-and-postgresql).
 
 ---
 
@@ -155,12 +157,61 @@ DEV_INPUT=/path/to/your/files_required
 
 ---
 
-## 9. Troubleshooting
+## 9. WSL2 and PostgreSQL
+
+If you run `make` from WSL2 and Postgres is installed on Windows (not inside WSL2), the connection will be refused — WSL2's `localhost` is isolated from Windows' `localhost`.
+
+**Option A — Run database commands from Windows PowerShell (quickest):**
+
+```powershell
+cd backend
+.\venv\Scripts\alembic upgrade head
+```
+
+This works because PowerShell's `localhost` reaches Windows Postgres directly.
+
+**Option B — Configure Windows Postgres to accept WSL2 connections (permanent fix):**
+
+1. Find your PostgreSQL data directory (usually `C:\Program Files\PostgreSQL\<version>\data\`)
+
+2. Edit `postgresql.conf` — change:
+   ```
+   listen_addresses = 'localhost'
+   ```
+   to:
+   ```
+   listen_addresses = '*'
+   ```
+
+3. Edit `pg_hba.conf` — add this line:
+   ```
+   host    all    all    0.0.0.0/0    md5
+   ```
+
+4. Restart the Postgres Windows service (Services → `postgresql-x64-<version>` → Restart)
+
+5. Get the Windows host IP from WSL2:
+   ```bash
+   cat /etc/resolv.conf | grep nameserver | awk '{print $2}'
+   ```
+
+6. Update `backend/.env` to use that IP instead of `localhost`:
+   ```
+   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@<windows-host-ip>:5432/intrepid_poc
+   ```
+
+After this, `make migrate`, `make run-backend`, and all other `make` targets work from WSL2.
+
+---
+
+## 10. Troubleshooting
 
 | Error | Cause | Fix |
 |---|---|---|
 | `ModuleNotFoundError: No module named 'api'` | uvicorn run from wrong directory | Use `make run-backend` or run `cd backend && uvicorn api.main:app` |
 | `connection refused` on DATABASE_URL | Postgres not running or database missing | Start Postgres; verify `intrepid_poc` database exists |
+| `connection refused` from WSL2 | WSL2 cannot reach Windows `localhost` | See [WSL2 and PostgreSQL](#wsl2-and-postgresql) |
 | `FileNotFoundError: Tape20Loans file not found` | Missing `--pdate` or wrong date with sample data | Use `--pdate 2026-02-19` when running with sample data |
 | `STORAGE_TYPE=s3` errors without S3 credentials | `backend/.env` still has `STORAGE_TYPE=s3` | Set `STORAGE_TYPE=local` in `backend/.env` |
 | `missing separator` in Makefile | Editor replaced tabs with spaces | Ensure Makefile recipe lines use tab (not space) indentation |
+| `SSL certificate verify failed` on `pip install` | Corporate proxy intercepts HTTPS | Run `pip config set global.trusted-host "pypi.org files.pythonhosted.org"` then retry |
