@@ -77,6 +77,10 @@ def calculate_pipeline_dates(pdate: str = None, tday: str = None) -> Tuple[str, 
 
     if pdate is None:
         pdate = calculate_next_tuesday(base_date=base_date)
+    elif tday is None:
+        # pdate was explicitly provided but tday was not — derive file dates from pdate
+        # so that Tape20Loans date = pdate - 1 day (not system today - 1 day)
+        base_date = datetime.strptime(pdate, "%Y-%m-%d")
     
     yesterday = calculate_yesterday(base_date=base_date)
     last_end = calculate_last_month_end(base_date=base_date)
