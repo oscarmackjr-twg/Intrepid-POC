@@ -30,7 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `backend/.env` contains no hardcoded Windows paths and clearly separates local-storage vs S3 modes
   4. A new developer can onboard using `.env.example` alone — no undocumented env vars required
   5. Alembic migrations apply cleanly and the core pipeline completes an upload-to-cashflow run locally
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Clean backend/.env and create backend/.env.example (LOCAL-03, LOCAL-04)
+- [ ] 01-02-PLAN.md — Synthetic sample data and initial Alembic migration (LOCAL-05, LOCAL-06)
+- [ ] 01-03-PLAN.md — Makefile and DEVELOPMENT.md onboarding guide (LOCAL-01, LOCAL-02, LOCAL-04)
+- [ ] 01-04-PLAN.md — Human smoke test: full stack end-to-end verification (all LOCAL requirements)
 
 ### Phase 2: Docker Local Dev
 **Goal**: `docker compose up` starts the full local stack — app, Postgres, React dev server — with data persisting across restarts and migrations running automatically
@@ -81,7 +87,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Dev | 0/TBD | Not started | - |
+| 1. Local Dev | 0/4 | Not started | - |
 | 2. Docker Local Dev | 0/TBD | Not started | - |
 | 3. AWS Infrastructure | 0/TBD | Not started | - |
 | 4. CI/CD Pipeline | 0/TBD | Not started | - |
