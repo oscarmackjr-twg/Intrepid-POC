@@ -57,6 +57,14 @@ data/
 !**/test/**/*.csv
 !**/test/**/*.xlsx
 
+# Exception: commit sample data for local dev onboarding
+# (negation rules in backend/.gitignore also required; order matters)
+!backend/data/
+!backend/data/sample/
+!backend/data/sample/**
+!backend/data/sample/**/*.xlsx
+!backend/data/sample/**/*.csv
+
 # Testing
 .pytest_cache/
 .coverage

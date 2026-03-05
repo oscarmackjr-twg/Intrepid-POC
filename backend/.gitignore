@@ -47,10 +47,11 @@ logs/
 *.sqlite
 *.sqlite3
 
-# Data directories
-data/
-*.xlsx
-*.csv
+# Data directories (real pipeline data; sample/ is committed for local dev onboarding)
+# Root .gitignore handles *.xlsx and *.csv with negation exception for backend/data/sample/
+data/inputs/
+data/outputs/
+data/archive/
 
 # Testing
 .pytest_cache/
