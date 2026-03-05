@@ -38,9 +38,15 @@ class RunContext:
         run_id = f"run_{uuid.uuid4().hex[:12]}_{now.strftime('%Y%m%d_%H%M%S')}"
         
         # Resolve Tday (base date)
+        # When pdate is explicitly provided but tday is not, use pdate as the base
+        # so that Tape20Loans file date = pdate - 1 day (not system today - 1 day).
         if tday is None:
-            base_date = now
-            tday_str = now.strftime('%Y-%m-%d')
+            if pdate is not None:
+                tday_str = pdate
+                base_date = datetime.strptime(pdate, "%Y-%m-%d")
+            else:
+                base_date = now
+                tday_str = now.strftime('%Y-%m-%d')
         else:
             try:
                 base_date = datetime.strptime(tday, "%Y-%m-%d")
