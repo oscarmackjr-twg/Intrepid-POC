@@ -1,6 +1,8 @@
 # Local Development Guide
 
-This guide covers the complete flow from a fresh clone to a running local stack. Follow each section in order.
+This guide covers the complete flow from a fresh clone to a running local stack.
+
+**Primary workflow: PowerShell on Windows.** WSL2 notes are in [Appendix A](#appendix-a-wsl2).
 
 ---
 
@@ -10,13 +12,12 @@ Ensure the following are installed before starting:
 
 - **Python 3.11+** — verify: `python --version`
 - **Node.js 18+ and npm** — verify: `node --version`
-- **PostgreSQL (running locally)** — verify: `psql -U postgres -c '\l'`
+- **PostgreSQL (running locally)** — verify: `psql -U postgres -c "\l"`
 - **Git**
-- **GNU Make** (Linux/macOS: built-in; Windows: install via Chocolatey `choco install make` or Git for Windows)
 
 Create the local database before running migrations:
 
-```bash
+```powershell
 psql -U postgres -c "CREATE DATABASE intrepid_poc;"
 ```
 
@@ -24,29 +25,19 @@ psql -U postgres -c "CREATE DATABASE intrepid_poc;"
 
 ## 2. Initial Setup
 
-```bash
+```powershell
 git clone <repo-url>
 cd intrepid-poc
-make setup
+.\dev.ps1 setup
 ```
 
-`make setup` does three things:
+`.\dev.ps1 setup` does three things:
 
-1. Creates `backend/venv` (Python virtual environment)
-2. Installs Python dependencies from `backend/requirements.txt` into the venv
-3. Runs `npm install` in `frontend/`
+1. Creates `backend\venv` (Python virtual environment at `backend\venv\Scripts\`)
+2. Installs Python dependencies from `backend\requirements.txt` into the venv
+3. Runs `npm install` in `frontend\`
 
-**Windows users without `make`:** Run these commands manually:
-
-```
-cd backend
-python -m venv venv
-venv\Scripts\pip install -r requirements.txt
-cd ..\frontend
-npm install
-```
-
-> **WSL2 users:** `make` runs correctly in WSL2, but the Makefile auto-detects the environment (`venv/bin/` on WSL/Linux, `venv\Scripts\` on native Windows). If you run `make setup` from WSL2, run all other `make` targets from WSL2 as well. See [WSL2 and PostgreSQL](#wsl2-and-postgresql) below for the database connection caveat.
+> The `--trusted-host` flags are included automatically for corporate networks that intercept HTTPS.
 
 ---
 
@@ -54,57 +45,55 @@ npm install
 
 Copy the example env file and edit it:
 
-```bash
-cp backend/.env.example backend/.env
+```powershell
+Copy-Item backend\.env.example backend\.env
 ```
 
-Edit `backend/.env` to match your local setup:
+Edit `backend\.env` to match your local setup:
 
 | Variable | Default | Notes |
 |---|---|---|
-| `DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/intrepid_poc` | Update if your Postgres credentials differ |
+| `DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/intrepid_poc` | Update password if your Postgres install uses a different one |
 | `SECRET_KEY` | `change-me-local` | Change to any random string for local dev |
 | `STORAGE_TYPE` | `local` | Leave as `local` for sample data |
 | `DEV_INPUT` | `./data/sample/files_required` | Leave as-is to use sample data |
 
-`backend/.env` is gitignored — never commit it. Only `backend/.env.example` is tracked.
+`backend\.env` is gitignored — never commit it. Only `backend\.env.example` is tracked.
 
 ---
 
 ## 4. Run Database Migrations
 
-```bash
-make migrate
+```powershell
+.\dev.ps1 migrate
 ```
 
-This runs `alembic upgrade head` from the `backend/` directory.
+Expected output: `Running upgrade -> 60a8a67090c8` (or `already at head` if already applied).
 
-**If you have an existing `intrepid_poc` database from before Alembic was introduced**, drop and recreate it first to avoid schema conflicts:
+**If you have an existing `intrepid_poc` database from before Alembic was introduced**, drop and recreate it first:
 
-```bash
+```powershell
 psql -U postgres -c "DROP DATABASE IF EXISTS intrepid_poc; CREATE DATABASE intrepid_poc;"
-make migrate
+.\dev.ps1 migrate
 ```
-
-**WSL2 users:** If `make migrate` fails with `Connection refused` — see [WSL2 and PostgreSQL](#wsl2-and-postgresql).
 
 ---
 
 ## 5. Start the Backend
 
-```bash
-make run-backend
+```powershell
+.\dev.ps1 run-backend
 ```
 
-The backend starts at `http://localhost:8000`.
+The backend starts at `http://localhost:8000`. Verify it is running in a second terminal:
 
-Verify it is running:
-
-```bash
+```powershell
 curl http://localhost:8000/api/health
 ```
 
-> Always start the backend before the frontend. The Vite dev server proxies `/api` requests to `:8000`, so the frontend will show errors if the backend is not up.
+Expected: HTTP 200 response with no startup errors.
+
+> Always start the backend before the frontend. The Vite dev server proxies `/api` requests to `:8000`.
 
 ---
 
@@ -112,8 +101,8 @@ curl http://localhost:8000/api/health
 
 In a separate terminal:
 
-```bash
-make run-frontend
+```powershell
+.\dev.ps1 run-frontend
 ```
 
 The frontend starts at `http://localhost:5173` with hot reload enabled.
@@ -124,7 +113,7 @@ Open `http://localhost:5173` in your browser. API calls are proxied to `http://l
 
 ## 7. Running the Pipeline Locally
 
-The repository includes a sample dataset at `backend/data/sample/files_required/`. The pipeline uses date-stamped filenames to locate input files.
+The repository includes a sample dataset at `backend\data\sample\files_required\`. The pipeline uses date-stamped filenames to locate input files.
 
 **Important:** The sample files are dated `02-18-2026`, which means the pipeline processing date must be `2026-02-19` (the day after the file date).
 
@@ -133,85 +122,52 @@ The repository includes a sample dataset at `backend/data/sample/files_required/
 1. Open `http://localhost:5173`
 2. Use the pipeline run form and enter processing date `2026-02-19`
 
-**Via CLI directly:**
+**Via CLI directly** (with backend running, in a separate terminal):
 
-```bash
+```powershell
 cd backend
-venv/bin/python main.py --pdate 2026-02-19
+.\venv\Scripts\python main.py --pdate 2026-02-19
 ```
 
-**To use your own live input files** instead of sample data, set `DEV_INPUT` in `backend/.env` to point at your `files_required/` directory:
+Expected: pipeline completes without `FileNotFoundError`. Output files appear in `backend\data\outputs\`.
+
+**To use your own live input files** instead of sample data, set `DEV_INPUT` in `backend\.env`:
 
 ```
-DEV_INPUT=/path/to/your/files_required
+DEV_INPUT=C:\path\to\your\files_required
 ```
 
 ---
 
 ## 8. Development Notes
 
-- **All backend commands must be run from the `backend/` directory.** pydantic-settings resolves `.env` relative to the current working directory. The Makefile handles the `cd backend` step automatically.
-- **Alembic enum changes** (such as `UserRole`, `RunStatus`) are not auto-detected — write manual migration steps if you modify these enums.
-- **`backend/.env` is gitignored** — never commit it. Only `backend/.env.example` is tracked.
-- **Frontend proxy:** The Vite dev server (`vite.config.ts`) proxies all `/api` requests to `http://localhost:8000`. This is configured automatically — no manual proxy setup needed.
+- **All backend commands run from `backend\`.** pydantic-settings resolves `.env` relative to the working directory. `dev.ps1` handles the directory switch automatically.
+- **Alembic enum changes** (`UserRole`, `RunStatus`) are not auto-detected — write manual migration steps if you modify these enums.
+- **`backend\.env` is gitignored** — never commit it. Only `backend\.env.example` is tracked.
+- **Frontend proxy:** Vite proxies all `/api` requests to `http://localhost:8000`. No manual proxy setup needed.
 
 ---
 
-## 9. WSL2 and PostgreSQL
-
-If you run `make` from WSL2 and Postgres is installed on Windows (not inside WSL2), the connection will be refused — WSL2's `localhost` is isolated from Windows' `localhost`.
-
-**Option A — Run database commands from Windows PowerShell (quickest):**
-
-```powershell
-cd backend
-.\venv\Scripts\alembic upgrade head
-```
-
-This works because PowerShell's `localhost` reaches Windows Postgres directly.
-
-**Option B — Configure Windows Postgres to accept WSL2 connections (permanent fix):**
-
-1. Find your PostgreSQL data directory (usually `C:\Program Files\PostgreSQL\<version>\data\`)
-
-2. Edit `postgresql.conf` — change:
-   ```
-   listen_addresses = 'localhost'
-   ```
-   to:
-   ```
-   listen_addresses = '*'
-   ```
-
-3. Edit `pg_hba.conf` — add this line:
-   ```
-   host    all    all    0.0.0.0/0    md5
-   ```
-
-4. Restart the Postgres Windows service (Services → `postgresql-x64-<version>` → Restart)
-
-5. Get the Windows host IP from WSL2:
-   ```bash
-   cat /etc/resolv.conf | grep nameserver | awk '{print $2}'
-   ```
-
-6. Update `backend/.env` to use that IP instead of `localhost`:
-   ```
-   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@<windows-host-ip>:5432/intrepid_poc
-   ```
-
-After this, `make migrate`, `make run-backend`, and all other `make` targets work from WSL2.
-
----
-
-## 10. Troubleshooting
+## 9. Troubleshooting
 
 | Error | Cause | Fix |
 |---|---|---|
-| `ModuleNotFoundError: No module named 'api'` | uvicorn run from wrong directory | Use `make run-backend` or run `cd backend && uvicorn api.main:app` |
-| `connection refused` on DATABASE_URL | Postgres not running or database missing | Start Postgres; verify `intrepid_poc` database exists |
-| `connection refused` from WSL2 | WSL2 cannot reach Windows `localhost` | See [WSL2 and PostgreSQL](#wsl2-and-postgresql) |
-| `FileNotFoundError: Tape20Loans file not found` | Missing `--pdate` or wrong date with sample data | Use `--pdate 2026-02-19` when running with sample data |
-| `STORAGE_TYPE=s3` errors without S3 credentials | `backend/.env` still has `STORAGE_TYPE=s3` | Set `STORAGE_TYPE=local` in `backend/.env` |
-| `missing separator` in Makefile | Editor replaced tabs with spaces | Ensure Makefile recipe lines use tab (not space) indentation |
-| `SSL certificate verify failed` on `pip install` | Corporate proxy intercepts HTTPS | Run `pip config set global.trusted-host "pypi.org files.pythonhosted.org"` then retry |
+| `ModuleNotFoundError: No module named 'api'` | uvicorn run from wrong directory | Use `.\dev.ps1 run-backend` (handles `cd backend` automatically) |
+| `connection refused` on `DATABASE_URL` | Postgres not running or wrong password | Start Postgres service; check password in `backend\.env` |
+| `FileNotFoundError: Tape20Loans file not found` | Wrong `--pdate` with sample data | Use `--pdate 2026-02-19` when running with sample data |
+| `STORAGE_TYPE=s3` errors without S3 credentials | `.env` has `STORAGE_TYPE=s3` | Set `STORAGE_TYPE=local` in `backend\.env` |
+| `venv\Scripts\alembic` not found | venv created in WSL2, not PowerShell | Delete `backend\venv` and run `.\dev.ps1 setup` from PowerShell |
+
+---
+
+## Appendix A: WSL2
+
+WSL2 is not the primary workflow for this project. If you need to use WSL2:
+
+- Run `make setup` from WSL2 — this creates `backend/venv/bin/` (Linux-style)
+- The `Makefile` auto-detects WSL2 and uses `venv/bin/` accordingly
+- **WSL2 cannot reach Windows Postgres via `localhost`.** You must either:
+  - Configure Postgres to listen on all interfaces (`listen_addresses = '*'` in `postgresql.conf`) and update `DATABASE_URL` with the Windows host IP (`cat /etc/resolv.conf | grep nameserver | awk '{print $2}'`)
+  - Or run all database commands from PowerShell instead
+
+The `dev.ps1` script and PowerShell workflow have no WSL2 dependencies.
