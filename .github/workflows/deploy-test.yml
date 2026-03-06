@@ -45,6 +45,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -f deploy/Dockerfile \
+            --build-arg VITE_APP_ENV=staging \
             -t $ECR_REGISTRY/$ECR_REPO_NAME:$IMAGE_TAG \
             -t $ECR_REGISTRY/$ECR_REPO_NAME:latest .
           docker push $ECR_REGISTRY/$ECR_REPO_NAME:$IMAGE_TAG

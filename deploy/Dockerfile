@@ -16,6 +16,8 @@ RUN find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.json" -o -name "
 ENV VITE_API_URL=
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=4096
+ARG VITE_APP_ENV
+ENV VITE_APP_ENV=$VITE_APP_ENV
 RUN npm run build
 
 # ---- Backend ----
