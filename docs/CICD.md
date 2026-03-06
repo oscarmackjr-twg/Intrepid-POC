@@ -90,6 +90,66 @@ Push a commit to `main` and watch the Actions run. All steps should complete gre
 
 ---
 
+## First Deploy Checklist
+
+After the first successful CI/CD deploy (GitHub Actions workflow green), complete these one-time steps to make the staging environment usable.
+
+### Step 1: Verify the staging URL loads
+
+Open in a browser:
+```
+http://intrepid-poc-qa-alb-1332245107.us-east-1.elb.amazonaws.com
+```
+The Loan Engine login page should appear with an amber "STAGING — Not Production" banner at the top.
+
+### Step 2: Seed the staging admin user
+
+Run the seed script as an ECS one-off task. Retrieve subnet and security group values from Terraform outputs (already set as GitHub repo variables):
+
+```powershell
+# Get values from Terraform outputs
+cd deploy\terraform\qa
+$SUBNET_IDS = terraform output -raw ecs_subnet_ids    # comma-separated, e.g. subnet-abc,subnet-def
+$SG_ID = terraform output -raw ecs_security_group_id  # e.g. sg-xyz789
+
+# Run seed script as ECS one-off task
+$TASK_ARN = aws ecs run-task `
+  --cluster intrepid-poc-qa `
+  --task-definition intrepid-poc-qa `
+  --launch-type FARGATE `
+  --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS],securityGroups=[$SG_ID],assignPublicIp=ENABLED}" `
+  --overrides '{\"containerOverrides\":[{\"name\":\"app\",\"command\":[\"python\",\"scripts/seed_staging_user.py\"]}]}' `
+  --query 'tasks[0].taskArn' `
+  --output text
+echo "Task: $TASK_ARN"
+
+# Wait for completion
+aws ecs wait tasks-stopped --cluster intrepid-poc-qa --tasks $TASK_ARN
+
+# Check exit code (0 = success)
+aws ecs describe-tasks --cluster intrepid-poc-qa --tasks $TASK_ARN `
+  --query 'tasks[0].containers[?name==`app`].exitCode' --output text
+```
+
+The script is idempotent — safe to run again if needed (updates password if user exists).
+
+### Step 3: Verify Ops login and upload
+
+1. Open the staging URL in a browser
+2. Log in as `admin` with the staging password (see `backend/scripts/seed_staging_user.py`)
+3. Navigate to File Manager
+4. Upload a sample loan spreadsheet from `backend/data/sample/`
+5. Confirm the file is accepted (no error, appears in the file list)
+
+### Troubleshooting seed script failures
+
+Check CloudWatch Logs for the seed task:
+- Log group: `/ecs/intrepid-poc-qa`
+- Filter by the task ARN shown above
+- Common cause: `ModuleNotFoundError` — ensure the task definition WORKDIR is `/app` and the command is `["python", "scripts/seed_staging_user.py"]` (relative path, not absolute)
+
+---
+
 ## Deploy Sequence
 
 Each workflow step and what to do if it fails:
