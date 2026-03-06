@@ -76,7 +76,12 @@ Plans:
   1. A push to main triggers the GitHub Actions workflow, which builds the image and pushes it to ECR successfully
   2. The workflow runs Alembic migrations against the staging RDS instance as part of the deploy sequence
   3. All required GitHub secrets and variables are documented (in README or CICD runbook) and confirmed configured in the repo
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Terraform OIDC IAM role, subnet/SG outputs, terraform apply + GitHub repo variable setup (CICD-01)
+- [ ] 04-02-PLAN.md — Rewrite GitHub Actions workflow: OIDC auth, correct ECR/ECS names, migration step, stability wait (CICD-01, CICD-02)
+- [ ] 04-03-PLAN.md — Create docs/CICD.md runbook: secrets/variables inventory, OIDC setup steps, deploy sequence (CICD-03)
 
 ### Phase 5: Staging Deployment
 **Goal**: The staging environment is live at a real URL, Ops can log in and upload a file, and the environment is clearly identified as non-production
