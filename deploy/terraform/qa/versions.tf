@@ -28,7 +28,7 @@ provider "aws" {
   default_tags {
     tags = {
       Environment = "qa"
-      Project     = "loan-engine"
+      Project     = "intrepid-poc"
       ManagedBy   = "terraform"
     }
   }

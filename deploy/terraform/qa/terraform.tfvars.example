@@ -1,17 +1,18 @@
 # Copy to terraform.tfvars and set values (do not commit terraform.tfvars with real secrets)
-# Or pass -var "db_password=..." and use TF_VAR_db_password
+# For CI/CD: export TF_VAR_db_password='<password>'
 
 aws_region   = "us-east-1"
-app_name     = "loan-engine"
+app_name     = "intrepid-poc"
 environment  = "qa"
 
-# S3: loan-engine-qa
-s3_bucket_name = "loan-engine-qa"
+# S3: intrepid-poc-qa
+s3_bucket_name = "intrepid-poc-qa"
 
-# RDS: loan-engine-qa
-db_instance_identifier = "loan-engine-qa"
-db_password            = "Intrepid456$%"   # Set via env: $env:TF_VAR_db_password = "Intrepid456$%"
+# RDS: intrepid-poc-qa
+db_instance_identifier = "intrepid-poc-qa"
+db_password            = "CHANGE_ME"   # Set via env: export TF_VAR_db_password='...'
 
-# ECS (compute): loan-engine-qa
-ecs_cluster_name = "loan-engine-qa"
-ecs_service_name = "loan-engine-qa"
+# ECS (compute): intrepid-poc-qa
+ecs_cluster_name    = "intrepid-poc-qa"
+ecs_service_name    = "intrepid-poc-qa"
+ecr_repository_name = "intrepid-poc-qa"

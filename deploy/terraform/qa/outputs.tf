@@ -9,7 +9,7 @@ output "alb_dns_name" {
 }
 
 output "s3_bucket" {
-  description = "S3 bucket name (loan-engine-qa)"
+  description = "S3 bucket name (intrepid-poc-qa)"
   value       = aws_s3_bucket.app.id
 }
 
@@ -20,7 +20,7 @@ output "rds_endpoint" {
 }
 
 output "ecs_cluster_name" {
-  description = "ECS cluster name (loan-engine-qa)"
+  description = "ECS cluster name (intrepid-poc-qa)"
   value       = aws_ecs_cluster.main.name
 }
 

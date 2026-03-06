@@ -73,7 +73,9 @@ try {
         docker push "${repoUrl}:latest"
         if ($LASTEXITCODE -ne 0) { Write-Error "Docker push failed."; exit 1 }
         Write-Host "Forcing ECS service to deploy new image..." -ForegroundColor Cyan
-        $ecsArgs = @("ecs", "update-service", "--cluster", "loan-engine-qa", "--service", "loan-engine-qa", "--force-new-deployment", "--region", $Region)
+        $clusterName = (terraform output -raw ecs_cluster_name 2>$null)
+        $serviceName = (terraform output -raw ecs_service_name 2>$null)
+        $ecsArgs = @("ecs", "update-service", "--cluster", $clusterName, "--service", $serviceName, "--force-new-deployment", "--region", $Region)
         if ($Profile) { $ecsArgs = @("--profile", $Profile) + $ecsArgs }
         & aws @ecsArgs
     }
