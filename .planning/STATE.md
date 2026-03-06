@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Phase 2 context gathered
-last_updated: "2026-03-06T02:03:02.140Z"
+stopped_at: Completed 02-docker-local-dev/02-01-PLAN.md
+last_updated: "2026-03-06T02:31:55.651Z"
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
 ---
 
 ---
@@ -60,6 +60,7 @@ Progress: [████░░░░░░] 20%
 | 03-infra | TBD | Not started |
 | 04-cicd | TBD | Not started |
 | 05-staging | TBD | Not started |
+| Phase 02-docker-local-dev P01 | 2 | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [01-02] backend/.gitignore data/ replaced with specific subdirs (data/inputs/, data/outputs/, data/archive/) to allow sample/ exception
 - [01-02] Postgres user password unknown on this machine; migration generated via pg_hba.conf trust auth (temporarily); restored to scram-sha-256 after; user must update DATABASE_URL in .env
 - [01-04] Pipeline had 4 bugs fixed during smoke test (promo_term, Purchase Price, int overflow on NaN, ChainedAssignmentError)
+- [Phase 02-docker-local-dev]: Volume paths relative to deploy/ (../backend, ../frontend) — eliminates Windows path blocker DOCKER-02
+- [Phase 02-docker-local-dev]: exec uvicorn pattern ensures PID 1 signal handling; alembic upgrade head runs inline before start
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T02:03:02.110Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-docker-local-dev/02-CONTEXT.md
+Last session: 2026-03-06T02:31:55.645Z
+Stopped at: Completed 02-docker-local-dev/02-01-PLAN.md
+Resume file: None
