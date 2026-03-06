@@ -27,9 +27,9 @@ Requirements for local dev → Docker → AWS staging deployment.
 ### AWS Infrastructure
 
 - [x] **INFRA-01**: Terraform `qa` environment applies cleanly (`terraform init && apply`)
-- [ ] **INFRA-02**: Secrets Manager entries exist for `DATABASE_URL` and `SECRET_KEY`
-- [ ] **INFRA-03**: ECR repository is provisioned and accessible
-- [ ] **INFRA-04**: RDS Postgres instance is running and reachable from ECS tasks
+- [x] **INFRA-02**: Secrets Manager entries exist for `DATABASE_URL` and `SECRET_KEY`
+- [x] **INFRA-03**: ECR repository is provisioned and accessible
+- [x] **INFRA-04**: RDS Postgres instance is running and reachable from ECS tasks
 
 ### CI/CD
 
@@ -97,9 +97,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOCKER-03 | Phase 2 | Complete |
 | DOCKER-04 | Phase 2 | Complete |
 | INFRA-01 | Phase 3 | Complete |
-| INFRA-02 | Phase 3 | Pending |
-| INFRA-03 | Phase 3 | Pending |
-| INFRA-04 | Phase 3 | Pending |
+| INFRA-02 | Phase 3 | Complete |
+| INFRA-03 | Phase 3 | Complete |
+| INFRA-04 | Phase 3 | Complete |
 | CICD-01 | Phase 4 | Pending |
 | CICD-02 | Phase 4 | Pending |
 | CICD-03 | Phase 4 | Pending |

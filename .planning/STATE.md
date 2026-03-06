@@ -3,10 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
+stopped_at: Completed 03-aws-infrastructure/03-02-PLAN.md — Phase 3 complete, all INFRA requirements verified
+last_updated: "2026-03-06T16:27:04.501Z"
+progress:
+  total_phases: 5
+  completed_phases: 3
+  total_plans: 8
+  completed_plans: 8
+  percent: 100
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: in-progress
 stopped_at: "Completed 03-aws-infrastructure/03-01-PLAN.md"
 last_updated: "2026-03-06T04:45:00.000Z"
 progress:
-  total_phases: 5
+  [██████████] 100%
   completed_phases: 2
   total_plans: 8
   completed_plans: 7
@@ -50,15 +65,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Ops can take a loan tape from email to executed wire instructions in one controlled, visible process — replacing ad hoc scripts
-**Current focus:** Phase 3 — AWS Infrastructure
+**Current focus:** Phase 4 — CI/CD
 
 ## Current Position
 
-Phase: 3 of 5 (AWS Infrastructure)
-Plan: 1 of 2 complete in current phase
-Status: Phase 3 Plan 01 complete — terraform apply succeeded, all intrepid-poc-qa resources provisioned
+Phase: 3 of 5 (AWS Infrastructure) — COMPLETE
+Plan: 2 of 2 complete in current phase
+Status: Phase 3 complete — all four INFRA requirements verified (Secrets Manager readable, ECR push confirmed, RDS psql returning PostgreSQL 16.8)
 
-Progress: [██████░░░░] 60%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -77,6 +92,7 @@ Progress: [██████░░░░] 60%
 | 05-staging | TBD | Not started |
 | Phase 02-docker-local-dev P01 | 2 | 3 tasks | 1 files |
 | Phase 02-docker-local-dev P02 | 10 | 2 tasks | 1 files |
+| Phase 03-aws-infrastructure P02 | 158min | 2 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -101,6 +117,8 @@ Recent decisions affecting current work:
 - [Phase 02-docker-local-dev]: App image must be rebuilt after requirements.txt changes — use `up --build app`; cached image pre-dates psycopg[binary] addition
 - [Phase 02-docker-local-dev]: VITE_API_TARGET nullish coalescing (??): frontend proxy target reads env var in Docker, falls back to localhost:8000 for host-native dev
 - [Phase 03-aws-infrastructure]: deploy-qa.ps1 ECS update-service uses terraform output -raw instead of hardcoded cluster/service names — handles any app_name change automatically
+- [Phase 03-aws-infrastructure]: RDS psql connection requires AWS global CA bundle (sslmode=verify-ca + sslrootcert) and % password chars URL-encoded as %25
+- [Phase 03-aws-infrastructure]: Temporary SG ingress pattern for RDS testing: authorize /32 from local IP, test, revoke immediately — keeps RDS not publicly reachable
 
 ### Pending Todos
 
@@ -115,6 +133,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T04:45:00Z
-Stopped at: Completed 03-aws-infrastructure/03-01-PLAN.md (terraform apply complete, all intrepid-poc-qa resources live)
+Last session: 2026-03-06T16:27:04.481Z
+Stopped at: Completed 03-aws-infrastructure/03-02-PLAN.md — Phase 3 complete, all INFRA requirements verified
 Resume file: None
