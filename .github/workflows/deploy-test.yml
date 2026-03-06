@@ -1,9 +1,10 @@
-# Deploy Loan Engine to AWS Test (ECS Fargate)
-# Trigger: push to main (or set branch in workflow_dispatch)
-# Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (or use OIDC)
-# Repo vars or secrets: ECR_REPO_URI, ECS_CLUSTER, ECS_SERVICE, AWS_REGION
+# Deploy intrepid-poc to AWS QA (ECS Fargate)
+# Trigger: push to main
+# Auth: GitHub OIDC — no static AWS credentials stored in GitHub
+# Required repo variables: AWS_ROLE_ARN, ECS_SUBNET_IDS, ECS_SECURITY_GROUP
+# Optional repo variables: AWS_REGION (defaults to us-east-1)
 
-name: Deploy to AWS Test
+name: Deploy to AWS QA
 
 on:
   push:
@@ -12,22 +13,25 @@ on:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
-  ECR_REPO_NAME: loan-engine
-  ECS_CLUSTER: ${{ vars.ECS_CLUSTER || 'test-cluster' }}
-  ECS_SERVICE: ${{ vars.ECS_SERVICE || 'loan-engine-test' }}
+  ECR_REPO_NAME: intrepid-poc-qa
+  ECS_CLUSTER: intrepid-poc-qa
+  ECS_SERVICE: intrepid-poc-qa
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for OIDC token request
+      contents: read    # required for actions/checkout
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS
+      - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to ECR
@@ -40,10 +44,45 @@ jobs:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -f deploy/Dockerfile -t $ECR_REGISTRY/$ECR_REPO_NAME:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPO_NAME:latest .
+          docker build -f deploy/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_REPO_NAME:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPO_NAME:latest .
           docker push $ECR_REGISTRY/$ECR_REPO_NAME:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPO_NAME:latest
           echo "image=$ECR_REGISTRY/$ECR_REPO_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Run Alembic migration (ECS one-off task)
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition ${{ env.ECS_CLUSTER }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ vars.ECS_SUBNET_IDS }}],securityGroups=[${{ vars.ECS_SECURITY_GROUP }}],assignPublicIp=ENABLED}" \
+            --overrides '{"containerOverrides":[{"name":"app","command":["alembic","upgrade","head"]}]}' \
+            --query 'tasks[0].taskArn' \
+            --output text)
+          echo "TASK_ARN=$TASK_ARN" >> $GITHUB_ENV
+          echo "Migration task started: $TASK_ARN"
+
+      - name: Wait for migration to complete
+        run: |
+          aws ecs wait tasks-stopped \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks "$TASK_ARN"
+
+      - name: Check migration exit code
+        run: |
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[?name==`app`].exitCode' \
+            --output text)
+          echo "Migration exit code: $EXIT_CODE"
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Migration FAILED (exit code $EXIT_CODE) — aborting deploy"
+            exit 1
+          fi
+          echo "Migration succeeded"
 
       - name: Deploy to ECS
         run: |
@@ -53,7 +92,15 @@ jobs:
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
 
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }}
+
       - name: Deployment summary
         run: |
           echo "Image: ${{ steps.build.outputs.image }}"
-          echo "ECS: ${{ env.ECS_CLUSTER }} / ${{ env.ECS_SERVICE }}"
+          echo "ECS cluster: ${{ env.ECS_CLUSTER }}"
+          echo "ECS service: ${{ env.ECS_SERVICE }}"
+          echo "Deploy complete"
