@@ -100,6 +100,16 @@ None — plan executed exactly as written for all three tasks.
 
 - Backend unit test `test_list_runs` fails with SQLite UNIQUE constraint on `users.username` — confirmed pre-existing (reproduces on the unmodified commit). This is a test teardown isolation issue unrelated to docker-compose changes. Deferred.
 
+### Smoke Test Gotchas (found during 02-02 human verification)
+
+**1. Stale `pgdata` volume — `database "intrepid_poc" does not exist`**
+If `docker compose up` was run before with the old `loan_engine` DB name, the `pgdata` named volume contains an already-initialized Postgres data directory. Postgres ignores `POSTGRES_DB` on subsequent starts if data dir already exists — so `intrepid_poc` is never created.
+Fix: `docker compose -f deploy/docker-compose.yml down -v` (removes named volumes), then `up` again.
+
+**2. Stale Docker image — `ModuleNotFoundError: No module named 'psycopg'`**
+The app image may be cached from before `psycopg[binary]>=3.1.18` was added to `requirements.txt`. The cached image only has `psycopg2-binary`.
+Fix: `docker compose -f deploy/docker-compose.yml up -d --build app` to force image rebuild.
+
 ## User Setup Required
 
 None — no external service configuration required for this plan. Docker Compose file changes take effect on next `docker compose -f deploy/docker-compose.yml up`.
