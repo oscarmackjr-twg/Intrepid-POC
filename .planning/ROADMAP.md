@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Local Dev** - App runs locally with clean config, no hardcoded paths or Windows artifacts
 - [x] **Phase 2: Docker Local Dev** - Single-command Docker Compose startup with auto-migrations and hot reload (completed 2026-03-06)
-- [ ] **Phase 3: AWS Infrastructure** - Terraform qa environment applies cleanly with secrets, ECR, and RDS live
+- [x] **Phase 3: AWS Infrastructure** - Terraform qa environment applies cleanly with secrets, ECR, and RDS live (completed 2026-03-06)
 - [ ] **Phase 4: CI/CD Pipeline** - GitHub Actions builds, pushes to ECR, and deploys to ECS with migrations
 - [ ] **Phase 5: Staging Deployment** - Live staging URL, Ops can log in and upload, environment banner visible
 
@@ -65,8 +65,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Fix loan-engine naming remnants, create terraform.tfvars, destroy+apply infrastructure (INFRA-01)
-- [ ] 03-02-PLAN.md — Verify Secrets Manager entries, ECR push test, and RDS psql connectivity (INFRA-02, INFRA-03, INFRA-04)
+- [x] 03-01-PLAN.md — Fix loan-engine naming remnants, create terraform.tfvars, destroy+apply infrastructure (INFRA-01)
+- [x] 03-02-PLAN.md — Verify Secrets Manager entries, ECR push test, and RDS psql connectivity (INFRA-02, INFRA-03, INFRA-04)
 
 ### Phase 4: CI/CD Pipeline
 **Goal**: A push to main triggers GitHub Actions to build the Docker image, push it to ECR, run Alembic migrations, and deploy the updated task to ECS — all without manual steps
@@ -97,6 +97,6 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Local Dev | 4/4 | Complete | 2026-03-06 |
 | 2. Docker Local Dev | 2/2 | Complete   | 2026-03-06 |
-| 3. AWS Infrastructure | 1/2 | In Progress|  |
+| 3. AWS Infrastructure | 2/2 | Complete | 2026-03-06 |
 | 4. CI/CD Pipeline | 0/TBD | Not started | - |
 | 5. Staging Deployment | 0/TBD | Not started | - |
