@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-06T17:06:24.275Z"
+stopped_at: "Checkpoint: Task 2 terraform apply - awaiting human action (04-01-PLAN.md)"
+last_updated: "2026-03-06T18:02:31.858Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 11
+  completed_plans: 10
 ---
 
 ---
@@ -107,6 +107,7 @@ Progress: [██████████] 100%
 | Phase 02-docker-local-dev P01 | 2 | 3 tasks | 1 files |
 | Phase 02-docker-local-dev P02 | 10 | 2 tasks | 1 files |
 | Phase 03-aws-infrastructure P02 | 158min | 2 tasks | 0 files |
+| Phase 04-cicd-pipeline P03 | 1 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,9 @@ Recent decisions affecting current work:
 - [Phase 03-aws-infrastructure]: deploy-qa.ps1 ECS update-service uses terraform output -raw instead of hardcoded cluster/service names — handles any app_name change automatically
 - [Phase 03-aws-infrastructure]: RDS psql connection requires AWS global CA bundle (sslmode=verify-ca + sslrootcert) and % password chars URL-encoded as %25
 - [Phase 03-aws-infrastructure]: Temporary SG ingress pattern for RDS testing: authorize /32 from local IP, test, revoke immediately — keeps RDS not publicly reachable
+- [Phase 04-cicd-pipeline]: docs/CICD.md created as self-contained runbook — any developer can configure CI/CD from scratch using only this document
+- [Phase 04-cicd-pipeline]: Variables table sourced from Terraform outputs (not hardcoded) — keeps IDs in sync with infrastructure
+- [Phase 04-cicd-pipeline]: GitHub repo owner confirmed as oscarmackjr-twg (from git remote -v); OIDC provider created as new resource; trust policy uses StringEquals locked to refs/heads/main
 
 ### Pending Todos
 
@@ -147,6 +151,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T17:06:24.262Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-cicd-pipeline/04-CONTEXT.md
+Last session: 2026-03-06T18:02:31.848Z
+Stopped at: Checkpoint: Task 2 terraform apply - awaiting human action (04-01-PLAN.md)
+Resume file: None

@@ -35,7 +35,7 @@ Requirements for local dev → Docker → AWS staging deployment.
 
 - [ ] **CICD-01**: GitHub Actions workflow builds Docker image and pushes to ECR on push to main
 - [ ] **CICD-02**: Workflow runs Alembic migrations as part of deploy
-- [ ] **CICD-03**: Required GitHub secrets/variables are documented and configured
+- [x] **CICD-03**: Required GitHub secrets/variables are documented and configured
 
 ### Staging
 
@@ -102,7 +102,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-04 | Phase 3 | Complete |
 | CICD-01 | Phase 4 | Pending |
 | CICD-02 | Phase 4 | Pending |
-| CICD-03 | Phase 4 | Pending |
+| CICD-03 | Phase 4 | Complete |
 | STAGE-01 | Phase 5 | Pending |
 | STAGE-02 | Phase 5 | Pending |
 | STAGE-03 | Phase 5 | Pending |
