@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 04-cicd-pipeline/04-01-PLAN.md
-last_updated: "2026-03-06T18:35:40.095Z"
+stopped_at: Completed 04-cicd-pipeline/04-02-PLAN.md
+last_updated: "2026-03-06T18:39:55.340Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 ---
@@ -108,6 +108,7 @@ Progress: [██████████] 100%
 | Phase 02-docker-local-dev P02 | 10 | 2 tasks | 1 files |
 | Phase 03-aws-infrastructure P02 | 158min | 2 tasks | 0 files |
 | Phase 04-cicd-pipeline P03 | 1 | 1 tasks | 1 files |
+| Phase 04-cicd-pipeline P02 | 1min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,7 @@ Recent decisions affecting current work:
 - [Phase 04-cicd-pipeline]: Variables table sourced from Terraform outputs (not hardcoded) — keeps IDs in sync with infrastructure
 - [Phase 04-cicd-pipeline]: GitHub repo owner confirmed as oscarmackjr-twg (from git remote -v); OIDC provider created as new resource; trust policy uses StringEquals locked to refs/heads/main
 - [Phase 04-cicd-pipeline]: IAM role github-actions-intrepid-poc-qa applied via terraform apply — OIDC auth foundation complete, GitHub repo variables AWS_ROLE_ARN, ECS_SUBNET_IDS, ECS_SECURITY_GROUP configured
+- [Phase 04-cicd-pipeline]: deploy-test.yml rewritten: OIDC auth, migration gate (run-task + exit code check), services-stable wait, all resource names corrected to intrepid-poc-qa
 
 ### Pending Todos
 
@@ -152,6 +154,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T18:35:34.126Z
-Stopped at: Completed 04-cicd-pipeline/04-01-PLAN.md
+Last session: 2026-03-06T18:39:55.330Z
+Stopped at: Completed 04-cicd-pipeline/04-02-PLAN.md
 Resume file: None

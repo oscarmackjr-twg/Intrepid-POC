@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Local Dev** - App runs locally with clean config, no hardcoded paths or Windows artifacts
 - [x] **Phase 2: Docker Local Dev** - Single-command Docker Compose startup with auto-migrations and hot reload (completed 2026-03-06)
 - [x] **Phase 3: AWS Infrastructure** - Terraform qa environment applies cleanly with secrets, ECR, and RDS live (completed 2026-03-06)
-- [ ] **Phase 4: CI/CD Pipeline** - GitHub Actions builds, pushes to ECR, and deploys to ECS with migrations
+- [x] **Phase 4: CI/CD Pipeline** - GitHub Actions builds, pushes to ECR, and deploys to ECS with migrations (completed 2026-03-06)
 - [ ] **Phase 5: Staging Deployment** - Live staging URL, Ops can log in and upload, environment banner visible
 
 ## Phase Details
@@ -103,5 +103,5 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 1. Local Dev | 4/4 | Complete | 2026-03-06 |
 | 2. Docker Local Dev | 2/2 | Complete   | 2026-03-06 |
 | 3. AWS Infrastructure | 2/2 | Complete | 2026-03-06 |
-| 4. CI/CD Pipeline | 2/3 | In Progress|  |
+| 4. CI/CD Pipeline | 3/3 | Complete   | 2026-03-06 |
 | 5. Staging Deployment | 0/TBD | Not started | - |
