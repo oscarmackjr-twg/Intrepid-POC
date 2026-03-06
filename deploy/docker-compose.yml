@@ -1,6 +1,5 @@
-# Local / test run: app + Postgres
+# Local / test run: app + Postgres + Vite frontend
 # From repo root: docker compose -f deploy/docker-compose.yml up -d
-# Migrations: run inside backend container or host (see cookbook).
 
 services:
   app:
@@ -9,16 +8,20 @@ services:
       dockerfile: deploy/Dockerfile
     ports:
       - "8000:8000"
+    working_dir: /app/backend
     volumes:
-      - "C:\\Users\\omack\\Intrepid\\pythonFramework\\loan_engine\\inputs\\93rd_buy:/data/dev_run"
+      - ../backend:/app/backend           # hot reload; pip packages at /usr/local/lib are safe
+      - ../backend/data/sample:/data/sample:ro  # read-only sample data
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/loan_engine
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/intrepid_poc
       SECRET_KEY: change-me-in-production
       CORS_ORIGINS: '["http://localhost:8000","http://localhost:5173"]'
       STORAGE_TYPE: local
-      DEV_INPUT: /data/dev_run/files_required
-      DEV_OUTPUT: /data/dev_run/output
-      DEV_OUTPUT_SHARED: /data/dev_run/output_share
+      DEV_INPUT: /data/sample/files_required
+      DEV_OUTPUT: /tmp/dev_output
+      DEV_OUTPUT_SHARED: /tmp/dev_output_share
+    command: >
+      sh -c "alembic upgrade head && exec uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
       db:
         condition: service_healthy
@@ -34,7 +37,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: loan_engine
+      POSTGRES_DB: intrepid_poc
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -44,6 +47,20 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  frontend:
+    image: node:20-slim
+    working_dir: /app/frontend
+    volumes:
+      - ../frontend:/app/frontend         # source code; HMR watches this
+      - /app/frontend/node_modules        # anonymous volume preserves Linux-built binaries
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_TARGET: http://app:8000
+    command: sh -c "npm ci && npm run dev -- --host"
+    depends_on:
+      - app
 
 volumes:
   pgdata:
