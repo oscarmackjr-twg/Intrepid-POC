@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: "Checkpoint: Task 2 terraform apply - awaiting human action (04-01-PLAN.md)"
-last_updated: "2026-03-06T18:02:31.858Z"
+stopped_at: Completed 04-cicd-pipeline/04-01-PLAN.md
+last_updated: "2026-03-06T18:35:40.095Z"
 progress:
   total_phases: 5
   completed_phases: 3
@@ -137,6 +137,7 @@ Recent decisions affecting current work:
 - [Phase 04-cicd-pipeline]: docs/CICD.md created as self-contained runbook — any developer can configure CI/CD from scratch using only this document
 - [Phase 04-cicd-pipeline]: Variables table sourced from Terraform outputs (not hardcoded) — keeps IDs in sync with infrastructure
 - [Phase 04-cicd-pipeline]: GitHub repo owner confirmed as oscarmackjr-twg (from git remote -v); OIDC provider created as new resource; trust policy uses StringEquals locked to refs/heads/main
+- [Phase 04-cicd-pipeline]: IAM role github-actions-intrepid-poc-qa applied via terraform apply — OIDC auth foundation complete, GitHub repo variables AWS_ROLE_ARN, ECS_SUBNET_IDS, ECS_SECURITY_GROUP configured
 
 ### Pending Todos
 
@@ -151,6 +152,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T18:02:31.848Z
-Stopped at: Checkpoint: Task 2 terraform apply - awaiting human action (04-01-PLAN.md)
+Last session: 2026-03-06T18:35:34.126Z
+Stopped at: Completed 04-cicd-pipeline/04-01-PLAN.md
 Resume file: None
