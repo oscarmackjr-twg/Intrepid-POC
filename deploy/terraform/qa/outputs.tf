@@ -33,3 +33,13 @@ output "ecr_repository_url" {
   description = "ECR repository URL for pushing QA image"
   value       = aws_ecr_repository.app.repository_url
 }
+
+output "ecs_subnet_ids" {
+  description = "Public subnet IDs for ECS run-task network configuration"
+  value       = join(",", aws_subnet.public[*].id)
+}
+
+output "ecs_security_group_id" {
+  description = "ECS security group ID for ECS run-task network configuration"
+  value       = aws_security_group.ecs.id
+}
