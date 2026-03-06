@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-06T03:54:28.508Z"
+stopped_at: "Checkpoint: 03-01 Task 2 — human plan review then terraform destroy+apply"
+last_updated: "2026-03-06T04:21:17.564Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 100
 ---
 
@@ -100,6 +100,7 @@ Recent decisions affecting current work:
 - [Phase 02-docker-local-dev]: First `docker compose up` after DB name change requires `down -v` to wipe stale pgdata volume (Postgres ignores POSTGRES_DB if data dir already exists)
 - [Phase 02-docker-local-dev]: App image must be rebuilt after requirements.txt changes — use `up --build app`; cached image pre-dates psycopg[binary] addition
 - [Phase 02-docker-local-dev]: VITE_API_TARGET nullish coalescing (??): frontend proxy target reads env var in Docker, falls back to localhost:8000 for host-native dev
+- [Phase 03-aws-infrastructure]: deploy-qa.ps1 ECS update-service uses terraform output -raw instead of hardcoded cluster/service names — handles any app_name change automatically
 
 ### Pending Todos
 
@@ -114,6 +115,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T03:54:28.479Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-aws-infrastructure/03-CONTEXT.md
+Last session: 2026-03-06T04:21:13.628Z
+Stopped at: Checkpoint: 03-01 Task 2 — human plan review then terraform destroy+apply
+Resume file: None
