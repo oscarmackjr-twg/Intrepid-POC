@@ -40,7 +40,7 @@ Requirements for local dev → Docker → AWS staging deployment.
 ### Staging
 
 - [ ] **STAGE-01**: Staging URL is accessible and app loads after CI/CD deploy
-- [ ] **STAGE-02**: Ops team can log in and upload a file in staging
+- [x] **STAGE-02**: Ops team can log in and upload a file in staging
 - [ ] **STAGE-03**: Staging environment has an unmissable banner (not production)
 
 ## v2.0 Requirements (Deferred)
@@ -104,7 +104,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CICD-02 | Phase 4 | Complete |
 | CICD-03 | Phase 4 | Complete |
 | STAGE-01 | Phase 5 | Pending |
-| STAGE-02 | Phase 5 | Pending |
+| STAGE-02 | Phase 5 | Complete |
 | STAGE-03 | Phase 5 | Pending |
 
 **Coverage:**

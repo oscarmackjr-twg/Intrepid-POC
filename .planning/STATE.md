@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-06T20:35:49.517Z"
+stopped_at: Completed 05-staging-deployment/05-02-PLAN.md
+last_updated: "2026-03-06T21:02:36.638Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 14
+  completed_plans: 13
 ---
 
 ---
@@ -109,6 +109,8 @@ Progress: [██████████] 100%
 | Phase 03-aws-infrastructure P02 | 158min | 2 tasks | 0 files |
 | Phase 04-cicd-pipeline P03 | 1 | 1 tasks | 1 files |
 | Phase 04-cicd-pipeline P02 | 1min | 1 tasks | 1 files |
+| Phase 05-staging-deployment P02 | 15 | 2 tasks | 2 files |
+| Phase 05-staging-deployment P01 | 2 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -140,6 +142,10 @@ Recent decisions affecting current work:
 - [Phase 04-cicd-pipeline]: GitHub repo owner confirmed as oscarmackjr-twg (from git remote -v); OIDC provider created as new resource; trust policy uses StringEquals locked to refs/heads/main
 - [Phase 04-cicd-pipeline]: IAM role github-actions-intrepid-poc-qa applied via terraform apply — OIDC auth foundation complete, GitHub repo variables AWS_ROLE_ARN, ECS_SUBNET_IDS, ECS_SECURITY_GROUP configured
 - [Phase 04-cicd-pipeline]: deploy-test.yml rewritten: OIDC auth, migration gate (run-task + exit code check), services-stable wait, all resource names corrected to intrepid-poc-qa
+- [Phase 05-staging-deployment]: Seed script uses explicit upsert (query-then-update-or-insert) not SQLAlchemy merge() for staging admin — simpler and predictable for one-off ops use
+- [Phase 05-staging-deployment]: ECS one-off task pattern documented in CICD.md First Deploy Checklist with PowerShell syntax — covers seed script execution, wait, exit code check, and Ops login verification
+- [Phase 05-staging-deployment]: StagingBanner renders when VITE_APP_ENV \!== 'production' — undefined (no build arg) also shows banner, safe default for local dev
+- [Phase 05-staging-deployment]: VITE_APP_ENV baked into Docker image at build time via ARG/ENV — no runtime secret injection needed, Vite inlines value at npm run build
 
 ### Pending Todos
 
@@ -154,6 +160,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:35:49.489Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-staging-deployment/05-CONTEXT.md
+Last session: 2026-03-06T21:02:25.997Z
+Stopped at: Completed 05-staging-deployment/05-02-PLAN.md
+Resume file: None
