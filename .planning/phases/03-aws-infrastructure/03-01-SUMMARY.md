@@ -11,7 +11,9 @@ requires:
 provides:
   - Clean Terraform configuration with intrepid-poc naming throughout
   - terraform.tfvars with real QA credentials (gitignored)
-  - All intrepid-poc-qa AWS resources provisioned (pending human apply)
+  - All intrepid-poc-qa AWS resources provisioned in AWS account 014148916722
+  - ALB DNS name: intrepid-poc-qa-alb-1332245107.us-east-1.elb.amazonaws.com
+  - ECR repository URL: 014148916722.dkr.ecr.us-east-1.amazonaws.com/intrepid-poc-qa
 affects: [04-cicd, 05-staging]
 
 # Tech tracking
@@ -42,20 +44,20 @@ patterns-established:
 requirements-completed: [INFRA-01]
 
 # Metrics
-duration: 15min
+duration: ~30min
 completed: 2026-03-06
 ---
 
 # Phase 3 Plan 01: Fix loan-engine Naming and Provision QA Infrastructure Summary
 
-**Terraform QA configuration renamed from loan-engine to intrepid-poc throughout all resource values; terraform validate passes; human-gated destroy+apply pending to provision 25 intrepid-poc-qa AWS resources**
+**Terraform QA config cleaned of all loan-engine resource values and applied; intrepid-poc-qa VPC, ECR, RDS, Secrets Manager, ECS cluster/service, ALB, S3, and IAM roles provisioned in us-east-1**
 
 ## Performance
 
-- **Duration:** ~15 min (Task 1 complete; Task 2 awaiting human checkpoint)
+- **Duration:** ~30 min (Task 1 auto + Task 2 human apply)
 - **Started:** 2026-03-06T04:18:14Z
-- **Completed:** 2026-03-06T04:33:00Z (Task 1); Task 2 pending
-- **Tasks:** 1 of 2 (Task 2 is human-verify checkpoint)
+- **Completed:** 2026-03-06
+- **Tasks:** 2 of 2
 - **Files modified:** 5
 
 ## Accomplishments
@@ -63,15 +65,31 @@ completed: 2026-03-06
 - Created gitignored `terraform.tfvars` with real QA credentials (db_password, all resource names)
 - `terraform validate` passes with exit code 0 confirming configuration correctness
 - `deploy-qa.ps1` now uses dynamic `terraform output` lookups instead of hardcoded ECS names
+- `terraform destroy` removed all old loan-engine-* resources from account 014148916722
+- `terraform apply` provisioned all intrepid-poc-qa AWS resources successfully
+
+## Provisioned AWS Resources (terraform output)
+
+```
+alb_dns_name       = "intrepid-poc-qa-alb-1332245107.us-east-1.elb.amazonaws.com"
+application_url    = "http://intrepid-poc-qa-alb-1332245107.us-east-1.elb.amazonaws.com"
+ecr_repository_url = "014148916722.dkr.ecr.us-east-1.amazonaws.com/intrepid-poc-qa"
+ecs_cluster_name   = "intrepid-poc-qa"
+ecs_service_name   = "intrepid-poc-qa"
+s3_bucket          = "intrepid-poc-qa"
+rds_endpoint       = <sensitive>
+```
+
+Note: ECS service is in crash/unhealthy state — expected. No Docker image in ECR yet (Phase 4's job).
 
 ## Task Commits
 
 Each task was committed atomically:
 
 1. **Task 1: Fix loan-engine naming remnants and create terraform.tfvars** - `7ad2729` (fix)
-2. **Task 2: Human plan review then terraform destroy + apply** - PENDING HUMAN CHECKPOINT
+2. **Task 2: Human plan review then terraform destroy + apply** - human-executed (no code commit; infrastructure state in terraform.tfstate)
 
-**Plan metadata:** TBD (after Task 2 checkpoint approved)
+**Plan metadata:** TBD (docs commit)
 
 ## Files Created/Modified
 - `deploy/terraform/qa/versions.tf` - Project tag updated from loan-engine to intrepid-poc
@@ -83,33 +101,25 @@ Each task was committed atomically:
 
 ## Decisions Made
 - `deploy-qa.ps1` uses `terraform output -raw` for ECS cluster/service names: decouples the deploy script from hardcoded naming and ensures it works for any future app_name value
-- `terraform.tfvars.example` db_password set to CHANGE_ME placeholder (the real value was previously committed in the example — corrected)
+- `terraform.tfvars.example` db_password set to CHANGE_ME placeholder (the real value was previously in the example — corrected to avoid accidental secret exposure)
 
 ## Deviations from Plan
 
 None - plan executed exactly as written.
 
 ## Issues Encountered
-- None. All five file edits applied cleanly. `terraform validate` passed on first run.
-- `loan-engine` remnants found only in code comments (ecr.tf:1, ecs.tf:13, s3.tf:1, versions.tf backend comment, variables.tf description) — not resource values, satisfying done criteria.
+- `loan-engine` remnants found only in code comments (ecr.tf, ecs.tf, s3.tf, versions.tf backend comment, variables.tf description) — not resource values, satisfying done criteria. No action needed.
 
 ## User Setup Required
 
-**Task 2 requires manual execution.** Run in order from `deploy/terraform/qa/`:
-
-1. `aws sts get-caller-identity` — confirm account 014148916722 active
-2. `aws s3 ls s3://intrepid-poc-qa 2>&1` — pre-flight bucket check
-3. `terraform plan` — review ~25 destroy+recreate operations
-4. `terraform destroy` — removes old loan-engine-* resources
-5. `terraform apply` — provisions intrepid-poc-qa resources (5-15 min for RDS)
-
-**IMPORTANT:** ECS service will show UNHEALTHY after apply — expected (no ECR image yet, that is Phase 4).
+None — terraform apply is complete. ECS will remain unhealthy until Phase 4 pushes a Docker image to ECR.
 
 ## Next Phase Readiness
-- Task 1 complete: Terraform config clean, validated, and committed
-- Task 2 (human gate): After `terraform apply` completes successfully, all intrepid-poc-qa AWS resources will be provisioned
-- Phase 4 (CI/CD) can then push Docker image to ECR and trigger ECS deployment
+- All intrepid-poc-qa AWS resources are live and ready
+- ECR repository URL for Phase 4 CI/CD: `014148916722.dkr.ecr.us-east-1.amazonaws.com/intrepid-poc-qa`
+- ECS cluster `intrepid-poc-qa` and service `intrepid-poc-qa` exist and will stabilize once an image is pushed
+- ALB is active at `intrepid-poc-qa-alb-1332245107.us-east-1.elb.amazonaws.com`
 
 ---
 *Phase: 03-aws-infrastructure*
-*Completed: 2026-03-06 (Task 1 done; Task 2 pending human action)*
+*Completed: 2026-03-06*
