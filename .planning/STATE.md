@@ -3,15 +3,29 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 01-02-PLAN.md (sample data and initial migration)
-last_updated: "2026-03-05T19:50:00Z"
-last_activity: 2026-03-05 — Plan 01-02 complete (synthetic sample data, Alembic initial_schema migration)
+stopped_at: Phase 2 context gathered
+last_updated: "2026-03-06T02:03:02.140Z"
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 2
-  percent: 10
+  completed_plans: 4
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: in-progress
+stopped_at: Completed Phase 1 — Local Dev (all 4 plans, all 6 LOCAL requirements verified)
+last_updated: "2026-03-06T01:30:00Z"
+last_activity: 2026-03-06 — Phase 1 complete (human smoke test approved, pipeline runs end-to-end)
+progress:
+  total_phases: 5
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 4
+  percent: 20
 ---
 
 # Project State
@@ -21,35 +35,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Ops can take a loan tape from email to executed wire instructions in one controlled, visible process — replacing ad hoc scripts
-**Current focus:** Phase 1 — Local Dev
+**Current focus:** Phase 2 — Docker Local Dev
 
 ## Current Position
 
-Phase: 1 of 5 (Local Dev)
-Plan: 2 of 4 in current phase
-Status: In progress
-Last activity: 2026-03-05 — Plan 01-02 complete (synthetic sample data committed, Alembic initial_schema migration generated and applied)
+Phase: 2 of 5 (Docker Local Dev)
+Plan: 0 of TBD in current phase
+Status: Phase 1 complete — Phase 2 not yet planned
 
-Progress: [██░░░░░░░░] 10%
+Progress: [████░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 13 min
-- Total execution time: 27 min
+- Total plans completed: 4
+- Phase 1 total: 4 plans
 
 **By Phase:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01-local-dev | 2 | 27 min | 13 min |
-
-**Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (25 min)
-- Trend: Baseline
-
-*Updated after each plan completion*
+| Phase | Plans | Status |
+|-------|-------|--------|
+| 01-local-dev | 4/4 | Complete |
+| 02-docker | TBD | Not started |
+| 03-infra | TBD | Not started |
+| 04-cicd | TBD | Not started |
+| 05-staging | TBD | Not started |
 
 ## Accumulated Context
 
@@ -67,20 +77,21 @@ Recent decisions affecting current work:
 - [01-02] Root .gitignore requires negation rules for backend/data/sample/ — git cannot re-include files in an excluded parent directory from child .gitignore
 - [01-02] backend/.gitignore data/ replaced with specific subdirs (data/inputs/, data/outputs/, data/archive/) to allow sample/ exception
 - [01-02] Postgres user password unknown on this machine; migration generated via pg_hba.conf trust auth (temporarily); restored to scram-sha-256 after; user must update DATABASE_URL in .env
+- [01-04] Pipeline had 4 bugs fixed during smoke test (promo_term, Purchase Price, int overflow on NaN, ChainedAssignmentError)
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- docker-compose.yml volume mount is hardcoded Windows path — blocks cross-platform Docker use (Phase 2)
+- docker-compose.yml volume mount is hardcoded Windows path — blocks cross-platform Docker use (Phase 2, primary work item)
 - deploy-test.yml GitHub Actions workflow needs migration step and secret config added (Phase 4)
 - Existing Terraform in deploy/terraform/qa/ needs audit before applying (Phase 3)
 - Postgres user password on this machine is not "postgres" — user must update backend/.env DATABASE_URL with actual password for alembic commands
 
 ## Session Continuity
 
-Last session: 2026-03-05T19:50:00Z
-Stopped at: Completed 01-02-PLAN.md (sample data and initial migration)
-Resume file: .planning/phases/01-local-dev/01-03-PLAN.md
+Last session: 2026-03-06T02:03:02.110Z
+Stopped at: Phase 2 context gathered
+Resume file: .planning/phases/02-docker-local-dev/02-CONTEXT.md
