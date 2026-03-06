@@ -47,7 +47,11 @@ Plans:
   2. The app is accessible at `localhost:8000` in the browser immediately after compose up
   3. The Postgres volume mount uses a relative or env-var path — no hardcoded Windows absolute paths in docker-compose.yml
   4. Alembic migrations run automatically on container start without manual intervention
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Overhaul docker-compose.yml: fix DB name, remove Windows path, add migrations entrypoint, add frontend service (DOCKER-01, DOCKER-02, DOCKER-04)
+- [ ] 02-02-PLAN.md — Update vite.config.ts proxy target + human smoke test of full Docker stack (DOCKER-01, DOCKER-03)
 
 ### Phase 3: AWS Infrastructure
 **Goal**: Terraform qa environment applies cleanly, leaving a provisioned ECR repository, running RDS instance, and Secrets Manager entries that ECS tasks can consume
@@ -87,8 +91,8 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Dev | 3/4 | In Progress|  |
-| 2. Docker Local Dev | 0/TBD | Not started | - |
+| 1. Local Dev | 4/4 | Complete | 2026-03-06 |
+| 2. Docker Local Dev | 0/2 | Not started | - |
 | 3. AWS Infrastructure | 0/TBD | Not started | - |
 | 4. CI/CD Pipeline | 0/TBD | Not started | - |
 | 5. Staging Deployment | 0/TBD | Not started | - |
