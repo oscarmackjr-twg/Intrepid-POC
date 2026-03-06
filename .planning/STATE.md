@@ -3,10 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
+stopped_at: Completed 02-docker-local-dev/02-02-PLAN.md
+last_updated: "2026-03-06T03:11:48.542Z"
+progress:
+  total_phases: 5
+  completed_phases: 2
+  total_plans: 6
+  completed_plans: 6
+  percent: 100
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: in-progress
 stopped_at: Completed 02-docker-local-dev/02-01-PLAN.md
 last_updated: "2026-03-06T02:31:55.651Z"
 progress:
-  total_phases: 5
+  [██████████] 100%
   completed_phases: 1
   total_plans: 6
   completed_plans: 5
@@ -61,6 +76,7 @@ Progress: [████░░░░░░] 20%
 | 04-cicd | TBD | Not started |
 | 05-staging | TBD | Not started |
 | Phase 02-docker-local-dev P01 | 2 | 3 tasks | 1 files |
+| Phase 02-docker-local-dev P02 | 10 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -81,6 +97,9 @@ Recent decisions affecting current work:
 - [01-04] Pipeline had 4 bugs fixed during smoke test (promo_term, Purchase Price, int overflow on NaN, ChainedAssignmentError)
 - [Phase 02-docker-local-dev]: Volume paths relative to deploy/ (../backend, ../frontend) — eliminates Windows path blocker DOCKER-02
 - [Phase 02-docker-local-dev]: exec uvicorn pattern ensures PID 1 signal handling; alembic upgrade head runs inline before start
+- [Phase 02-docker-local-dev]: First `docker compose up` after DB name change requires `down -v` to wipe stale pgdata volume (Postgres ignores POSTGRES_DB if data dir already exists)
+- [Phase 02-docker-local-dev]: App image must be rebuilt after requirements.txt changes — use `up --build app`; cached image pre-dates psycopg[binary] addition
+- [Phase 02-docker-local-dev]: VITE_API_TARGET nullish coalescing (??): frontend proxy target reads env var in Docker, falls back to localhost:8000 for host-native dev
 
 ### Pending Todos
 
@@ -95,6 +114,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T02:31:55.645Z
-Stopped at: Completed 02-docker-local-dev/02-01-PLAN.md
+Last session: 2026-03-06T03:11:48.531Z
+Stopped at: Completed 02-docker-local-dev/02-02-PLAN.md
 Resume file: None

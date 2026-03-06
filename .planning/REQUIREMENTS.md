@@ -21,7 +21,7 @@ Requirements for local dev → Docker → AWS staging deployment.
 
 - [x] **DOCKER-01**: `docker compose -f deploy/docker-compose.yml up` starts app + Postgres successfully
 - [x] **DOCKER-02**: Docker Compose volume mount is configurable (not hardcoded Windows path)
-- [ ] **DOCKER-03**: App is accessible at `localhost:8000` after compose up
+- [x] **DOCKER-03**: App is accessible at `localhost:8000` after compose up
 - [x] **DOCKER-04**: Migrations run automatically on container start
 
 ### AWS Infrastructure
@@ -94,7 +94,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOCAL-06 | Phase 1 | Complete |
 | DOCKER-01 | Phase 2 | Complete |
 | DOCKER-02 | Phase 2 | Complete |
-| DOCKER-03 | Phase 2 | Pending |
+| DOCKER-03 | Phase 2 | Complete |
 | DOCKER-04 | Phase 2 | Complete |
 | INFRA-01 | Phase 3 | Pending |
 | INFRA-02 | Phase 3 | Pending |
