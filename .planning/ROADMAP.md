@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Local Dev** - App runs locally with clean config, no hardcoded paths or Windows artifacts
 - [x] **Phase 2: Docker Local Dev** - Single-command Docker Compose startup with auto-migrations and hot reload (completed 2026-03-06)
 - [x] **Phase 3: AWS Infrastructure** - Terraform qa environment applies cleanly with secrets, ECR, and RDS live (completed 2026-03-06)
-- [x] **Phase 4: CI/CD Pipeline** - GitHub Actions builds, pushes to ECR, and deploys to ECS with migrations (completed 2026-03-06)
+- [x] **Phase 4: CI/CD Pipeline** - GitHub Actions builds, pushes to ECR, and deploys to ECS with migrations (completed 2026-03-06)
 - [ ] **Phase 5: Staging Deployment** - Live staging URL, Ops can log in and upload, environment banner visible
 
 ## Phase Details
@@ -91,7 +91,12 @@ Plans:
   1. The staging URL loads the application in a browser after a CI/CD deploy completes
   2. An Ops team member can log in, upload a loan spreadsheet, and see it accepted by the application
   3. A clearly visible, unmissable banner identifies the environment as staging (not production) on every page
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — StagingBanner component (Layout + Login), VITE_APP_ENV build arg in Dockerfile and GitHub Actions (STAGE-03)
+- [ ] 05-02-PLAN.md — Seed script for staging admin user, First Deploy Checklist in CICD.md (STAGE-02)
+- [ ] 05-03-PLAN.md — Trigger deploy, run seed script, human verification of all three STAGE requirements (STAGE-01, STAGE-02, STAGE-03)
 
 ## Progress
 
@@ -104,4 +109,4 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 2. Docker Local Dev | 2/2 | Complete   | 2026-03-06 |
 | 3. AWS Infrastructure | 2/2 | Complete | 2026-03-06 |
 | 4. CI/CD Pipeline | 3/3 | Complete   | 2026-03-06 |
-| 5. Staging Deployment | 0/TBD | Not started | - |
+| 5. Staging Deployment | 0/3 | Not started | - |
