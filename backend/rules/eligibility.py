@@ -150,8 +150,10 @@ def check_eligibility_sfy(final_df_all: pd.DataFrame, buy_df: pd.DataFrame = Non
     results = {}
     
     sfy_df = final_df_all[final_df_all['platform'] == 'sfy'].copy()
+    if 'promo_term' not in sfy_df.columns:
+        sfy_df['promo_term'] = 0
     total_balance = sfy_df['Orig. Balance'].sum()
-    
+
     if total_balance == 0:
         return results
     
@@ -276,13 +278,17 @@ def check_eligibility_sfy(final_df_all: pd.DataFrame, buy_df: pd.DataFrame = Non
     # Check L: BD types
     check_l1 = sfy_df[sfy_df['type'] == 'wpdi_bd']['Orig. Balance'].sum() / total_balance
     check_l2 = sfy_df[sfy_df['type'] == 'standard_bd']['Orig. Balance'].sum() / total_balance
-    check_l3 = final_df_all[
-        final_df_all['type'].isin(['standard_bd', 'wpdi_bd'])
-    ]['Purchase Price'].sum() / final_df_all['Purchase Price'].sum()
-    check_l4 = final_df_all[
-        (final_df_all['type'].isin(['standard_bd', 'wpdi_bd'])) &
-        (final_df_all['Excess_Asset'] != True)
-    ]['Purchase Price'].sum() / final_df_all['Purchase Price'].sum()
+    if 'Purchase Price' in final_df_all.columns and final_df_all['Purchase Price'].sum() > 0:
+        check_l3 = final_df_all[
+            final_df_all['type'].isin(['standard_bd', 'wpdi_bd'])
+        ]['Purchase Price'].sum() / final_df_all['Purchase Price'].sum()
+        check_l4 = final_df_all[
+            (final_df_all['type'].isin(['standard_bd', 'wpdi_bd'])) &
+            (final_df_all['Excess_Asset'] != True)
+        ]['Purchase Price'].sum() / final_df_all['Purchase Price'].sum()
+    else:
+        check_l3 = 0.0
+        check_l4 = 0.0
     results['check_l1'] = {'value': check_l1, 'pass': check_l1 <= 0.01}
     results['check_l2'] = {'value': check_l2, 'pass': True}  # Informational
     results['check_l3'] = {'value': check_l3, 'pass': True}  # Informational

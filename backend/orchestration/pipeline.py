@@ -1,9 +1,22 @@
 """Main pipeline orchestration."""
+import math
 import pandas as pd
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 import logging
+
+
+def _int_or_none(val) -> Optional[int]:
+    """Convert a value to int, returning None for NaN/None."""
+    if val is None:
+        return None
+    try:
+        if math.isnan(float(val)):
+            return None
+    except (TypeError, ValueError):
+        return None
+    return int(val)
 
 from orchestration.run_context import RunContext
 from transforms.normalize import normalize_loans_df, normalize_sfy_df, normalize_prime_df
@@ -285,10 +298,10 @@ class PipelineExecutor:
                 orig_balance=row.get("Orig. Balance"),
                 purchase_price=row.get("Purchase Price"),
                 lender_price_pct=row.get("Lender Price(%)"),
-                fico_borrower=row.get("FICO Borrower"),
+                fico_borrower=_int_or_none(row.get("FICO Borrower")),
                 dti=row.get("DTI"),
                 pti=row.get("PTI"),
-                term=row.get("Term"),
+                term=_int_or_none(row.get("Term")),
                 apr=row.get("APR"),
                 property_state=row.get("Property State"),
                 purchase_price_check=row.get("purchase_price_check", False),

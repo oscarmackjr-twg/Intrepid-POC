@@ -30,7 +30,7 @@ def normalize_loans_df(df: pd.DataFrame) -> pd.DataFrame:
     
     # Fill missing status codes
     if 'Status Codes' in df.columns:
-        df['Status Codes'].fillna("", inplace=True)
+        df['Status Codes'] = df['Status Codes'].fillna("")
     
     return df
 
