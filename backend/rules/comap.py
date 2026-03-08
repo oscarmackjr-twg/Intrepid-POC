@@ -51,6 +51,38 @@ NOTES_COMAP_COLS_MIN_FICO = {
 }
 
 
+def _found_in_grid(prog: str, fico: float, grid: pd.DataFrame, fico_col_mins: dict) -> bool:
+    """Return True if prog/fico is valid in a CoMAP grid.
+
+    Checks two ways:
+    1. The program appears as a mapped value in the FICO-appropriate column
+       (loan program = the co-mapped/purchased program).
+    2. The program appears in the first column ("Applied for Program") of the grid
+       AND the FICO-appropriate band column contains a non-null mapped value
+       (loan program = the originally applied program before co-mapping).
+    """
+    avail = [c for c in fico_col_mins if c in grid.columns]
+    if not avail:
+        return False
+
+    # Check 1: prog is a co-mapped value in the correct FICO band column
+    for col in avail:
+        if prog in grid[col].values and fico >= fico_col_mins[col]:
+            return True
+
+    # Check 2: prog is the applied-for program; verify a mapping exists for the FICO band
+    applied_col = grid.columns[0]
+    matching_rows = grid[grid[applied_col] == prog]
+    if not matching_rows.empty:
+        for col in avail:
+            if fico >= fico_col_mins[col]:
+                mapped = matching_rows[col].dropna().astype(str).str.strip()
+                if mapped.ne('').any():
+                    return True
+
+    return False
+
+
 def check_comap_prime(
     buy_df: pd.DataFrame,
     prime_comap: pd.DataFrame,
@@ -81,35 +113,15 @@ def check_comap_prime(
         found = False
 
         if pd.notna(submit_dt) and submit_dt > oct25_cutoff:
-            oct25_cols = ['660-699', '700-739', '740-749', '750+']
-            available_oct25_cols = [c for c in oct25_cols if c in prime_comap_oct25.columns]
-            if available_oct25_cols and prog in prime_comap_oct25[available_oct25_cols].stack().unique():
-                for col in available_oct25_cols:
-                    if prog in prime_comap_oct25[col].values and fico >= PRIME_COMAP_COLS_MIN_FICO2[col]:
-                        found = True
-                        break
-            if not found:
-                oct25_2_cols = ['660-699', '700-739', '740-749', '750-769', '770+']
-                available_oct25_2_cols = [c for c in oct25_2_cols if c in prime_comap_oct25_2.columns]
-                if available_oct25_2_cols and prog in prime_comap_oct25_2[available_oct25_2_cols].stack().unique():
-                    for col in available_oct25_2_cols:
-                        if prog in prime_comap_oct25_2[col].values and fico >= PRIME_COMAP_COLS_MIN_FICO[col]:
-                            found = True
-                            break
+            found = (
+                _found_in_grid(prog, fico, prime_comap_oct25, PRIME_COMAP_COLS_MIN_FICO2)
+                or _found_in_grid(prog, fico, prime_comap_oct25_2, PRIME_COMAP_COLS_MIN_FICO)
+                or _found_in_grid(prog, fico, prime_comap_new, PRIME_COMAP_COLS_MIN_FICO)
+            )
         elif pd.notna(submit_dt) and submit_dt > prime_new_cutoff:
-            prime_cols = ['660-699', '700-739', '740-749', '750-769', '770+']
-            available_prime_cols = [c for c in prime_cols if c in prime_comap_new.columns]
-            for col in available_prime_cols:
-                if prog in prime_comap_new[col].values and fico >= PRIME_COMAP_COLS_MIN_FICO[col]:
-                    found = True
-                    break
+            found = _found_in_grid(prog, fico, prime_comap_new, PRIME_COMAP_COLS_MIN_FICO)
         else:
-            prime_cols = ['660-699', '700-739', '740-749', '750-769', '770+']
-            available_prime_cols = [c for c in prime_cols if c in prime_comap.columns]
-            for col in available_prime_cols:
-                if prog in prime_comap[col].values and fico >= PRIME_COMAP_COLS_MIN_FICO[col]:
-                    found = True
-                    break
+            found = _found_in_grid(prog, fico, prime_comap, PRIME_COMAP_COLS_MIN_FICO)
 
         if not found:
             loan_not_in_comap.append((row['SELLER Loan #'], prog, 'PRIME'))
@@ -123,6 +135,7 @@ def check_comap_sfy(
     sfy_comap2: pd.DataFrame,
     sfy_comap_oct25: pd.DataFrame,
     sfy_comap_oct25_2: pd.DataFrame,
+    sfy_comap_bl5: pd.DataFrame,
 ) -> List[Tuple[str, str, str]]:
     """Check SFY loans against CoMAP. Uses each loan's Submit Date for date-based grid (mirrors February_Baseline)."""
     loan_not_in_comap = []
@@ -146,37 +159,17 @@ def check_comap_sfy(
         found = False
 
         if pd.notna(submit_dt) and submit_dt > oct25_cutoff:
-            oct25_cols = ['660-719', '720-779', '780+']
-            available_oct25_cols = [c for c in oct25_cols if c in sfy_comap_oct25.columns]
-            if available_oct25_cols and prog in sfy_comap_oct25[available_oct25_cols].stack().unique():
-                for col in available_oct25_cols:
-                    if prog in sfy_comap_oct25[col].values and fico >= SFY_COMAP_COLS_MIN_FICO3[col]:
-                        found = True
-                        break
-            if not found:
-                oct25_2_cols = ['660-699', '700-739', '740-749', '750-769', '770+']
-                available_oct25_2_cols = [c for c in oct25_2_cols if c in sfy_comap_oct25_2.columns]
-                if available_oct25_2_cols and prog in sfy_comap_oct25_2[available_oct25_2_cols].stack().unique():
-                    for col in available_oct25_2_cols:
-                        if prog in sfy_comap_oct25_2[col].values and fico >= SFY_COMAP_COLS_MIN_FICO2[col]:
-                            found = True
-                            break
+            found = (
+                _found_in_grid(prog, fico, sfy_comap_oct25, SFY_COMAP_COLS_MIN_FICO3)
+                or _found_in_grid(prog, fico, sfy_comap_oct25_2, SFY_COMAP_COLS_MIN_FICO2)
+                or _found_in_grid(prog, fico, sfy_comap_bl5, SFY_COMAP_COLS_MIN_FICO)
+            )
         else:
-            sfy_cols = ['660-719', '720-779', '780-799', '800+']
-            available_sfy_cols = [c for c in sfy_cols if c in sfy_comap.columns]
-            if available_sfy_cols and prog in sfy_comap[available_sfy_cols].stack().unique():
-                for col in available_sfy_cols:
-                    if prog in sfy_comap[col].values and fico >= SFY_COMAP_COLS_MIN_FICO[col]:
-                        found = True
-                        break
-            if not found:
-                sfy2_cols = ['660-699', '700-739', '740-749', '750-769', '770+']
-                available_sfy2_cols = [c for c in sfy2_cols if c in sfy_comap2.columns]
-                if available_sfy2_cols and prog in sfy_comap2[available_sfy2_cols].stack().unique():
-                    for col in available_sfy2_cols:
-                        if prog in sfy_comap2[col].values and fico >= SFY_COMAP_COLS_MIN_FICO2[col]:
-                            found = True
-                            break
+            found = (
+                _found_in_grid(prog, fico, sfy_comap, SFY_COMAP_COLS_MIN_FICO)
+                or _found_in_grid(prog, fico, sfy_comap2, SFY_COMAP_COLS_MIN_FICO2)
+                or _found_in_grid(prog, fico, sfy_comap_bl5, SFY_COMAP_COLS_MIN_FICO)
+            )
 
         if not found:
             loan_not_in_comap.append((row['SELLER Loan #'], prog, 'SFY'))
@@ -190,34 +183,18 @@ def check_comap_notes(
 ) -> List[Tuple[str, str, str]]:
     """Check Notes loans against CoMAP."""
     loan_not_in_comap = []
-    
+
     check_df = buy_df[
         (buy_df['Application Type'] == 'HD NOTE') &
         (buy_df['purchase_price_check'] == True)
     ].copy()
-    
+
     for _, row in check_df.iterrows():
         fico = row['FICO Borrower']
         prog = row['loan program']
-        # Convert to string in case it's numeric (numpy.float64, etc.)
         prog = str(prog) if pd.notna(prog) else ''
-        found = False
-        
-        # Verify columns exist first
-        notes_cols = ['680-749', '750-769', '770-789', '790+']
-        available_notes_cols = [col for col in notes_cols if col in notes_comap.columns]
-        if not available_notes_cols:
-            continue
-        
-        if prog not in notes_comap[available_notes_cols].stack().unique():
-            continue
-        
-        for col in available_notes_cols:
-            if prog in notes_comap[col].values and fico >= NOTES_COMAP_COLS_MIN_FICO[col]:
-                found = True
-                break
-        
-        if not found:
+
+        if not _found_in_grid(prog, fico, notes_comap, NOTES_COMAP_COLS_MIN_FICO):
             loan_not_in_comap.append((row['SELLER Loan #'], prog, 'NOTES'))
-    
+
     return loan_not_in_comap

@@ -127,7 +127,11 @@ class PipelineExecutor:
                 data['prime_comap_new'] = pd.read_excel(underwriting_file, sheet_name='Prime CoMAP - New')
             except Exception:
                 data['prime_comap_new'] = data['prime_comap'].copy()
-            
+            try:
+                data['sfy_comap_bl5'] = pd.read_excel(underwriting_file, sheet_name='SFY COMAP_')
+            except Exception:
+                data['sfy_comap_bl5'] = data['sfy_comap'].copy()
+
             logger.info("Reference data loaded successfully run_id=%s", self.context.run_id)
 
         except Exception as e:
@@ -450,6 +454,7 @@ class PipelineExecutor:
                 ref_data['sfy_comap2'],
                 ref_data['sfy_comap_oct25'],
                 ref_data['sfy_comap_oct25_2'],
+                ref_data['sfy_comap_bl5'],
             ))
             loan_not_in_comap.extend(check_comap_notes(buy_df, ref_data['notes_comap']))
             
