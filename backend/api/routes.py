@@ -720,17 +720,12 @@ async def get_run_summary(
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
     
-    # Get eligibility checks from run errors (stored as JSON)
-    eligibility_checks = {}
-    if run.errors:
-        eligibility_checks = run.errors
-    
     return {
         "run_id": run.run_id,
         "total_loans": run.total_loans,
         "total_balance": run.total_balance,
         "exceptions_count": run.exceptions_count,
-        "eligibility_checks": eligibility_checks
+        "eligibility_checks": {}
     }
 
 

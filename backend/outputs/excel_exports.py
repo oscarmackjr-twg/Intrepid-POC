@@ -79,31 +79,31 @@ def export_exception_reports(
         storage.write_file(notes_path, export_to_excel_bytes(notes_flagged))
         reports["notes_flagged_loans"] = notes_path
     
-    if not comap_failed.empty:
-        comap_path = f"{output_prefix}/comap_not_passed.xlsx"
-        storage.write_file(comap_path, export_to_excel_bytes(comap_failed))
-        reports["comap_not_passed"] = comap_path
-    
+    # Always write comap_not_passed (header-only when empty so downstream can detect 0 failures)
+    comap_path = f"{output_prefix}/comap_not_passed.xlsx"
+    storage.write_file(comap_path, export_to_excel_bytes(comap_failed))
+    reports["comap_not_passed"] = comap_path
+
     # Shared reports (limited columns)
     if not purchase_mismatch.empty:
         purchase_share_path = f"{output_share_prefix}/purchase_price_mismatch.xlsx"
         share_storage.write_file(purchase_share_path, export_to_excel_bytes(purchase_mismatch, max_cols=30))
         reports["purchase_price_mismatch_share"] = purchase_share_path
-    
+
     if not flagged_loans.empty:
         flagged_share_path = f"{output_share_prefix}/flagged_loans.xlsx"
         share_storage.write_file(flagged_share_path, export_to_excel_bytes(flagged_loans, max_cols=30))
         reports["flagged_loans_share"] = flagged_share_path
-    
+
     if not notes_flagged.empty:
         notes_share_path = f"{output_share_prefix}/notes_flagged_loans.xlsx"
         share_storage.write_file(notes_share_path, export_to_excel_bytes(notes_flagged, max_cols=30))
         reports["notes_flagged_loans_share"] = notes_share_path
-    
-    if not comap_failed.empty:
-        comap_share_path = f"{output_share_prefix}/comap_not_passed.xlsx"
-        share_storage.write_file(comap_share_path, export_to_excel_bytes(comap_failed, max_cols=30))
-        reports["comap_not_passed_share"] = comap_share_path
+
+    # Always write comap share file too
+    comap_share_path = f"{output_share_prefix}/comap_not_passed.xlsx"
+    share_storage.write_file(comap_share_path, export_to_excel_bytes(comap_failed, max_cols=30))
+    reports["comap_not_passed_share"] = comap_share_path
     
     # Special asset outputs (notebook: special_asset_prime.xlsx; mirror for SFY)
     if special_asset_prime is not None and not special_asset_prime.empty:
