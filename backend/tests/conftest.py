@@ -246,6 +246,18 @@ def temp_dir():
 
 
 @pytest.fixture
+def temp_ff_input_dir(temp_dir):
+    """Temp directory with files_required/ containing a minimal placeholder Excel for FF runner tests."""
+    import openpyxl
+    files_required = temp_dir / "files_required"
+    files_required.mkdir(parents=True, exist_ok=True)
+    # Minimal Excel placeholder — runner checks files_required/ exists, not file contents
+    wb = openpyxl.Workbook()
+    wb.save(str(files_required / "placeholder.xlsx"))
+    return temp_dir
+
+
+@pytest.fixture
 def sample_input_dir(temp_dir):
     """Create sample input directory structure."""
     files_required = temp_dir / "files_required"
