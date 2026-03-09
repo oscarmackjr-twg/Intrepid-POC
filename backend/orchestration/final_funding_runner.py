@@ -94,6 +94,38 @@ def _upload_local_output_to_storage(local_folder: str, output_prefix: str) -> No
                 logger.debug("Uploaded %s -> output_share/%s", f, key)
 
 
+def _bridge_cashflow_outputs_to_inputs(temp_dir: str, storage_type: str) -> None:
+    """Copy current_assets.csv from outputs storage area into temp files_required/ if present.
+
+    This bridges cashflow outputs into Final Funding inputs without requiring Ops to
+    manually download and re-upload the file. Silent no-op when file is absent.
+    """
+    files_required = Path(temp_dir) / "files_required"
+    try:
+        output_storage = get_storage_backend(area="outputs")
+        all_outputs = output_storage.list_files("", recursive=True)
+    except Exception as e:
+        logger.warning("Cashflow bridge: could not list outputs area (%s) — skipping", e)
+        return
+    candidates = [
+        f for f in all_outputs
+        if f.path.endswith("current_assets.csv")
+    ]
+    if not candidates:
+        logger.debug("Cashflow bridge: no current_assets.csv in outputs area — skipping")
+        return
+    # Sort by last_modified descending — take the most recent
+    candidates.sort(key=lambda f: f.last_modified or "", reverse=True)
+    best = candidates[0]
+    try:
+        content = output_storage.read_file(best.path)
+        files_required.mkdir(parents=True, exist_ok=True)
+        (files_required / "current_assets.csv").write_bytes(content)
+        logger.info("Cashflow bridge: copied %s → files_required/current_assets.csv", best.path)
+    except Exception as e:
+        logger.warning("Cashflow bridge: failed to copy %s (%s) — skipping", best.path, e)
+
+
 def _resolve_script_path(env_key: str, settings_attr: str, bundled: Path) -> str:
     """Use env/settings path if set and file exists; otherwise use bundled script if present."""
     script_path = getattr(settings, settings_attr, None) or os.environ.get(env_key)
@@ -147,6 +179,7 @@ def _execute_final_funding(script_path: str, output_prefix: str, folder: Optiona
                 s3_prefix = requested
             temp_dir = _prepare_temp_input_from_s3(s3_prefix)
             try:
+                _bridge_cashflow_outputs_to_inputs(temp_dir, "s3")
                 _run_workbook_script(script_path, temp_dir)
                 _upload_local_output_to_storage(temp_dir, output_prefix)
             finally:
@@ -160,6 +193,7 @@ def _execute_final_funding(script_path: str, output_prefix: str, folder: Optiona
                 input_base = folder or str(Path(settings.INPUT_DIR).resolve())
             temp_dir = _prepare_temp_input_from_local(input_base)
             try:
+                _bridge_cashflow_outputs_to_inputs(temp_dir, "local")
                 _run_workbook_script(script_path, temp_dir)
                 _upload_local_output_to_storage(temp_dir, output_prefix)
             finally:
