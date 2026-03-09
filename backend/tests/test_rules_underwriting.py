@@ -28,12 +28,13 @@ class TestCheckUnderwriting:
         flagged, min_income = check_underwriting(
             buy_df,
             sample_underwriting_df,
+            sample_underwriting_df,
             is_notes=False,
             tuloans=[]
         )
-        
+
         assert len(flagged) == 0
-    
+
     def test_fail_balance_criteria(self, sample_underwriting_df):
         """Test loan that fails balance criteria."""
         buy_df = pd.DataFrame({
@@ -47,17 +48,18 @@ class TestCheckUnderwriting:
             'Orig. Balance': [50000],  # Too high
             'Stamp fee': [0],
         })
-        
+
         flagged, min_income = check_underwriting(
             buy_df,
+            sample_underwriting_df,
             sample_underwriting_df,
             is_notes=False,
             tuloans=[]
         )
-        
+
         assert len(flagged) > 0
         assert 'SFC_1001' in flagged
-    
+
     def test_fail_dti_criteria(self, sample_underwriting_df):
         """Test loan that fails DTI criteria."""
         buy_df = pd.DataFrame({
@@ -71,16 +73,17 @@ class TestCheckUnderwriting:
             'Orig. Balance': [15000],
             'Stamp fee': [0],
         })
-        
+
         flagged, min_income = check_underwriting(
             buy_df,
+            sample_underwriting_df,
             sample_underwriting_df,
             is_notes=False,
             tuloans=[]
         )
-        
+
         assert len(flagged) > 0
-    
+
     def test_high_fico_income_exception(self, sample_underwriting_df):
         """Test high FICO loan with income exception."""
         buy_df = pd.DataFrame({
@@ -94,18 +97,19 @@ class TestCheckUnderwriting:
             'Orig. Balance': [15000],
             'Stamp fee': [0],
         })
-        
+
         flagged, min_income = check_underwriting(
             buy_df,
+            sample_underwriting_df,
             sample_underwriting_df,
             is_notes=False,
             tuloans=[]
         )
-        
+
         # Should pass with min_income exception
         assert len(flagged) == 0
         assert len(min_income) > 0
-    
+
     def test_notes_loans(self, sample_underwriting_df):
         """Test notes loan checking."""
         buy_df = pd.DataFrame({
@@ -119,17 +123,18 @@ class TestCheckUnderwriting:
             'Orig. Balance': [15000],
             'Stamp fee': [0],
         })
-        
+
         flagged, min_income = check_underwriting(
             buy_df,
+            sample_underwriting_df,
             sample_underwriting_df,
             is_notes=True,
             tuloans=[]
         )
-        
+
         # Should check notes program (without 'notes' suffix)
         assert isinstance(flagged, list)
-    
+
     def test_tuloans_exclusion(self, sample_underwriting_df):
         """Test TU loans exclusion."""
         buy_df = pd.DataFrame({
@@ -143,9 +148,10 @@ class TestCheckUnderwriting:
             'Orig. Balance': [15000, 15000],
             'Stamp fee': [0, 0],
         })
-        
+
         flagged, min_income = check_underwriting(
             buy_df,
+            sample_underwriting_df,
             sample_underwriting_df,
             is_notes=False,
             tuloans=['SFC_1001']

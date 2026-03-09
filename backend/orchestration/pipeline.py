@@ -421,21 +421,25 @@ class PipelineExecutor:
             purchase_exceptions = get_purchase_price_exceptions(final_df)
             all_exceptions.extend(purchase_exceptions)
             
-            # Underwriting checks (returns tuple: (flagged_loans, min_income_loans))
-            flagged_loans_sfy, min_income_sfy = check_underwriting(
-                buy_df, ref_data['underwriting_sfy'], is_notes=False, tuloans=list(tuloans)
+            # Underwriting checks — per-loan routing: sfy → underwriting_sfy, else → underwriting_prime
+            # (mirrors all_in_one_file_Wed.py: separate grids selected inside the loop by platform)
+            flagged_loans, min_income_loans = check_underwriting(
+                buy_df,
+                ref_data['underwriting_sfy'],
+                ref_data['underwriting_prime'],
+                is_notes=False,
+                tuloans=list(tuloans),
             )
-            flagged_loans_prime, min_income_prime = check_underwriting(
-                buy_df, ref_data['underwriting_prime'], is_notes=False, tuloans=list(tuloans)
-            )
-            flagged_loans = flagged_loans_sfy + flagged_loans_prime
-            
+
             flagged_notes, min_income_notes = check_underwriting(
-                buy_df, ref_data['underwriting_sfy_notes'], is_notes=True, tuloans=list(tuloans)
+                buy_df,
+                ref_data['underwriting_sfy_notes'],
+                ref_data['underwriting_prime_notes'],
+                is_notes=True,
+                tuloans=list(tuloans),
             )
-            
-            all_exceptions.extend(get_underwriting_exceptions(buy_df, flagged_loans_sfy, 'underwriting_sfy'))
-            all_exceptions.extend(get_underwriting_exceptions(buy_df, flagged_loans_prime, 'underwriting_prime'))
+
+            all_exceptions.extend(get_underwriting_exceptions(buy_df, flagged_loans, 'underwriting'))
             all_exceptions.extend(get_underwriting_exceptions(buy_df, flagged_notes, 'underwriting_notes'))
             self.append_run_log("Underwriting checks completed (SFY, PRIME, Notes).")
             

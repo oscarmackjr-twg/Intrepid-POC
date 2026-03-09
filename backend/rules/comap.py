@@ -51,6 +51,16 @@ NOTES_COMAP_COLS_MIN_FICO = {
 }
 
 
+def _prog_in_grid(prog: str, grid: pd.DataFrame, fico_col_mins: dict) -> bool:
+    """Return True if prog appears anywhere in the FICO band columns of the grid (FICO-agnostic).
+
+    Mirrors the reference notebook's skip check: if a program isn't present in any column
+    of the applicable grid, the loan is skipped entirely rather than flagged.
+    """
+    avail = [c for c in fico_col_mins if c in grid.columns]
+    return any(prog in grid[col].values for col in avail)
+
+
 def _found_in_grid(prog: str, fico: float, grid: pd.DataFrame, fico_col_mins: dict) -> bool:
     """Return True if prog/fico is valid in a CoMAP grid.
 
@@ -90,9 +100,15 @@ def check_comap_prime(
     prime_comap_oct25_2: pd.DataFrame,
     prime_comap_new: pd.DataFrame,
 ) -> List[Tuple[str, str, str]]:
-    """Check Prime loans against CoMAP. Uses each loan's Submit Date for date-based grid (mirrors February_Baseline)."""
+    """Check Prime loans against CoMAP. Uses each loan's Submit Date for date-based grid (mirrors February_Baseline).
+
+    Cutoff of 1900-10-24 matches the reference notebook (all-loans use the oct25 grids).
+    Skip logic: if a program is not present in any column of the applicable grids, the loan
+    is skipped (not flagged) — mirrors reference notebook's continue statement.
+    """
     loan_not_in_comap = []
-    oct25_cutoff = pd.to_datetime('2025-10-24')
+    # Reference notebook uses '1900-10-24' so ALL loans go through the oct25 path.
+    oct25_cutoff = pd.to_datetime('1900-10-24')
     prime_new_cutoff = pd.to_datetime('2020-06-11')
 
     check_df = buy_df[
@@ -113,14 +129,23 @@ def check_comap_prime(
         found = False
 
         if pd.notna(submit_dt) and submit_dt > oct25_cutoff:
+            # Skip if program not in any oct25 grid column (mirrors reference `continue`)
+            if not (
+                _prog_in_grid(prog, prime_comap_oct25, PRIME_COMAP_COLS_MIN_FICO2)
+                or _prog_in_grid(prog, prime_comap_oct25_2, PRIME_COMAP_COLS_MIN_FICO)
+            ):
+                continue
             found = (
                 _found_in_grid(prog, fico, prime_comap_oct25, PRIME_COMAP_COLS_MIN_FICO2)
                 or _found_in_grid(prog, fico, prime_comap_oct25_2, PRIME_COMAP_COLS_MIN_FICO)
-                or _found_in_grid(prog, fico, prime_comap_new, PRIME_COMAP_COLS_MIN_FICO)
             )
         elif pd.notna(submit_dt) and submit_dt > prime_new_cutoff:
+            if not _prog_in_grid(prog, prime_comap_new, PRIME_COMAP_COLS_MIN_FICO):
+                continue
             found = _found_in_grid(prog, fico, prime_comap_new, PRIME_COMAP_COLS_MIN_FICO)
         else:
+            if not _prog_in_grid(prog, prime_comap, PRIME_COMAP_COLS_MIN_FICO):
+                continue
             found = _found_in_grid(prog, fico, prime_comap, PRIME_COMAP_COLS_MIN_FICO)
 
         if not found:
@@ -137,9 +162,15 @@ def check_comap_sfy(
     sfy_comap_oct25_2: pd.DataFrame,
     sfy_comap_bl5: pd.DataFrame,
 ) -> List[Tuple[str, str, str]]:
-    """Check SFY loans against CoMAP. Uses each loan's Submit Date for date-based grid (mirrors February_Baseline)."""
+    """Check SFY loans against CoMAP. Uses each loan's Submit Date for date-based grid (mirrors February_Baseline).
+
+    Cutoff of 1900-10-24 matches the reference notebook (all loans use the oct25 grids).
+    Skip logic: if a program is not present in any column of the applicable grids, the loan
+    is skipped (not flagged) — mirrors reference notebook's continue statement.
+    """
     loan_not_in_comap = []
-    oct25_cutoff = pd.to_datetime('2025-10-24')
+    # Reference notebook uses '1900-10-24' so ALL loans go through the oct25 path.
+    oct25_cutoff = pd.to_datetime('1900-10-24')
 
     check_df = buy_df[
         (buy_df['Application Type'] != 'HD NOTE') &
@@ -159,16 +190,25 @@ def check_comap_sfy(
         found = False
 
         if pd.notna(submit_dt) and submit_dt > oct25_cutoff:
+            # Skip if program not in any oct25 grid column (mirrors reference `continue`)
+            if not (
+                _prog_in_grid(prog, sfy_comap_oct25, SFY_COMAP_COLS_MIN_FICO3)
+                or _prog_in_grid(prog, sfy_comap_oct25_2, SFY_COMAP_COLS_MIN_FICO2)
+            ):
+                continue
             found = (
                 _found_in_grid(prog, fico, sfy_comap_oct25, SFY_COMAP_COLS_MIN_FICO3)
                 or _found_in_grid(prog, fico, sfy_comap_oct25_2, SFY_COMAP_COLS_MIN_FICO2)
-                or _found_in_grid(prog, fico, sfy_comap_bl5, SFY_COMAP_COLS_MIN_FICO)
             )
         else:
+            if not (
+                _prog_in_grid(prog, sfy_comap, SFY_COMAP_COLS_MIN_FICO)
+                or _prog_in_grid(prog, sfy_comap2, SFY_COMAP_COLS_MIN_FICO2)
+            ):
+                continue
             found = (
                 _found_in_grid(prog, fico, sfy_comap, SFY_COMAP_COLS_MIN_FICO)
                 or _found_in_grid(prog, fico, sfy_comap2, SFY_COMAP_COLS_MIN_FICO2)
-                or _found_in_grid(prog, fico, sfy_comap_bl5, SFY_COMAP_COLS_MIN_FICO)
             )
 
         if not found:
@@ -193,6 +233,10 @@ def check_comap_notes(
         fico = row['FICO Borrower']
         prog = row['loan program']
         prog = str(prog) if pd.notna(prog) else ''
+
+        # Skip if program not in notes grid at all (mirrors reference `continue`)
+        if not _prog_in_grid(prog, notes_comap, NOTES_COMAP_COLS_MIN_FICO):
+            continue
 
         if not _found_in_grid(prog, fico, notes_comap, NOTES_COMAP_COLS_MIN_FICO):
             loan_not_in_comap.append((row['SELLER Loan #'], prog, 'NOTES'))
