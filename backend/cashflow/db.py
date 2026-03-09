@@ -8,7 +8,7 @@ from contextlib import contextmanager
 import psycopg
 from psycopg.rows import dict_row
 
-DB_DSN = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/intrepid_poc")
+DB_DSN = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:5432/intrepid_poc")
 
 
 @contextmanager
