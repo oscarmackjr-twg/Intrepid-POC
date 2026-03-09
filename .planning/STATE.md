@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 06-final-funding-cashflow-integration/06-01-PLAN.md — 9 FF test stubs scaffolded (Wave 0 RED state)
-last_updated: "2026-03-09T13:49:20.560Z"
+stopped_at: Completed 06-final-funding-cashflow-integration/06-02-PLAN.md — real SG and CIBC workbook scripts bundled with FOLDER env convention
+last_updated: "2026-03-09T13:53:15.734Z"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 19
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 ---
@@ -126,6 +126,7 @@ Progress: [██████████] 100%
 | Phase 05-staging-deployment P02 | 15 | 2 tasks | 2 files |
 | Phase 05-staging-deployment P01 | 2 | 2 tasks | 5 files |
 | Phase 06-final-funding-cashflow-integration P01 | 15 | 2 tasks | 3 files |
+| Phase 06 P02 | 8 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -167,6 +168,8 @@ Recent decisions affecting current work:
 - [Phase 05-staging-deployment]: VITE_APP_ENV baked into Docker image at build time via ARG/ENV — no runtime secret injection needed, Vite inlines value at npm run build
 - [Phase 06-final-funding-cashflow-integration]: pytestmark skipif at module level: entire jobs test file skips when api.program_run_jobs missing
 - [Phase 06-final-funding-cashflow-integration]: Wave 0 scaffold: 9 test stubs created before any FF implementation, gating Plans 02-04
+- [Phase 06]: Retained commented-out fx4_servicing_file line with C:/Users/gdehankar (forward slash, different user) per verbatim copy instruction; plan verification uses backslash C:\Users check and passes
+- [Phase 06]: Known-limitation comment placed after folder= line in both scripts; date variables (pdate, curr_date, last_end, fd, yestarday) must be updated manually per buy cycle
 
 ### Pending Todos
 
@@ -181,6 +184,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-09T13:49:10.043Z
-Stopped at: Completed 06-final-funding-cashflow-integration/06-01-PLAN.md — 9 FF test stubs scaffolded (Wave 0 RED state)
+Last session: 2026-03-09T13:53:15.730Z
+Stopped at: Completed 06-final-funding-cashflow-integration/06-02-PLAN.md — real SG and CIBC workbook scripts bundled with FOLDER env convention
 Resume file: None
