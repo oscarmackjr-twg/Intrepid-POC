@@ -40,8 +40,52 @@ def test_create_job_returns_queued():
 
     RED: ImportError or AttributeError from missing _create_ff_job.
     GREEN: _create_ff_job("sg") returns {"job_id": <non-empty str>, "status": "QUEUED"}.
+
+    db_conn is mocked so this test runs without a live PostgreSQL connection.
     """
-    result = _create_ff_job(mode="sg")
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _mock_db_conn():
+        mock_conn = MagicMock()
+        # Simulate no existing QUEUED/RUNNING job (concurrent guard returns None)
+        mock_conn.execute.return_value.fetchone.return_value = None
+        yield mock_conn
+
+    with patch("api.program_run_jobs.db_conn", _mock_db_conn):
+        # After INSERT, fetchone returns a row dict for the new job
+        with patch("api.program_run_jobs.db_conn", _mock_db_conn):
+            # Provide a realistic row response for the SELECT after INSERT
+            captured_job_id = []
+
+            @contextmanager
+            def _mock_db_conn_with_row():
+                mock_conn = MagicMock()
+                call_count = [0]
+
+                def execute_side_effect(sql, params=None):
+                    call_count[0] += 1
+                    mock_result = MagicMock()
+                    if "SELECT" in sql and "WHERE job_id" in sql:
+                        # Return a row dict for the created job
+                        job_id = params.get("job_id", "ff-sg-test") if params else "ff-sg-test"
+                        captured_job_id.append(job_id)
+                        mock_result.fetchone.return_value = {
+                            "job_id": job_id,
+                            "status": "QUEUED",
+                            "mode": "sg",
+                        }
+                    else:
+                        # concurrent check or INSERT: return None for fetchone
+                        mock_result.fetchone.return_value = None
+                    return mock_result
+
+                mock_conn.execute.side_effect = execute_side_effect
+                yield mock_conn
+
+            with patch("api.program_run_jobs.db_conn", _mock_db_conn_with_row):
+                result = _create_ff_job(mode="sg")
+
     assert isinstance(result, dict), "Expected dict return from _create_ff_job"
     assert result.get("status") == "QUEUED", f"Expected status QUEUED, got {result.get('status')!r}"
     assert isinstance(result.get("job_id"), str) and result["job_id"], (
@@ -117,12 +161,29 @@ def test_poll_endpoint():
     Tests that the endpoint is registered on main.app.
     RED: endpoint doesn't exist (404 on route lookup, not 404 on missing job).
     GREEN: endpoint exists and returns 404 JSON for a non-existent job_id.
+
+    Auth is bypassed via dependency_overrides so the test doesn't require
+    a real JWT token. db_conn is mocked to avoid a live DB connection.
     """
+    from contextlib import contextmanager
     from fastapi.testclient import TestClient
     from main import app
+    from auth.security import get_current_user
 
-    client = TestClient(app)
-    response = client.get("/api/program-run/jobs/nonexistent-job-id-00000")
+    @contextmanager
+    def _mock_db_conn_no_row():
+        mock_conn = MagicMock()
+        mock_conn.execute.return_value.fetchone.return_value = None
+        yield mock_conn
+
+    app.dependency_overrides[get_current_user] = lambda: {"id": 1, "email": "test@test.com"}
+    try:
+        with patch("api.program_run_jobs.db_conn", _mock_db_conn_no_row):
+            client = TestClient(app)
+            response = client.get("/api/program-run/jobs/nonexistent-job-id-00000")
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
     # Endpoint must exist: if missing entirely, FastAPI returns 404 with {"detail": "Not Found"}
     # not the job-specific 404 we expect. Both cases are 404 — but with the endpoint present
     # the response body will include a structured message about the job not found.

@@ -1,9 +1,16 @@
-"""CLI entry point for pipeline execution."""
+"""CLI entry point for pipeline execution.
+
+Also re-exports the FastAPI app object so test modules can import it as:
+    from main import app
+"""
 import argparse
 import sys
 from orchestration.run_context import RunContext
 from orchestration.pipeline import PipelineExecutor
 from config.settings import settings
+
+# Re-export FastAPI app for test discovery and convenience
+from api.main import app  # noqa: F401
 
 
 def main():
