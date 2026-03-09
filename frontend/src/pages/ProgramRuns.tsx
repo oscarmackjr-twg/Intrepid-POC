@@ -68,6 +68,12 @@ export default function ProgramRuns() {
   const [taggingSubmitting, setTaggingSubmitting] = useState(false)
   const [finalFundingSGSubmitting, setFinalFundingSGSubmitting] = useState(false)
   const [finalFundingCIBCSubmitting, setFinalFundingCIBCSubmitting] = useState(false)
+  const [finalFundingSGJobId, setFinalFundingSGJobId] = useState<string | null>(null)
+  const [finalFundingSGStatus, setFinalFundingSGStatus] = useState<string>('')
+  const [finalFundingSGError, setFinalFundingSGError] = useState<string>('')
+  const [finalFundingCIBCJobId, setFinalFundingCIBCJobId] = useState<string | null>(null)
+  const [finalFundingCIBCStatus, setFinalFundingCIBCStatus] = useState<string>('')
+  const [finalFundingCIBCError, setFinalFundingCIBCError] = useState<string>('')
   const [runAcceptedDialogOpen, setRunAcceptedDialogOpen] = useState(false)
   const [startedRunId, setStartedRunId] = useState<string | null>(null)
   const [outputPath, setOutputPath] = useState('')
@@ -166,6 +172,72 @@ export default function ProgramRuns() {
     return () => { cancelled = true }
   }, [stdoutRunId, storageType, config])
 
+  // Poll Final Funding SG job status
+  useEffect(() => {
+    if (!finalFundingSGJobId) return
+    let cancelled = false
+    const poll = async () => {
+      try {
+        const res = await axios.get(`/api/program-run/jobs/${finalFundingSGJobId}`)
+        if (cancelled) return
+        const job = res.data
+        setFinalFundingSGStatus(job.status)
+        if (job.status === 'FAILED') {
+          setFinalFundingSGError(job.error_detail || 'Script failed — check server logs.')
+          setFinalFundingSGJobId(null)
+          setFinalFundingSGSubmitting(false)
+        } else if (job.status === 'COMPLETED') {
+          setFinalFundingSGJobId(null)
+          setFinalFundingSGSubmitting(false)
+          loadOutputFiles()
+        } else {
+          setTimeout(poll, 3000)
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          setFinalFundingSGError(`Failed to poll job status: ${e.message || String(e)}`)
+          setFinalFundingSGJobId(null)
+          setFinalFundingSGSubmitting(false)
+        }
+      }
+    }
+    poll()
+    return () => { cancelled = true }
+  }, [finalFundingSGJobId])
+
+  // Poll Final Funding CIBC job status
+  useEffect(() => {
+    if (!finalFundingCIBCJobId) return
+    let cancelled = false
+    const poll = async () => {
+      try {
+        const res = await axios.get(`/api/program-run/jobs/${finalFundingCIBCJobId}`)
+        if (cancelled) return
+        const job = res.data
+        setFinalFundingCIBCStatus(job.status)
+        if (job.status === 'FAILED') {
+          setFinalFundingCIBCError(job.error_detail || 'Script failed — check server logs.')
+          setFinalFundingCIBCJobId(null)
+          setFinalFundingCIBCSubmitting(false)
+        } else if (job.status === 'COMPLETED') {
+          setFinalFundingCIBCJobId(null)
+          setFinalFundingCIBCSubmitting(false)
+          loadOutputFiles()
+        } else {
+          setTimeout(poll, 3000)
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          setFinalFundingCIBCError(`Failed to poll job status: ${e.message || String(e)}`)
+          setFinalFundingCIBCJobId(null)
+          setFinalFundingCIBCSubmitting(false)
+        }
+      }
+    }
+    poll()
+    return () => { cancelled = true }
+  }, [finalFundingCIBCJobId])
+
   const openEffectiveDateModal = () => {
     setEffectiveDateInput(formatEffectiveDate(new Date()))
     setEffectiveDateModalOpen(true)
@@ -249,52 +321,62 @@ export default function ProgramRuns() {
   }
 
   const runFinalFundingSG = async () => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      alert('You are not logged in. Please log in and try again.')
+      window.location.href = '/login'
+      return
+    }
+    setFinalFundingSGSubmitting(true)
+    setFinalFundingSGStatus('QUEUED')
+    setFinalFundingSGError('')
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        alert('You are not logged in. Please log in and try again.')
-        window.location.href = '/login'
-        return
-      }
-      setFinalFundingSGSubmitting(true)
-      await axios.post('/api/program-run', { phase: 'final_funding_sg' })
-      alert('Final Funding SG completed. Check the output directory below.')
-      loadOutputFiles()
+      const res = await axios.post('/api/program-run/jobs', {
+        mode: 'sg',
+        folder: storageType === 'local' ? runFolder.trim() || null : null,
+      })
+      setFinalFundingSGJobId(res.data.job_id)
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || error.message
       if (error.response?.status === 401) {
         alert('Your session has expired. Please log in again.')
         window.location.href = '/login'
+      } else if (error.response?.status === 409) {
+        setFinalFundingSGError(error.response?.data?.detail ?? 'A Final Funding SG job is already running. Wait for it to finish.')
       } else {
-        alert(`Final Funding SG failed: ${errorMessage}`)
+        setFinalFundingSGError(error.response?.data?.detail || error.message || 'Failed to start Final Funding SG job.')
       }
-    } finally {
       setFinalFundingSGSubmitting(false)
+      setFinalFundingSGStatus('')
     }
   }
 
   const runFinalFundingCIBC = async () => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      alert('You are not logged in. Please log in and try again.')
+      window.location.href = '/login'
+      return
+    }
+    setFinalFundingCIBCSubmitting(true)
+    setFinalFundingCIBCStatus('QUEUED')
+    setFinalFundingCIBCError('')
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        alert('You are not logged in. Please log in and try again.')
-        window.location.href = '/login'
-        return
-      }
-      setFinalFundingCIBCSubmitting(true)
-      await axios.post('/api/program-run', { phase: 'final_funding_cibc' })
-      alert('Final Funding CIBC completed. Check the output directory below.')
-      loadOutputFiles()
+      const res = await axios.post('/api/program-run/jobs', {
+        mode: 'cibc',
+        folder: storageType === 'local' ? runFolder.trim() || null : null,
+      })
+      setFinalFundingCIBCJobId(res.data.job_id)
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || error.message
       if (error.response?.status === 401) {
         alert('Your session has expired. Please log in again.')
         window.location.href = '/login'
+      } else if (error.response?.status === 409) {
+        setFinalFundingCIBCError(error.response?.data?.detail ?? 'A Final Funding CIBC job is already running. Wait for it to finish.')
       } else {
-        alert(`Final Funding CIBC failed: ${errorMessage}`)
+        setFinalFundingCIBCError(error.response?.data?.detail || error.message || 'Failed to start Final Funding CIBC job.')
       }
-    } finally {
       setFinalFundingCIBCSubmitting(false)
+      setFinalFundingCIBCStatus('')
     }
   }
 
@@ -358,20 +440,42 @@ export default function ProgramRuns() {
           >
             {taggingSubmitting ? 'Running…' : 'Tagging'}
           </button>
-          <button
-            onClick={runFinalFundingSG}
-            disabled={finalFundingSGSubmitting}
-            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {finalFundingSGSubmitting ? 'Running…' : 'Final Funding SG'}
-          </button>
-          <button
-            onClick={runFinalFundingCIBC}
-            disabled={finalFundingCIBCSubmitting}
-            className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {finalFundingCIBCSubmitting ? 'Running…' : 'Final Funding CIBC'}
-          </button>
+          <div>
+            <button
+              onClick={runFinalFundingSG}
+              disabled={finalFundingSGSubmitting}
+              className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {finalFundingSGSubmitting ? 'Running…' : 'Final Funding SG'}
+            </button>
+            {finalFundingSGStatus && (
+              <p className="text-sm mt-1">
+                Status: <span className={finalFundingSGStatus === 'FAILED' ? 'text-red-600 font-medium' : finalFundingSGStatus === 'COMPLETED' ? 'text-green-600 font-medium' : 'text-yellow-600 font-medium'}>{finalFundingSGStatus}</span>
+                {finalFundingSGStatus === 'RUNNING' && '...'}
+              </p>
+            )}
+            {finalFundingSGError && (
+              <p className="text-sm text-red-600 mt-1">{finalFundingSGError}</p>
+            )}
+          </div>
+          <div>
+            <button
+              onClick={runFinalFundingCIBC}
+              disabled={finalFundingCIBCSubmitting}
+              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {finalFundingCIBCSubmitting ? 'Running…' : 'Final Funding CIBC'}
+            </button>
+            {finalFundingCIBCStatus && (
+              <p className="text-sm mt-1">
+                Status: <span className={finalFundingCIBCStatus === 'FAILED' ? 'text-red-600 font-medium' : finalFundingCIBCStatus === 'COMPLETED' ? 'text-green-600 font-medium' : 'text-yellow-600 font-medium'}>{finalFundingCIBCStatus}</span>
+                {finalFundingCIBCStatus === 'RUNNING' && '...'}
+              </p>
+            )}
+            {finalFundingCIBCError && (
+              <p className="text-sm text-red-600 mt-1">{finalFundingCIBCError}</p>
+            )}
+          </div>
         </div>
         <p className="text-sm text-gray-500 mt-2">
           Pre-Funding runs the pipeline (same as Start Pipeline Run). Tagging runs the tagging script using files from the inputs directory. Final Funding SG and Final Funding CIBC run the respective workbooks using standard input and output directories. Outputs appear in the file manager below.
