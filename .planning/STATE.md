@@ -3,6 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
+stopped_at: Completed 06-final-funding-cashflow-integration/06-01-PLAN.md — 9 FF test stubs scaffolded (Wave 0 RED state)
+last_updated: "2026-03-09T13:49:20.560Z"
+progress:
+  total_phases: 6
+  completed_phases: 4
+  total_plans: 19
+  completed_plans: 14
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: in-progress
 stopped_at: Completed 05-staging-deployment/05-01-PLAN.md — StagingBanner + Dockerfile/CI build-arg wiring complete
 last_updated: "2026-03-06T21:02:42.136Z"
 progress:
@@ -111,8 +125,13 @@ Progress: [██████████] 100%
 | Phase 04-cicd-pipeline P02 | 1min | 1 tasks | 1 files |
 | Phase 05-staging-deployment P02 | 15 | 2 tasks | 2 files |
 | Phase 05-staging-deployment P01 | 2 | 2 tasks | 5 files |
+| Phase 06-final-funding-cashflow-integration P01 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 6 added: Final Funding & Cashflow Integration
 
 ### Decisions
 
@@ -146,6 +165,8 @@ Recent decisions affecting current work:
 - [Phase 05-staging-deployment]: ECS one-off task pattern documented in CICD.md First Deploy Checklist with PowerShell syntax — covers seed script execution, wait, exit code check, and Ops login verification
 - [Phase 05-staging-deployment]: StagingBanner renders when VITE_APP_ENV \!== 'production' — undefined (no build arg) also shows banner, safe default for local dev
 - [Phase 05-staging-deployment]: VITE_APP_ENV baked into Docker image at build time via ARG/ENV — no runtime secret injection needed, Vite inlines value at npm run build
+- [Phase 06-final-funding-cashflow-integration]: pytestmark skipif at module level: entire jobs test file skips when api.program_run_jobs missing
+- [Phase 06-final-funding-cashflow-integration]: Wave 0 scaffold: 9 test stubs created before any FF implementation, gating Plans 02-04
 
 ### Pending Todos
 
@@ -160,6 +181,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T21:02:42.128Z
-Stopped at: Completed 05-staging-deployment/05-01-PLAN.md — StagingBanner + Dockerfile/CI build-arg wiring complete
+Last session: 2026-03-09T13:49:10.043Z
+Stopped at: Completed 06-final-funding-cashflow-integration/06-01-PLAN.md — 9 FF test stubs scaffolded (Wave 0 RED state)
 Resume file: None

@@ -110,14 +110,14 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 3. AWS Infrastructure | 2/2 | Complete | 2026-03-06 |
 | 4. CI/CD Pipeline | 3/3 | Complete   | 2026-03-06 |
 | 5. Staging Deployment | 2/3 | In Progress|  |
-| 6. Final Funding & Cashflow | 0/5 | Not started |  |
+| 6. Final Funding & Cashflow | 1/5 | In Progress|  |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
 **Goal:** Replace stub Final Funding SG and CIBC scripts with real workbook implementations, add async job tracking so Ops can see RUNNING/COMPLETED/FAILED status in the UI, and bridge cashflow outputs automatically into Final Funding inputs.
 **Requirements**: FF-01, FF-02, FF-03, FF-04, FF-05, FF-06, FF-07, FF-08, FF-09
 **Depends on:** Phase 5
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
 - [ ] 06-01-PLAN.md — Test scaffolds (Wave 0): test_final_funding_jobs.py and test_final_funding_runner.py (FF-03..FF-09)
