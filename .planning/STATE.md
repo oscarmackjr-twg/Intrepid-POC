@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 06-final-funding-cashflow-integration/06-02-PLAN.md — real SG and CIBC workbook scripts bundled with FOLDER env convention
-last_updated: "2026-03-09T13:53:15.734Z"
+stopped_at: Completed 06-final-funding-cashflow-integration/06-03-PLAN.md — FF job tracking API with cashflow bridge complete
+last_updated: "2026-03-09T14:01:12.026Z"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 19
-  completed_plans: 15
+  completed_plans: 16
 ---
 
 ---
@@ -127,6 +127,7 @@ Progress: [██████████] 100%
 | Phase 05-staging-deployment P01 | 2 | 2 tasks | 5 files |
 | Phase 06-final-funding-cashflow-integration P01 | 15 | 2 tasks | 3 files |
 | Phase 06 P02 | 8 | 2 tasks | 2 files |
+| Phase 06-final-funding-cashflow-integration P03 | 20 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -170,6 +171,9 @@ Recent decisions affecting current work:
 - [Phase 06-final-funding-cashflow-integration]: Wave 0 scaffold: 9 test stubs created before any FF implementation, gating Plans 02-04
 - [Phase 06]: Retained commented-out fx4_servicing_file line with C:/Users/gdehankar (forward slash, different user) per verbatim copy instruction; plan verification uses backslash C:\Users check and passes
 - [Phase 06]: Known-limitation comment placed after folder= line in both scripts; date variables (pdate, curr_date, last_end, fd, yestarday) must be updated manually per buy cycle
+- [Phase 06]: _check_concurrent_ff_job extracted as standalone function for direct test access with mock conn
+- [Phase 06]: Bridge function omits is_directory filter — path.endswith sufficient, MagicMock compatibility
+- [Phase 06]: backend/main.py re-exports app from api.main for test module 'from main import app' compatibility
 
 ### Pending Todos
 
@@ -184,6 +188,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-09T13:53:15.730Z
-Stopped at: Completed 06-final-funding-cashflow-integration/06-02-PLAN.md — real SG and CIBC workbook scripts bundled with FOLDER env convention
+Last session: 2026-03-09T14:01:12.022Z
+Stopped at: Completed 06-final-funding-cashflow-integration/06-03-PLAN.md — FF job tracking API with cashflow bridge complete
 Resume file: None
