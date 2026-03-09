@@ -8,6 +8,7 @@ under final_funding_sg/ or final_funding_cibc/ so results appear in the Program 
 import os
 import shutil
 import subprocess
+import sys
 import logging
 import tempfile
 from pathlib import Path
@@ -57,8 +58,13 @@ def _run_workbook_script(script_path: str, folder: str) -> None:
     """Run the workbook Python script with FOLDER env set."""
     env = os.environ.copy()
     env["FOLDER"] = folder
+    # Use sys.executable so the subprocess always runs under the same interpreter
+    # (and thus the same venv) as the backend — avoids missing-package errors on
+    # Windows where the system `python` may differ from the venv python.
+    python_exe = os.environ.get("PYTHON") or sys.executable
+    logger.debug("Running %s with interpreter %s, FOLDER=%s", script_path, python_exe, folder)
     result = subprocess.run(
-        [os.environ.get("PYTHON", "python"), script_path],
+        [python_exe, script_path],
         env=env,
         cwd=str(Path(script_path).parent),
         capture_output=True,
@@ -191,6 +197,7 @@ def _execute_final_funding(script_path: str, output_prefix: str, folder: Optiona
                 input_base = str(Path(settings.INPUT_DIR) / folder)
             else:
                 input_base = folder or str(Path(settings.INPUT_DIR).resolve())
+            logger.info("Final funding local input_base=%s (resolved from INPUT_DIR=%s, folder=%s)", input_base, settings.INPUT_DIR, folder)
             temp_dir = _prepare_temp_input_from_local(input_base)
             try:
                 _bridge_cashflow_outputs_to_inputs(temp_dir, "local")
