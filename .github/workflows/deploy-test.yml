@@ -18,7 +18,58 @@ env:
   ECS_SERVICE: intrepid-poc-qa
 
 jobs:
+  security-quality-gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # TruffleHog needs full history
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install CI tools
+        run: pip install ruff mypy pip-audit
+
+      - name: Ruff lint
+        run: ruff check backend/
+
+      - name: Ruff format check
+        run: ruff format --check backend/
+
+      - name: Mypy type check
+        run: mypy backend/ --ignore-missing-imports --no-strict-optional --exclude venv --exclude migrations
+
+      - name: pip-audit CVE scan
+        run: pip-audit -r backend/requirements.txt
+
+      - name: npm audit
+        working-directory: frontend
+        run: |
+          npm ci
+          npm audit --audit-level=high
+
+      - name: Terraform validate
+        working-directory: deploy/terraform/qa
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: TruffleHog secret scan
+        uses: trufflesecurity/trufflehog-actions-scan@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
   deploy:
+    needs: [security-quality-gate]
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # required for OIDC token request

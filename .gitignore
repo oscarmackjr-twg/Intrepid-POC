@@ -1,7 +1,11 @@
 #Legacy code
 
-loan-engine-qa.pem 
+loan-engine-qa.pem
 setenv.bat
+
+# Elastic Beanstalk deployment bundles (HARD-07: removed from git history 2026-03-10)
+# Secret scanning will be wired in Plan 06 CI gates
+deploy/aws/eb/*.zip
 
 legacy
 
