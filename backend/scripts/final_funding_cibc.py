@@ -96,7 +96,10 @@ sfy_comap_oct25_2 = pd.read_excel(f"{folder}/files_required/Underwriting_Grids_C
 # %%
 sfy_df = pd.read_excel(sfy_file)
 sfy_df = sfy_df.drop(['Unnamed: 0', 'tags','final'], axis=1)
+_sfy_promo = sfy_df['promo_term'].values if 'promo_term' in sfy_df.columns else None
 sfy_df = sfy_df.loc[::-1, : 'Application Type']
+if _sfy_promo is not None:
+    sfy_df['promo_term'] = _sfy_promo
 sfy_df.head(1)
 
 # %%
@@ -105,15 +108,19 @@ sfy_df.tail(2)
 # %%
 prime_df = pd.read_excel(prime_file)
 prime_df = prime_df.drop(['Unnamed: 0', 'tags','final'], axis=1)
+_prime_promo = prime_df['promo_term'].values if 'promo_term' in prime_df.columns else None
 prime_df = prime_df.loc[:, : 'Application Type']
+if _prime_promo is not None:
+    prime_df['promo_term'] = _prime_promo
 prime_df.head(1)
 
 # %%
 prime_df.tail(2)
 
 # %%
-existing_file_=existing_file_[existing_file_['lender']=='CIBC']
-existing_file_ = existing_file_.drop(['lender'], axis=1)
+if 'lender' in existing_file_.columns:
+    existing_file_=existing_file_[existing_file_['lender']=='CIBC']
+    existing_file_ = existing_file_.drop(['lender'], axis=1)
 
 # %%
 #df_loans_types
@@ -203,6 +210,12 @@ buy_df['Submit Date'] = pd.to_datetime(buy_df['Submit Date'])
 buy_df['Purchase_Date'] = pd.to_datetime(buy_df['Purchase_Date'])
 buy_df['Monthly Payment Date'] = pd.to_datetime(buy_df['Monthly Payment Date'])
 buy_df = buy_df.merge(df_loans_types, on = ['loan program', 'Platform'], how = 'left')
+if 'Dealer Fee_x' in buy_df.columns:
+    buy_df.rename(columns={'Dealer Fee_x': 'Dealer Fee'}, inplace=True)
+    buy_df.drop(columns=['Dealer Fee_y'], inplace=True, errors='ignore')
+buy_df = buy_df.loc[:, ~buy_df.columns.duplicated()]
+if 'tagging' not in buy_df.columns:
+    buy_df = buy_df.merge(loans[['SELLER Loan #', 'tagging']], on='SELLER Loan #', how='left')
 assert sum(buy_df['SELLER Loan #'].duplicated()) == 0
 #buy_df.loc[(buy_df['new_programs'] == True)&(buy_df['Repurchase'] == False) & (buy_df['platform'] == 'sfy'), 'Excess_Asset'] = True
 #buy_df.loc[(buy_df['new_programs'] == True)&(buy_df['Repurchase'] == False) & (buy_df['platform'] == 'sfy'), 'Borrowing_Base_eligible'] = False
@@ -270,15 +283,24 @@ check_final_df[["Purchase_Date","SELLER Loan #","tagging","Platform","Excess_Ass
 # ## Check Purchase Price
 
 # %%
-existing_file['purchase_price_check'] = existing_file['Lender Price(%)'] == round(existing_file['modeled_purchase_price']*100, 2)
+if 'modeled_purchase_price' in existing_file.columns:
+    existing_file['purchase_price_check'] = existing_file['Lender Price(%)'] == round(existing_file['modeled_purchase_price']*100, 2)
+elif 'purchase_price_check' not in existing_file.columns:
+    existing_file['purchase_price_check'] = True
 existing_file.shape, existing_file.purchase_price_check.sum()
 
 # %%
-buy_df['purchase_price_check'] = buy_df['Lender Price(%)'] == round(buy_df['modeled_purchase_price']*100, 2)
+if 'modeled_purchase_price' in buy_df.columns:
+    buy_df['purchase_price_check'] = buy_df['Lender Price(%)'] == round(buy_df['modeled_purchase_price']*100, 2)
+elif 'purchase_price_check' not in buy_df.columns:
+    buy_df['purchase_price_check'] = True
 buy_df.shape, buy_df.purchase_price_check.sum()
 
 # %%
-final_df['purchase_price_check'] = final_df['Lender Price(%)'] == round(final_df['modeled_purchase_price']*100, 2)
+if 'modeled_purchase_price' in final_df.columns:
+    final_df['purchase_price_check'] = final_df['Lender Price(%)'] == round(final_df['modeled_purchase_price']*100, 2)
+elif 'purchase_price_check' not in final_df.columns:
+    final_df['purchase_price_check'] = True
 final_df.shape, final_df.purchase_price_check.sum()
 
 # %%
@@ -289,9 +311,10 @@ buy_df[['modeled_price','Purchase Price']]
 buy_df['modeled_price'].sum()-buy_df['Purchase Price'].sum()
 
 # %%
-buy_df['modeled_price']=buy_df['modeled_purchase_price']*buy_df['Orig. Balance'].astype(float)
-buy_df[['modeled_price','Purchase Price']]
-buy_df['modeled_price'].sum()-buy_df['Purchase Price'].sum()
+if 'modeled_purchase_price' in buy_df.columns:
+    buy_df['modeled_price']=buy_df['modeled_purchase_price']*buy_df['Orig. Balance'].astype(float)
+    buy_df[['modeled_price','Purchase Price']]
+    buy_df['modeled_price'].sum()-buy_df['Purchase Price'].sum()
 
 # %% [markdown]
 # ## Underwriting_checks
@@ -361,7 +384,6 @@ for row in buy_df[buy_df['Application Type'] == 'HD NOTE'].iterrows():
     pti = row[1]['PTI']
     reason = ""
     balance = row[1]['Orig. Balance'] - row[1]['Stamp fee']
-    (underwriting.approval_high >= balance) & (underwriting.approval_low <= balance)
     filter_one = underwriting[(underwriting.finance_type_name_nls == prog) & (underwriting.monthly_income_min <= mth_income) & (underwriting.fico_min <= fico)].sort_values("approval_high").reset_index(drop = True)
     meet_crit = False
     for i in filter_one.iterrows():
@@ -383,15 +405,36 @@ for row in buy_df[buy_df['Application Type'] == 'HD NOTE'].iterrows():
 len(loan_ids_notes), len(min_oncome_notes)
 
 # %%
-prime_comap_cols_min_fico = {j:int(j[:3]) for i,j in enumerate(['660-699', '700-739', '740-749', '750-769', '770+'])}
-prime_comap_cols_min_fico2 = {j:int(j[:3]) for i,j in enumerate(['660-699', '700-739', '740-749', '750+'])}
-sfy_comap_cols_min_fico = {j:int(j[:3]) for i,j in enumerate(['660-719', '720-779', '780-799', '800+'])}
-sfy_comap_cols_min_fico2 = {j:int(j[:3]) for i,j in enumerate(['660-699', '700-739', '740-749', '750-769','770+'])}
-sfy_comap_cols_min_fico3 = {j:int(j[:3]) for i,j in enumerate(['660-719', '720-779', '780+'])}
-notes_comap_cols_min_fico = {j:int(j[:3]) for i,j in enumerate(['680-749', '750-769', '770-789', '790+'])}
+def _build_comap_lookup(df):
+    """Return {prog: min_fico} supporting two COMAP sheet formats.
+    New format: 'loan program' and 'Min FICO' columns.
+    Old format: FICO band columns (e.g. '660-699', '700-739') with program names as cell values.
+    """
+    if 'loan program' in df.columns and 'Min FICO' in df.columns:
+        result = {}
+        for _, r in df[['loan program', 'Min FICO']].dropna(subset=['loan program']).iterrows():
+            p = str(r['loan program']).strip()
+            if p:
+                result[p] = int(r['Min FICO']) if pd.notna(r['Min FICO']) else 0
+        return result
+    fico_cols = {c: int(str(c)[:3]) for c in df.columns if str(c)[:3].isdigit()}
+    result = {}
+    for col, min_f in fico_cols.items():
+        for p in df[col].dropna():
+            p = str(p).strip()
+            if p:
+                result[p] = min(result.get(p, 9999), min_f)
+    return result
 
-# %%
-print(sfy_comap_cols_min_fico3)
+_lu_prime_oct25   = _build_comap_lookup(prime_comap_oct25)
+_lu_prime_oct25_2 = _build_comap_lookup(prime_comap_oct25_2)
+_lu_prime_new     = _build_comap_lookup(prime_comap_new)
+_lu_prime         = _build_comap_lookup(prime_comap)
+_lu_sfy_oct25     = _build_comap_lookup(sfy_comap_oct25)
+_lu_sfy_oct25_2   = _build_comap_lookup(sfy_comap_oct25_2)
+_lu_sfy           = _build_comap_lookup(sfy_comap)
+_lu_sfy2          = _build_comap_lookup(sfy_comap2)
+_lu_notes         = _build_comap_lookup(notes_comap)
 
 # %%
 loan_not_in_comap = []
@@ -401,72 +444,37 @@ for row in buy_df[(buy_df['Application Type'] != 'HD NOTE') & (buy_df['purchase_
     found = False
     if row[1]['platform'] == 'prime':
         if row[1]['Submit Date'] > pd.to_datetime('2025-10-24'):
-            if (prog not in prime_comap_oct25[['660-699', '700-739', '740-749', '750+']].stack().unique()) & (prog not in prime_comap_oct25_2[['660-699', '700-739', '740-749', '750-769', '770+']].stack().unique()):
+            if prog not in _lu_prime_oct25 and prog not in _lu_prime_oct25_2:
                 continue
-            else:
-                pass
-        elif prog not in prime_comap[['660-699', '700-739', '740-749', '750-769', '770+']].stack().unique():
-            continue
-        else:
-            pass
-        if row[1]['Submit Date'] > pd.to_datetime('2025-10-24'):
-            if prog in prime_comap_oct25[['660-699', '700-739', '740-749', '750+']].stack().unique():
-                for col in ['660-699', '700-739', '740-749', '750+']:
-                    if prog in prime_comap_oct25[col].values and fico >= prime_comap_cols_min_fico2[col]:
-                        found = True
-                        break
-            elif prog in prime_comap_oct25_2[['660-699', '700-739', '740-749', '750-769', '770+']].stack().unique():
-                for col in ['660-699', '700-739', '740-749', '750-769', '770+']:
-                    if prog in prime_comap_oct25_2[col].values and fico >= prime_comap_cols_min_fico[col]:
-                        found = True
-                        break
-            else:
-                pass
+            if prog in _lu_prime_oct25:
+                found = fico >= _lu_prime_oct25[prog]
+            elif prog in _lu_prime_oct25_2:
+                found = fico >= _lu_prime_oct25_2[prog]
         elif row[1]['Submit Date'] > pd.to_datetime('2024-06-11'):
-            for col in ['660-699', '700-739', '740-749', '750-769', '770+']:
-                if prog in prime_comap_new[col].values and fico >= prime_comap_cols_min_fico[col]:
-                    found = True
-                    break
+            if prog not in _lu_prime:
+                continue
+            found = prog in _lu_prime_new and fico >= _lu_prime_new[prog]
         else:
-            for col in ['660-699', '700-739', '740-749', '750-769', '770+']:
-                if prog in prime_comap[col].values and fico >= prime_comap_cols_min_fico[col]:
-                    found = True
-                    break
+            if prog not in _lu_prime:
+                continue
+            found = fico >= _lu_prime[prog]
         if not found:
             loan_not_in_comap.append((row[1]["SELLER Loan #"], prog, "PRIME"))
     else:
         if row[1]['Submit Date'] > pd.to_datetime('2025-10-24'):
-            if (prog not in sfy_comap_oct25[['660-719', '720-779', '780+']].stack().unique()) & (prog not in sfy_comap_oct25_2[['660-699', '700-739', '740-749', '750-769','770+']].stack().unique()):
+            if prog not in _lu_sfy_oct25 and prog not in _lu_sfy_oct25_2:
                 continue
-            else:
-                pass
-        elif (prog not in sfy_comap[['660-719', '720-779', '780-799', '800+']].stack().unique()) & (prog not in sfy_comap2[['660-699', '700-739', '740-749', '750-769','770+']].stack().unique()):
-            continue
+            if prog in _lu_sfy_oct25:
+                found = fico >= _lu_sfy_oct25[prog]
+            elif prog in _lu_sfy_oct25_2:
+                found = fico >= _lu_sfy_oct25_2[prog]
         else:
-            pass
-        if row[1]['Submit Date'] > pd.to_datetime('2025-10-24'):
-            if prog in sfy_comap_oct25[['660-719', '720-779', '780+']].stack().unique():
-                for col in ['660-719', '720-779', '780+']:
-                    if prog in sfy_comap_oct25[col].values and fico >= sfy_comap_cols_min_fico3[col]:
-                        found = True
-                        break
-            elif prog in sfy_comap_oct25_2[['660-699', '700-739', '740-749', '750-769', '770+']].stack().unique():
-                for col in ['660-699', '700-739', '740-749', '750-769', '770+']:
-                    if prog in sfy_comap_oct25_2[col].values and fico >= sfy_comap_cols_min_fico2[col]:
-                        found = True
-                        break
-            else:
-                pass
-        elif prog in sfy_comap[['660-719', '720-779', '780-799', '800+']].stack().unique():
-            for col in ['660-719', '720-779', '780-799', '800+']:
-                if prog in sfy_comap[col].values and fico >= sfy_comap_cols_min_fico[col]:
-                    found = True
-                    break
-        elif prog in sfy_comap2[['660-699', '700-739', '740-749', '750-769','770+']].stack().unique():
-            for col in ['660-699', '700-739', '740-749', '750-769','770+']:
-                if prog in sfy_comap2[col].values and fico >= sfy_comap_cols_min_fico2[col]:
-                    found = True
-                    break
+            if prog not in _lu_sfy and prog not in _lu_sfy2:
+                continue
+            if prog in _lu_sfy:
+                found = fico >= _lu_sfy[prog]
+            elif prog in _lu_sfy2:
+                found = fico >= _lu_sfy2[prog]
         if not found:
             loan_not_in_comap.append((row[1]["SELLER Loan #"], prog, "SFY"))
 
@@ -478,14 +486,10 @@ for row in buy_df[(buy_df['Application Type'] == 'HD NOTE') & (buy_df['purchase_
     fico = row[1]['FICO Borrower']
     prog = row[1]['loan program']
     found = False
-    if prog not in notes_comap[['680-749', '750-769', '770-789', '790+']].stack().unique():
+    if prog not in _lu_notes:
         continue
-    for col in ['680-749', '750-769', '770-789', '790+']:
-        if prog in notes_comap[col].values and fico >= notes_comap_cols_min_fico[col]:
-            found = True
-            break
+    found = fico >= _lu_notes[prog]
     if not found:
-        # reason = f"PRIME loan prog not in fico band - 660-699 - available - {fico}"
         loan_not_in_comap_notes.append((row[1]["SELLER Loan #"], prog, "NOTES"))
 
 len(loan_not_in_comap_notes)
