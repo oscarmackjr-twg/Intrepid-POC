@@ -125,3 +125,13 @@ Plans:
 - [ ] 06-03-PLAN.md — Backend job tracking: final_funding_job table, background thread runner, GET/POST API endpoints, cashflow bridge (FF-03..FF-09)
 - [ ] 06-04-PLAN.md — Frontend polling: replace alert() in ProgramRuns.tsx with job-id status display (FF-03, FF-06)
 - [ ] 06-05-PLAN.md — Full test suite verification + human smoke test checkpoint (FF-01..FF-09)
+
+### Phase 7: Application Hardening
+
+**Goal:** Harden the deployed application across seven areas: AWS networking/TLS (RDS to private subnets, ALB HTTPS), default secrets and bootstrap passwords, frontend auth token storage (localStorage → HttpOnly cookies), file/error endpoint information leakage, CI security and quality gates, durable audit logging, and repository hygiene.
+**Requirements**: HARD-01, HARD-02, HARD-03, HARD-04, HARD-05, HARD-06, HARD-07
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 7 to break down)
