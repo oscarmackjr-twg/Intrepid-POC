@@ -13,7 +13,7 @@ from sqlalchemy import (
     Enum as SQLEnum,
 )
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 from db.connection import Base
 
@@ -194,3 +194,27 @@ class Holiday(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Ensure country/date pairs are logically unique at the application level; DB uniqueness can be added via migrations.
+
+
+class AuditLog(Base):
+    """Durable audit trail for user actions (HARD-06).
+
+    Uses sa.JSON (not postgresql.JSONB) for SQLite compatibility in tests.
+    The Alembic migration uses JSONB explicitly for Postgres.
+    """
+
+    __tablename__ = "audit_log"
+
+    id = Column(Integer, primary_key=True, index=True)
+    event_type = Column(String(100), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    timestamp = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        index=True,
+    )
+    source_ip = Column(String(45), nullable=True)
+    resource = Column(String(500), nullable=True)
+    outcome = Column(String(20), nullable=True)   # "success" | "failure"
+    detail_json = Column(JSON, nullable=True)     # JSON (not JSONB) for SQLite compat in tests
