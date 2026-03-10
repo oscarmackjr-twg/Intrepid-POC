@@ -15,7 +15,7 @@ class TestUserRegistration:
             json={
                 "email": "newuser@test.com",
                 "username": "newuser",
-                "password": "testpass",
+                "password": "TestPass123!",
                 "full_name": "New User",
                 "role": "analyst",
                 "sales_team_id": None
@@ -32,7 +32,7 @@ class TestUserRegistration:
             json={
                 "email": "sales@test.com",
                 "username": "salesuser",
-                "password": "testpass",
+                "password": "TestPass123!",
                 "full_name": "Sales User",
                 "role": "sales_team",
                 "sales_team_id": sample_sales_team.id
@@ -49,7 +49,7 @@ class TestUserRegistration:
             json={
                 "email": "sales@test.com",
                 "username": "salesuser",
-                "password": "testpass",
+                "password": "TestPass123!",
                 "full_name": "Sales User",
                 "role": "sales_team",
                 "sales_team_id": None
@@ -65,7 +65,7 @@ class TestUserRegistration:
             json={
                 "email": sample_admin_user.email,
                 "username": "different",
-                "password": "testpass",
+                "password": "TestPass123!",
                 "full_name": "Different User",
                 "role": "analyst"
             },
@@ -80,7 +80,7 @@ class TestUserRegistration:
             json={
                 "email": "test@test.com",
                 "username": "test",
-                "password": "testpass",
+                "password": "TestPass123!",
                 "full_name": "Test User",
                 "role": "analyst"
             },
@@ -278,3 +278,85 @@ class TestRateLimit:
             data={"username": "wrong", "password": "wrong"},
         )
         assert response.status_code == 429
+
+
+class TestPasswordPolicy:
+    """Test password policy enforcement on register endpoint (HARD-02).
+
+    Tests validate_password_strength validator added to UserCreate in auth/routes.py.
+    """
+
+    def test_password_too_short_returns_422(self, client, auth_headers_admin, test_db_session):
+        """Password shorter than 12 chars must return 422."""
+        response = client.post(
+            "/api/auth/register",
+            json={
+                "email": "short@test.com",
+                "username": "shortpwuser",
+                "password": "short1A",
+                "full_name": "Short Password",
+                "role": "analyst",
+            },
+            headers=auth_headers_admin,
+        )
+        assert response.status_code == 422
+
+    def test_password_no_uppercase_returns_422(self, client, auth_headers_admin, test_db_session):
+        """Password with no uppercase letter must return 422."""
+        response = client.post(
+            "/api/auth/register",
+            json={
+                "email": "noup@test.com",
+                "username": "noupperuser",
+                "password": "alllowercase123",
+                "full_name": "No Uppercase",
+                "role": "analyst",
+            },
+            headers=auth_headers_admin,
+        )
+        assert response.status_code == 422
+
+    def test_password_no_lowercase_returns_422(self, client, auth_headers_admin, test_db_session):
+        """Password with no lowercase letter must return 422."""
+        response = client.post(
+            "/api/auth/register",
+            json={
+                "email": "nolo@test.com",
+                "username": "noloweruser",
+                "password": "ALLUPPERCASE123",
+                "full_name": "No Lowercase",
+                "role": "analyst",
+            },
+            headers=auth_headers_admin,
+        )
+        assert response.status_code == 422
+
+    def test_password_no_digit_returns_422(self, client, auth_headers_admin, test_db_session):
+        """Password with no digit must return 422."""
+        response = client.post(
+            "/api/auth/register",
+            json={
+                "email": "nodig@test.com",
+                "username": "nodigituser",
+                "password": "NoDigitsHereAtAll",
+                "full_name": "No Digit",
+                "role": "analyst",
+            },
+            headers=auth_headers_admin,
+        )
+        assert response.status_code == 422
+
+    def test_valid_password_succeeds(self, client, auth_headers_admin, test_db_session):
+        """Password meeting all requirements must succeed (200)."""
+        response = client.post(
+            "/api/auth/register",
+            json={
+                "email": "validpw@test.com",
+                "username": "validpassuser",
+                "password": "ValidPass123!",
+                "full_name": "Valid Password",
+                "role": "analyst",
+            },
+            headers=auth_headers_admin,
+        )
+        assert response.status_code == 200

@@ -32,15 +32,19 @@ def test_db_engine():
 
 @pytest.fixture(scope="function")
 def test_db_session(test_db_engine):
-    """Create test database session."""
+    """Create test database session with rollback-based isolation."""
+    connection = test_db_engine.connect()
+    transaction = connection.begin()
     TestingSessionLocal = sessionmaker(
-        autocommit=False, autoflush=False, bind=test_db_engine
+        autocommit=False, autoflush=False, bind=connection
     )
     session = TestingSessionLocal()
     try:
         yield session
     finally:
         session.close()
+        transaction.rollback()
+        connection.close()
 
 
 @pytest.fixture(scope="function")
@@ -239,8 +243,11 @@ def sample_sales_user(test_db_session, sample_sales_team):
 
 @pytest.fixture
 def client(test_db_session, override_get_db):
-    """Create test client with database override."""
+    """Create test client with database override. Resets rate limiter state each test."""
     from api.main import app
+    from auth.limiter import limiter
+    # Reset rate limiter storage so previous test's request count doesn't bleed in
+    limiter._storage.reset()
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
     app.dependency_overrides.clear()
