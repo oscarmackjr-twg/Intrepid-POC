@@ -1,5 +1,8 @@
 #Legacy code
 
+loan-engine-qa.pem 
+setenv.bat
+
 legacy
 
 #Virtual environment

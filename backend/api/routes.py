@@ -70,7 +70,8 @@ class RunCreate(BaseModel):
     tday: Optional[str] = None
     irr_target: float = 8.05
     # Local: filesystem path to input folder. S3 (AWS): key prefix under inputs area (e.g. "legacy", "sales_team_1").
-    folder: str = "C:/Users/omack/Intrepid/pythonFramework/loan_engine/legacy"
+    # When omitted, defaults to INPUT_DIR from settings (respects DEV_INPUT in .env).
+    folder: Optional[str] = None
 
 
 class RunResponse(BaseModel):
@@ -340,11 +341,8 @@ def _run_pipeline_background(context: RunContext, run_data: RunCreate) -> None:
             folder_for_run = temp_dir
             logger.info("Pipeline run run_id=%s S3 sync complete, starting execution", context.run_id)
         else:
-            # Local development: if DEV_INPUT is configured, always use that (parent of files_required)
-            if getattr(settings, "DEV_INPUT", None):
-                folder_for_run = settings.INPUT_DIR
-            else:
-                folder_for_run = run_data.folder
+            # Use explicitly provided folder, or fall back to INPUT_DIR (which respects DEV_INPUT in .env)
+            folder_for_run = run_data.folder or settings.INPUT_DIR
         with PipelineExecutor(context) as executor:
             executor.execute(folder_for_run, existing_run_id=context.run_id)
         logger.info("Pipeline run run_id=%s completed successfully", context.run_id)
@@ -398,15 +396,12 @@ async def create_pipeline_run(
     )
     logger.info("Pipeline run accepted run_id=%s user_id=%s pdate=%s", context.run_id, current_user.id, context.pdate)
 
-    # For local development with DEV_* overrides, ignore the folder parameter and use configured paths.
-    if settings.STORAGE_TYPE == "local" and getattr(settings, "DEV_INPUT", None):
-        context.input_file_path = settings.INPUT_DIR
-        context.output_dir = f"runs/{context.run_id}"
-    elif sales_team_id:
-        context.input_file_path = f"{run_data.folder}/sales_team_{sales_team_id}"
+    effective_folder = run_data.folder or settings.INPUT_DIR
+    if sales_team_id:
+        context.input_file_path = f"{effective_folder}/sales_team_{sales_team_id}"
         context.output_dir = f"sales_team_{sales_team_id}/runs/{context.run_id}"
     else:
-        context.input_file_path = run_data.folder
+        context.input_file_path = effective_folder
         context.output_dir = f"runs/{context.run_id}"
 
     # Archive previous run (non-blocking; best-effort)

@@ -118,9 +118,8 @@ class Settings(BaseSettings):
         """
         if self.STORAGE_TYPE.lower() == "local":
             if self.DEV_INPUT:
-                dev_input = self.DEV_INPUT.rstrip("\\/")
-                parent = os.path.dirname(dev_input) or dev_input
-                self.INPUT_DIR = parent
+                dev_input = Path(self.DEV_INPUT.rstrip("\\/")).resolve()
+                self.INPUT_DIR = str(dev_input.parent)
             if self.DEV_OUTPUT:
                 self.OUTPUT_DIR = self.DEV_OUTPUT
             if self.DEV_OUTPUT_SHARED:

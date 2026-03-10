@@ -89,7 +89,7 @@ export default function ProgramRuns() {
       setStorageType(st)
       setConfig(cfg)
       if (st === 'local') {
-        setRunFolder('C:/Users/omack/Intrepid/pythonFramework/loan_engine/legacy')
+        setRunFolder(cfg.local_input_dir ?? '')
       }
     }).catch(() => {})
   }, [])

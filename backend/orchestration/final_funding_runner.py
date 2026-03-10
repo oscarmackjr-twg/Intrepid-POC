@@ -41,6 +41,8 @@ def _prepare_temp_input_from_local(input_base: str) -> str:
     work_dir.mkdir()
     try:
         shutil.copytree(base, work_dir, dirs_exist_ok=True)
+        (work_dir / "output").mkdir(exist_ok=True)
+        (work_dir / "output_share").mkdir(exist_ok=True)
         return str(work_dir.resolve())
     except Exception:
         shutil.rmtree(parent, ignore_errors=True)
@@ -185,6 +187,8 @@ def _execute_final_funding(script_path: str, output_prefix: str, folder: Optiona
                 s3_prefix = requested
             temp_dir = _prepare_temp_input_from_s3(s3_prefix)
             try:
+                Path(temp_dir, "output").mkdir(exist_ok=True)
+                Path(temp_dir, "output_share").mkdir(exist_ok=True)
                 _bridge_cashflow_outputs_to_inputs(temp_dir, "s3")
                 _run_workbook_script(script_path, temp_dir)
                 _upload_local_output_to_storage(temp_dir, output_prefix)

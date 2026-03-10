@@ -62,7 +62,8 @@
       "Bash(cmd:*)",
       "Bash(powershell:*)",
       "Skill(gsd:add-phase)",
-      "Skill(gsd:update)"
+      "Skill(gsd:update)",
+      "Bash(grep:*)"
     ]
   }
 }

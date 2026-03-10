@@ -104,7 +104,7 @@ export default function Dashboard() {
       const st = r.data?.storage_type ?? 'local'
       setStorageType(st)
       if (st === 'local') {
-        setRunFolder('C:/Users/omack/Intrepid/pythonFramework/loan_engine/legacy')
+        setRunFolder(r.data?.local_input_dir ?? '')
       }
       // S3: no folder field used; run always reads from root of input directory
     }).catch(() => {})
