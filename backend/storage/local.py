@@ -98,6 +98,8 @@ class LocalStorageBackend(StorageBackend):
         dir_path.mkdir(parents=True, exist_ok=True)
     
     def get_file_url(self, path: str, expires_in: int = 3600) -> str:
-        """Get a URL to access/download a file (for local, returns file:// path)."""
+        """For local storage, return a relative API download path (never a file:// URI)."""
         file_path = self._resolve_path(path)
-        return f"file://{file_path.as_uri()}"
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {path}")
+        return f"/api/files/download/{path}"

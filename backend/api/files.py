@@ -8,6 +8,7 @@ from db.models import User
 from config.settings import settings
 import io
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +41,9 @@ async def list_files(
             ]
         }
     except Exception as e:
-        logger.error(f"Error listing files: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to list files: {str(e)}")
+        correlation_id = str(uuid.uuid4())
+        logger.error("Error listing files [correlation_id=%s]: %s", correlation_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"An internal error occurred (ref: {correlation_id})")
 
 
 @router.post("/upload")
@@ -85,16 +87,14 @@ async def upload_file(
             "size": len(content)
         }
     except ValueError as e:
-        # S3 NoSuchBucket or other clear config errors
-        logger.error("Upload error: %s", e)
-        raise HTTPException(status_code=400, detail=str(e))
+        # S3 NoSuchBucket or other clear config errors — surface a safe message
+        correlation_id = str(uuid.uuid4())
+        logger.error("Upload config error [correlation_id=%s]: %s", correlation_id, e, exc_info=True)
+        raise HTTPException(status_code=400, detail=f"Upload configuration error (ref: {correlation_id})")
     except Exception as e:
-        logger.error(f"Error uploading file: {e}", exc_info=True)
-        detail = str(e)
-        if "NoSuchBucket" in detail or "bucket" in detail.lower():
-            if getattr(settings, "S3_BUCKET_NAME", None):
-                detail = f"{detail} (Configured bucket: {settings.S3_BUCKET_NAME}. Create it in S3 or set S3_BUCKET_NAME to an existing bucket.)"
-        raise HTTPException(status_code=500, detail=f"Failed to upload file: {detail}")
+        correlation_id = str(uuid.uuid4())
+        logger.error("Error uploading file [correlation_id=%s]: %s", correlation_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"An internal error occurred (ref: {correlation_id})")
 
 
 @router.get("/download/{file_path:path}")
@@ -136,8 +136,9 @@ async def download_file(
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="File not found")
     except Exception as e:
-        logger.error(f"Error downloading file: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to download file: {str(e)}")
+        correlation_id = str(uuid.uuid4())
+        logger.error("Error downloading file [correlation_id=%s]: %s", correlation_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"An internal error occurred (ref: {correlation_id})")
 
 
 @router.get("/url/{file_path:path}")
@@ -161,8 +162,9 @@ async def get_file_url(
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="File not found")
     except Exception as e:
-        logger.error(f"Error getting file URL: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get file URL: {str(e)}")
+        correlation_id = str(uuid.uuid4())
+        logger.error("Error getting file URL [correlation_id=%s]: %s", correlation_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"An internal error occurred (ref: {correlation_id})")
 
 
 @router.delete("/{file_path:path}")
@@ -185,8 +187,9 @@ async def delete_file(
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="File not found")
     except Exception as e:
-        logger.error(f"Error deleting file: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+        correlation_id = str(uuid.uuid4())
+        logger.error("Error deleting file [correlation_id=%s]: %s", correlation_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"An internal error occurred (ref: {correlation_id})")
 
 
 @router.post("/mkdir")
@@ -203,5 +206,6 @@ async def create_directory(
         
         return {"message": "Directory created successfully", "path": path}
     except Exception as e:
-        logger.error(f"Error creating directory: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to create directory: {str(e)}")
+        correlation_id = str(uuid.uuid4())
+        logger.error("Error creating directory [correlation_id=%s]: %s", correlation_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"An internal error occurred (ref: {correlation_id})")
