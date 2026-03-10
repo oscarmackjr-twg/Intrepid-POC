@@ -1,13 +1,18 @@
 """FastAPI application main entry point."""
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request as FastAPIRequest
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
 from contextlib import asynccontextmanager
 import logging
 import logging.config
 import yaml
+
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from config.settings import settings
 from api.routes import router as api_router
@@ -15,6 +20,7 @@ from api.files import router as files_router
 from api.program_run_jobs import router as program_run_jobs_router
 from cashflow.routes import router as cashflow_router
 from auth.routes import router as auth_router
+from auth.limiter import limiter
 from scheduler.job_scheduler import scheduler, schedule_daily_runs
 
 # Configure logging
@@ -22,7 +28,7 @@ log_config_path = Path(__file__).parent.parent / "config" / "logging.yaml"
 if log_config_path.exists():
     with open(log_config_path, 'r') as f:
         log_config = yaml.safe_load(f)
-        
+
         # Ensure logs directory exists if file handler is configured
         if 'handlers' in log_config:
             for handler_name, handler_config in log_config['handlers'].items():
@@ -35,7 +41,7 @@ if log_config_path.exists():
                     log_file_path.parent.mkdir(parents=True, exist_ok=True)
                     # Update path to absolute
                     log_config['handlers'][handler_name]['filename'] = str(log_file_path)
-        
+
         logging.config.dictConfig(log_config)
 else:
     logging.basicConfig(level=logging.INFO)
@@ -43,20 +49,35 @@ else:
 logger = logging.getLogger(__name__)
 
 
+class CSPMiddleware(BaseHTTPMiddleware):
+    """Add Content-Security-Policy header to all API responses."""
+
+    async def dispatch(self, request: StarletteRequest, call_next):
+        response = await call_next(request)
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "connect-src 'self'"
+        )
+        return response
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     logger.info("Starting Loan Engine API...")
-    
+
     if settings.ENABLE_SCHEDULER:
         scheduler.start()
         # Schedule jobs after scheduler starts
         schedule_daily_runs()
         logger.info(f"Scheduler started - Daily runs at {settings.DAILY_RUN_TIME}")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Loan Engine API...")
     if settings.ENABLE_SCHEDULER:
@@ -70,7 +91,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# Wire slowapi rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS middleware — allow_credentials requires explicit origin list (not wildcard)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -78,6 +103,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# CSP header on all responses
+app.add_middleware(CSPMiddleware)
 
 # Include routers
 app.include_router(auth_router)

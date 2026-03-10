@@ -10,6 +10,7 @@ To change the database, set DATABASE_URL environment variable or create a .env f
     DATABASE_URL=postgresql://user:password@host:port/database
 """
 import sys
+import secrets
 from pathlib import Path
 
 # Add parent directory to path
@@ -22,22 +23,39 @@ from auth.security import get_password_hash, BCRYPT_MAX_PASSWORD_BYTES
 from config.settings import settings
 
 
+def generate_password() -> str:
+    """Generate a cryptographically random URL-safe password (24 chars, no spaces).
+
+    Uses secrets.token_urlsafe which returns a URL-safe text string with at least
+    the requested bytes of randomness. 18 bytes yields ~24 URL-safe characters.
+    """
+    return secrets.token_urlsafe(18)
+
+
 def create_admin_user(
     username: str = "admin",
-    password: str = "admin123",
     email: str = "admin@example.com",
-    full_name: str = "Administrator"
+    full_name: str = "Administrator",
+    password: str | None = None,
 ):
     """Create initial admin user.
-    
+
+    A one-time random password is generated automatically unless explicitly
+    provided (e.g. for testing). The password is printed once to stdout and
+    will not be recoverable after the script exits.
+
     Args:
         username: Admin username
-        password: Admin password (will be hashed)
         email: Admin email address
         full_name: Admin full name
+        password: Override password (auto-generated when None)
     """
+    one_time_password = password if password is not None else generate_password()
+    print(f"\nGenerated admin password: {one_time_password}")
+    print("IMPORTANT: Save this password — it will not be shown again.\n")
+
     # Bcrypt limits passwords to 72 bytes
-    pwd_bytes = password.encode("utf-8")
+    pwd_bytes = one_time_password.encode("utf-8")
     if len(pwd_bytes) > BCRYPT_MAX_PASSWORD_BYTES:
         raise ValueError(
             f"Password is too long ({len(pwd_bytes)} bytes). "
@@ -61,22 +79,20 @@ def create_admin_user(
         admin_user = User(
             email=email,
             username=username,
-            hashed_password=get_password_hash(password),
+            hashed_password=get_password_hash(one_time_password),
             full_name=full_name,
             role=UserRole.ADMIN,
             is_active=True
         )
-        
+
         db.add(admin_user)
         db.commit()
         db.refresh(admin_user)
-        
-        print(f"✅ Admin user created successfully!")
+
+        print(f"Admin user created successfully.")
         print(f"   Username: {username}")
         print(f"   Email: {email}")
-        print(f"   Password: {password}")
-        print(f"\n⚠️  Please change the password after first login!")
-        
+
         return admin_user
         
     except Exception as e:
@@ -160,24 +176,21 @@ def _print_permission_help():
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Create initial admin user and default team users")
     parser.add_argument("--username", default="admin", help="Admin username")
-    parser.add_argument("--password", default="admin123", help="Admin password")
     parser.add_argument("--email", default="admin@example.com", help="Admin email")
     parser.add_argument("--full-name", default="Administrator", help="Admin full name")
-    
+
     args = parser.parse_args()
 
     admin = create_admin_user(
         username=args.username,
-        password=args.password,
         email=args.email,
-        full_name=args.full_name
+        full_name=args.full_name,
     )
 
-    # Seed additional default users with initial password twg123
-    default_password = "twg123"
+    # Seed additional analyst users — each receives a unique one-time random password
     additional_users = [
         ("nparakh", "nparakh@example.com", "nparakh"),
         ("jbalaji", "jbalaji@example.com", "jbalaji"),
@@ -187,9 +200,12 @@ if __name__ == "__main__":
 
     for username, email, full_name in additional_users:
         try:
+            user_password = generate_password()
+            print(f"\nGenerated password for {username}: {user_password}")
+            print("IMPORTANT: Save this password — it will not be shown again.\n")
             create_user_if_missing(
                 username=username,
-                password=default_password,
+                password=user_password,
                 email=email,
                 full_name=full_name,
                 role=UserRole.ANALYST,

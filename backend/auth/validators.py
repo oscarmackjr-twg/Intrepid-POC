@@ -103,17 +103,17 @@ def validate_user_update(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can update users"
         )
-    
-    # Validate sales team assignment if role is being set/changed
-    if role is not None:
-        validate_sales_team_assignment(role, sales_team_id, db)
-    
-    # Users cannot change their own role (security measure)
+
+    # Users cannot change their own role (security measure) — check before sales team validation
     if user_id == current_user.id and role is not None and role != current_user.role:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Users cannot change their own role"
         )
+
+    # Validate sales team assignment if role is being set/changed
+    if role is not None:
+        validate_sales_team_assignment(role, sales_team_id, db)
 
 
 def get_user_sales_team_id(user: User) -> int | None:
