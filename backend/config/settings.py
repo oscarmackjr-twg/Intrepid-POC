@@ -52,6 +52,21 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    # Local development mode: set LOCAL_DEV_MODE=true in .env to bypass the
+    # SECRET_KEY sentinel check. NEVER set this to true in staging or production.
+    LOCAL_DEV_MODE: bool = False
+
+    KNOWN_FALLBACK_SECRET: str = "your-secret-key-change-in-production"
+
+    @model_validator(mode="after")
+    def validate_secret_key(self) -> "Settings":
+        if not self.LOCAL_DEV_MODE and self.SECRET_KEY == self.KNOWN_FALLBACK_SECRET:
+            raise ValueError(
+                "SECRET_KEY is set to the default fallback value. "
+                "Set a strong random SECRET_KEY, or set LOCAL_DEV_MODE=true in .env for local development."
+            )
+        return self
     
     # File Storage
     STORAGE_TYPE: str = "local"  # "local" or "s3"

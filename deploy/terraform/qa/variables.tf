@@ -123,3 +123,10 @@ variable "ec2_key_pair_public_key" {
   default     = ""
   sensitive   = true
 }
+
+# --- TLS / HTTPS ---
+variable "acm_certificate_arn" {
+  description = "ACM certificate ARN for ALB HTTPS listener. Leave empty string to skip HTTPS listener (QA without a cert). When set, HTTP port 80 redirects to HTTPS 443."
+  type        = string
+  default     = ""
+}

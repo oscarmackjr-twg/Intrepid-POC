@@ -1,7 +1,9 @@
-# DB subnet group (use public subnets so RDS can be reached; for production consider private subnets)
+# DB subnet group
+# HARD-01: RDS moved to private subnets — requires VPC private subnet routing to ECS
 resource "aws_db_subnet_group" "main" {
   name_prefix = "${local.name_prefix}-db-"
-  subnet_ids  = aws_subnet.public[*].id
+  # HARD-01: RDS moved to private subnets — requires VPC private subnet routing to ECS
+  subnet_ids  = aws_subnet.private[*].id
   description = "DB subnet group for ${var.app_name} QA"
   tags        = { Name = "${local.name_prefix}-db-subnet" }
 
@@ -20,13 +22,14 @@ resource "aws_db_instance" "main" {
   username = var.db_username
   password = var.db_password
 
-  allocated_storage     = 20
-  storage_type         = "gp2"
+  allocated_storage       = 20
+  storage_type            = "gp2"
   backup_retention_period = 7
 
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
-  publicly_accessible    = true
+  # HARD-01: RDS moved to private subnets — requires VPC private subnet routing to ECS
+  publicly_accessible    = false
 
   skip_final_snapshot = true
   tags               = { Name = var.db_instance_identifier }
