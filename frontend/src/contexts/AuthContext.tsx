@@ -12,9 +12,8 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  token: string | null
   login: (username: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   loading: boolean
 }
 
@@ -28,29 +27,15 @@ const API_BASE_URL =
 
 axios.defaults.baseURL = API_BASE_URL
 
-// Add request interceptor to ensure token is always sent
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
+// Send HttpOnly cookies with every request — required for cookie-based auth
+axios.defaults.withCredentials = true
 
-// Add response interceptor to handle 401 errors
+// Response interceptor: handle 401 by redirecting to login (cookie expired or absent)
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - clear and redirect to login
-      localStorage.removeItem('token')
-      delete axios.defaults.headers.common['Authorization']
-      // Only redirect if not already on login page
+      // Cookie expired or invalid — redirect to login page
       if (window.location.pathname !== '/login') {
         window.location.href = '/login'
       }
@@ -61,29 +46,21 @@ axios.interceptors.response.use(
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Check for stored token
-    const storedToken = localStorage.getItem('token')
-    if (storedToken) {
-      setToken(storedToken)
-      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
-      fetchUser()
-    } else {
-      setLoading(false)
-    }
+    // On mount, check if the browser has a valid session cookie by calling /api/auth/me.
+    // The cookie is sent automatically — no localStorage check needed.
+    fetchUser()
   }, [])
 
   const fetchUser = async () => {
     try {
       const response = await axios.get('/api/auth/me')
       setUser(response.data)
-    } catch (error) {
-      localStorage.removeItem('token')
-      setToken(null)
+    } catch {
+      // Cookie absent or expired — user is unauthenticated
       setUser(null)
     } finally {
       setLoading(false)
@@ -101,23 +78,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     })
 
-    const { access_token, user: userData } = response.data
-    setToken(access_token)
+    // Backend sets HttpOnly cookie — no token in response body.
+    // Extract user info from response and update context state.
+    const { user: userData } = response.data
     setUser(userData)
-    localStorage.setItem('token', access_token)
-    axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
   }
 
-  const logout = () => {
-    setToken(null)
-    setUser(null)
-    localStorage.removeItem('token')
-    delete axios.defaults.headers.common['Authorization']
-    navigate('/login')
+  const logout = async () => {
+    try {
+      // Call server-side logout to clear the HttpOnly cookie
+      await axios.post('/api/auth/logout')
+    } finally {
+      setUser(null)
+      navigate('/login')
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )

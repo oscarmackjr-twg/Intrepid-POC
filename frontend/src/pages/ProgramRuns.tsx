@@ -249,12 +249,7 @@ export default function ProgramRuns() {
 
   const triggerPreFundingRun = async (tdayYYYYMMDD: string | null) => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        alert('You are not logged in. Please log in and try again.')
-        window.location.href = '/login'
-        return
-      }
+      // Cookie-based auth: axios sends HttpOnly cookie automatically; no token check needed.
       setPreFundingSubmitting(true)
       // Clear standard output at the start of a new run
       setStandardOutput('')
@@ -297,12 +292,7 @@ export default function ProgramRuns() {
 
   const runTagging = async () => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        alert('You are not logged in. Please log in and try again.')
-        window.location.href = '/login'
-        return
-      }
+      // Cookie-based auth: axios sends HttpOnly cookie automatically; no token check needed.
       setTaggingSubmitting(true)
       await axios.post('/api/program-run', { phase: 'tagging' })
       alert('Tagging run completed. Check the output directory below.')
@@ -321,12 +311,7 @@ export default function ProgramRuns() {
   }
 
   const runFinalFundingSG = async () => {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      alert('You are not logged in. Please log in and try again.')
-      window.location.href = '/login'
-      return
-    }
+    // Cookie-based auth: axios sends HttpOnly cookie automatically; no token check needed.
     setFinalFundingSGSubmitting(true)
     setFinalFundingSGStatus('QUEUED')
     setFinalFundingSGError('')
@@ -351,12 +336,7 @@ export default function ProgramRuns() {
   }
 
   const runFinalFundingCIBC = async () => {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      alert('You are not logged in. Please log in and try again.')
-      window.location.href = '/login'
-      return
-    }
+    // Cookie-based auth: axios sends HttpOnly cookie automatically; no token check needed.
     setFinalFundingCIBCSubmitting(true)
     setFinalFundingCIBCStatus('QUEUED')
     setFinalFundingCIBCError('')

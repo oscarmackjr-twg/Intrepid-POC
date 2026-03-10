@@ -149,13 +149,8 @@ export default function Dashboard() {
 
   const triggerRun = async (tdayYYYYMMDD: string | null) => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        alert('You are not logged in. Please log in and try again.')
-        window.location.href = '/login'
-        return
-      }
-
+      // Cookie-based auth: no token check needed — axios sends HttpOnly cookie automatically.
+      // 401 responses are handled by the axios interceptor in AuthContext.
       setRunSubmitting(true)
       const payload: { folder: string; tday?: string } = {
         folder: storageType === 's3' ? '' : runFolder.trim(),
