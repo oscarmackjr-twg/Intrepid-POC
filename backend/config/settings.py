@@ -53,10 +53,6 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    # Local development mode: set LOCAL_DEV_MODE=true in .env to bypass the
-    # SECRET_KEY sentinel check. NEVER set this to true in staging or production.
-    LOCAL_DEV_MODE: bool = False
-
     KNOWN_FALLBACK_SECRET: str = "your-secret-key-change-in-production"
 
     @model_validator(mode="after")
@@ -116,7 +112,11 @@ class Settings(BaseSettings):
     
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
-    
+
+    # Local development mode: set LOCAL_DEV_MODE=true in .env to bypass the SECRET_KEY sentinel
+    # check and allow cookie secure=False over HTTP. NEVER set to true in staging/production.
+    LOCAL_DEV_MODE: bool = False
+
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FILE: Optional[str] = None
