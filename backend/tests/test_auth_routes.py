@@ -196,3 +196,85 @@ class TestUserList:
         """Test non-admin cannot list users."""
         response = client.get("/api/auth/users", headers=auth_headers_sales)
         assert response.status_code == 403
+
+
+class TestCookieLogin:
+    """Test HttpOnly cookie-based login (HARD-03)."""
+
+    def test_login_sets_httponly_cookie(self, client, sample_admin_user):
+        """Successful login sets an HttpOnly access_token cookie."""
+        response = client.post(
+            "/api/auth/login",
+            data={"username": "admin", "password": "testpass"},
+        )
+        assert response.status_code == 200
+        # Cookie must be present
+        assert "access_token" in response.cookies
+        # The Set-Cookie header must have HttpOnly flag
+        set_cookie_header = response.headers.get("set-cookie", "")
+        assert "httponly" in set_cookie_header.lower()
+
+    def test_login_response_has_no_access_token_in_body(self, client, sample_admin_user):
+        """Login response body does NOT expose access_token (tokens are in the cookie only)."""
+        response = client.post(
+            "/api/auth/login",
+            data={"username": "admin", "password": "testpass"},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert "access_token" not in body
+
+    def test_login_response_body_contains_user_info(self, client, sample_admin_user):
+        """Login response body contains user information."""
+        response = client.post(
+            "/api/auth/login",
+            data={"username": "admin", "password": "testpass"},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert "user" in body
+        assert body["user"]["username"] == "admin"
+
+    def test_logout_clears_cookie(self, client, sample_admin_user):
+        """POST /api/auth/logout clears the access_token cookie."""
+        # First login to get a cookie
+        login_resp = client.post(
+            "/api/auth/login",
+            data={"username": "admin", "password": "testpass"},
+        )
+        assert login_resp.status_code == 200
+        # Now logout
+        logout_resp = client.post("/api/auth/logout")
+        assert logout_resp.status_code == 200
+        # Cookie should be cleared (max-age=0 or expires in the past)
+        set_cookie_header = logout_resp.headers.get("set-cookie", "")
+        assert "access_token" in set_cookie_header
+        # Either max-age=0 or expires past date signals deletion
+        assert "max-age=0" in set_cookie_header.lower() or "expires" in set_cookie_header.lower()
+
+    def test_cookie_samesite_strict(self, client, sample_admin_user):
+        """Login cookie has SameSite=Strict attribute."""
+        response = client.post(
+            "/api/auth/login",
+            data={"username": "admin", "password": "testpass"},
+        )
+        assert response.status_code == 200
+        set_cookie_header = response.headers.get("set-cookie", "").lower()
+        assert "samesite=strict" in set_cookie_header
+
+
+class TestRateLimit:
+    """Test login rate limiting (10 requests per minute per IP)."""
+
+    def test_eleventh_login_returns_429(self, client):
+        """11th login attempt within 1 minute returns HTTP 429 Too Many Requests."""
+        for _ in range(10):
+            client.post(
+                "/api/auth/login",
+                data={"username": "wrong", "password": "wrong"},
+            )
+        response = client.post(
+            "/api/auth/login",
+            data={"username": "wrong", "password": "wrong"},
+        )
+        assert response.status_code == 429

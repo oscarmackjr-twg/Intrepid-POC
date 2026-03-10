@@ -9,11 +9,12 @@ import shutil
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+from fastapi.testclient import TestClient
 
 from db.connection import Base, get_db
 from db.models import User, SalesTeam, PipelineRun, UserRole, RunStatus
 from config.settings import settings
-from auth.security import get_password_hash
+from auth.security import get_password_hash, create_access_token
 
 
 # Test database setup
@@ -234,6 +235,29 @@ def sample_sales_user(test_db_session, sample_sales_team):
     test_db_session.commit()
     test_db_session.refresh(user)
     return user
+
+
+@pytest.fixture
+def client(test_db_session, override_get_db):
+    """Create test client with database override."""
+    from api.main import app
+    app.dependency_overrides[get_db] = override_get_db
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_headers_admin(sample_admin_user):
+    """Get auth headers for admin user."""
+    token = create_access_token({"sub": str(sample_admin_user.id)})
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def auth_headers_sales(sample_sales_user):
+    """Get auth headers for sales user."""
+    token = create_access_token({"sub": str(sample_sales_user.id)})
+    return {"Authorization": f"Bearer {token}"}
 
 
 # Temporary directory fixture
