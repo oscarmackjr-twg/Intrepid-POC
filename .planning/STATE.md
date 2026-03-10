@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 07-run-final-funding-via-api/07-03-PLAN.md — SECRET_KEY guard, one-time passwords, and password policy validation complete
-last_updated: "2026-03-10T20:08:16.551Z"
+stopped_at: Completed 07-run-final-funding-via-api/07-05-PLAN.md — HttpOnly cookie auth, rate limiting, CSP header complete
+last_updated: "2026-03-10T20:12:54.078Z"
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 25
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 ---
@@ -148,6 +148,7 @@ Progress: [██████████] 100%
 | Phase 07-run-final-funding-via-api P04 | 10 | 2 tasks | 8 files |
 | Phase 07-run-final-funding-via-api P01 | 10 | 2 tasks | 8 files |
 | Phase 07-run-final-funding-via-api P03 | 25 | 2 tasks | 5 files |
+| Phase 07-run-final-funding-via-api P05 | 45 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -205,6 +206,9 @@ Recent decisions affecting current work:
 - [Phase 07-run-final-funding-via-api]: 07-01 implementation deviation: parallel plan agents implemented HARD-03/04/06 before RED scaffolds were committed; tests went directly to GREEN
 - [Phase 07-run-final-funding-via-api]: LOCAL_DEV_MODE field consolidated: parallel agents had added it twice with conflicting defaults; resolved to single field with False default serving both SECRET_KEY guard and cookie security
 - [Phase 07-run-final-funding-via-api]: generate_password() extracted as public function in seed_admin.py to enable unit testing without DB dependencies; seed_admin no longer accepts hardcoded password args
+- [Phase 07-run-final-funding-via-api]: slowapi Limiter in auth/limiter.py to avoid circular import
+- [Phase 07-run-final-funding-via-api]: LOCAL_DEV_MODE gates cookie secure flag — False in dev (HTTP), True in staging (HTTPS)
+- [Phase 07-run-final-funding-via-api]: Authorization header fallback kept in get_current_user for API clients and CI scripts
 
 ### Pending Todos
 
@@ -219,6 +223,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-10T20:08:16.543Z
-Stopped at: Completed 07-run-final-funding-via-api/07-03-PLAN.md — SECRET_KEY guard, one-time passwords, and password policy validation complete
+Last session: 2026-03-10T20:12:54.072Z
+Stopped at: Completed 07-run-final-funding-via-api/07-05-PLAN.md — HttpOnly cookie auth, rate limiting, CSP header complete
 Resume file: None
