@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 07-run-final-funding-via-api/07-06-PLAN.md — security-quality-gate CI job added; paused at human-verify checkpoint
-last_updated: "2026-03-10T19:57:59.049Z"
+stopped_at: "Completed 07-run-final-funding-via-api/07-02-PLAN.md — Infrastructure hardening: RDS private subnets, ALB HTTPS redirect, tightened SG egress, git bundle cleanup"
+last_updated: "2026-03-10T19:58:44.915Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 25
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 ---
@@ -144,6 +144,7 @@ Progress: [██████████] 100%
 | Phase 06-final-funding-cashflow-integration P03 | 20 | 2 tasks | 5 files |
 | Phase 06-final-funding-cashflow-integration P04 | 5 | 1 tasks | 1 files |
 | Phase 07-run-final-funding-via-api P06 | 5 | 1 tasks | 1 files |
+| Phase 07-run-final-funding-via-api P02 | 163 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -193,6 +194,8 @@ Recent decisions affecting current work:
 - [Phase 06]: backend/main.py re-exports app from api.main for test module 'from main import app' compatibility
 - [Phase 06-final-funding-cashflow-integration]: Wrap each Final Funding button in a div to stack inline status beneath button within flex-wrap container
 - [Phase 07-run-final-funding-via-api]: [Phase 07-06] security-quality-gate CI job blocks deploy via needs: field; TruffleHog uses fetch-depth: 0 for full history
+- [Phase 07-run-final-funding-via-api]: HARD-01: RDS moved to private subnets (publicly_accessible=false); ALB HTTP redirects to HTTPS with count-gated listener (acm_certificate_arn variable); ECS SG egress tightened to ports 5432/443/53
+- [Phase 07-run-final-funding-via-api]: HARD-07: app-bundle.zip removed from git index via git rm --cached; deploy/aws/eb/*.zip added to .gitignore
 
 ### Pending Todos
 
@@ -207,6 +210,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-10T19:57:59.044Z
-Stopped at: Completed 07-run-final-funding-via-api/07-06-PLAN.md — security-quality-gate CI job added; paused at human-verify checkpoint
+Last session: 2026-03-10T19:58:44.911Z
+Stopped at: Completed 07-run-final-funding-via-api/07-02-PLAN.md — Infrastructure hardening: RDS private subnets, ALB HTTPS redirect, tightened SG egress, git bundle cleanup
 Resume file: None
