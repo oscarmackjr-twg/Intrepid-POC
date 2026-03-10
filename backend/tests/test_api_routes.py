@@ -46,7 +46,7 @@ class TestAuthentication:
     """Test authentication endpoints."""
     
     def test_login_success(self, client, sample_admin_user):
-        """Test successful login."""
+        """Test successful login — token is set as HttpOnly cookie, not in body."""
         response = client.post(
             "/api/auth/login",
             data={
@@ -55,7 +55,9 @@ class TestAuthentication:
             }
         )
         assert response.status_code == 200
-        assert "access_token" in response.json()
+        # Cookie-based auth: token is in the HttpOnly cookie, not the response body
+        assert "access_token" in response.cookies
+        assert "user" in response.json()
     
     def test_login_invalid_credentials(self, client):
         """Test login with invalid credentials."""
