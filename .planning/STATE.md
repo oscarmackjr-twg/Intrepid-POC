@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: "Completed 07-run-final-funding-via-api/07-02-PLAN.md — Infrastructure hardening: RDS private subnets, ALB HTTPS redirect, tightened SG egress, git bundle cleanup"
-last_updated: "2026-03-10T19:58:44.915Z"
+stopped_at: Completed 07-run-final-funding-via-api/07-04-PLAN.md — Error sanitization + AuditLog model complete
+last_updated: "2026-03-10T20:04:11.664Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 25
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 ---
@@ -145,6 +145,7 @@ Progress: [██████████] 100%
 | Phase 06-final-funding-cashflow-integration P04 | 5 | 1 tasks | 1 files |
 | Phase 07-run-final-funding-via-api P06 | 5 | 1 tasks | 1 files |
 | Phase 07-run-final-funding-via-api P02 | 163 | 2 tasks | 5 files |
+| Phase 07-run-final-funding-via-api P04 | 10 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -196,6 +197,8 @@ Recent decisions affecting current work:
 - [Phase 07-run-final-funding-via-api]: [Phase 07-06] security-quality-gate CI job blocks deploy via needs: field; TruffleHog uses fetch-depth: 0 for full history
 - [Phase 07-run-final-funding-via-api]: HARD-01: RDS moved to private subnets (publicly_accessible=false); ALB HTTP redirects to HTTPS with count-gated listener (acm_certificate_arn variable); ECS SG egress tightened to ports 5432/443/53
 - [Phase 07-run-final-funding-via-api]: HARD-07: app-bundle.zip removed from git index via git rm --cached; deploy/aws/eb/*.zip added to .gitignore
+- [Phase 07-run-final-funding-via-api]: Self-contained per-function DB engines in test files to avoid conftest session-scope UNIQUE constraint collision
+- [Phase 07-04]: detail_json uses sa.JSON in model (SQLite-compatible) but postgresql.JSONB in Alembic migration for Postgres production
 
 ### Pending Todos
 
@@ -210,6 +213,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-10T19:58:44.911Z
-Stopped at: Completed 07-run-final-funding-via-api/07-02-PLAN.md — Infrastructure hardening: RDS private subnets, ALB HTTPS redirect, tightened SG egress, git bundle cleanup
+Last session: 2026-03-10T20:04:11.660Z
+Stopped at: Completed 07-run-final-funding-via-api/07-04-PLAN.md — Error sanitization + AuditLog model complete
 Resume file: None
