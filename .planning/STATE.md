@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 07-run-final-funding-via-api/07-04-PLAN.md — Error sanitization + AuditLog model complete
-last_updated: "2026-03-10T20:04:11.664Z"
+stopped_at: Completed 07-run-final-funding-via-api/07-01-PLAN.md — TDD RED scaffold tests for all Wave 0 HARD requirements
+last_updated: "2026-03-10T20:06:45.554Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 25
-  completed_plans: 20
+  completed_plans: 21
 ---
 
 ---
@@ -146,6 +146,7 @@ Progress: [██████████] 100%
 | Phase 07-run-final-funding-via-api P06 | 5 | 1 tasks | 1 files |
 | Phase 07-run-final-funding-via-api P02 | 163 | 2 tasks | 5 files |
 | Phase 07-run-final-funding-via-api P04 | 10 | 2 tasks | 8 files |
+| Phase 07-run-final-funding-via-api P01 | 10 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -199,6 +200,8 @@ Recent decisions affecting current work:
 - [Phase 07-run-final-funding-via-api]: HARD-07: app-bundle.zip removed from git index via git rm --cached; deploy/aws/eb/*.zip added to .gitignore
 - [Phase 07-run-final-funding-via-api]: Self-contained per-function DB engines in test files to avoid conftest session-scope UNIQUE constraint collision
 - [Phase 07-04]: detail_json uses sa.JSON in model (SQLite-compatible) but postgresql.JSONB in Alembic migration for Postgres production
+- [Phase 07-run-final-funding-via-api]: Transaction-based rollback isolation in conftest.py resolves UNIQUE constraint errors from session-scoped DB engine
+- [Phase 07-run-final-funding-via-api]: 07-01 implementation deviation: parallel plan agents implemented HARD-03/04/06 before RED scaffolds were committed; tests went directly to GREEN
 
 ### Pending Todos
 
@@ -213,6 +216,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-10T20:04:11.660Z
-Stopped at: Completed 07-run-final-funding-via-api/07-04-PLAN.md — Error sanitization + AuditLog model complete
+Last session: 2026-03-10T20:06:45.549Z
+Stopped at: Completed 07-run-final-funding-via-api/07-01-PLAN.md — TDD RED scaffold tests for all Wave 0 HARD requirements
 Resume file: None

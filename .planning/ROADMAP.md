@@ -111,7 +111,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 4. CI/CD Pipeline | 3/3 | Complete   | 2026-03-06 |
 | 5. Staging Deployment | 2/3 | In Progress|  |
 | 6. Final Funding & Cashflow | 3/5 | In Progress|  |
-| 7. Application Hardening | 3/6 | In Progress|  |
+| 7. Application Hardening | 4/6 | In Progress|  |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
@@ -132,7 +132,7 @@ Plans:
 **Goal:** Harden the deployed application across seven areas: AWS networking/TLS (RDS to private subnets, ALB HTTPS), default secrets and bootstrap passwords, frontend auth token storage (localStorage → HttpOnly cookies), file/error endpoint information leakage, CI security and quality gates, durable audit logging, and repository hygiene.
 **Requirements**: HARD-01, HARD-02, HARD-03, HARD-04, HARD-05, HARD-06, HARD-07
 **Depends on:** Phase 6
-**Plans:** 3/6 plans executed
+**Plans:** 4/6 plans executed
 
 Plans:
 - [ ] 07-01-PLAN.md — Wave 0 test scaffolds: failing tests for HARD-02, HARD-03, HARD-04, HARD-06 (HARD-02, HARD-03, HARD-04, HARD-06)
