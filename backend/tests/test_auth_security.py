@@ -2,6 +2,23 @@
 import pytest
 from fastapi.testclient import TestClient
 from auth.security import create_access_token
+from api.main import app
+from db.connection import get_db
+
+
+@pytest.fixture
+def client(test_db_session, override_get_db):
+    """Test client with DB override."""
+    app.dependency_overrides[get_db] = override_get_db
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_headers_admin(sample_admin_user):
+    """Auth headers for admin user."""
+    token = create_access_token({"sub": str(sample_admin_user.id)})
+    return {"Authorization": f"Bearer {token}"}
 
 
 class TestGetCurrentUserCookieFallback:
