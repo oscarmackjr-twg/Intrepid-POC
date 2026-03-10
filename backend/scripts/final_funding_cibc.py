@@ -525,6 +525,8 @@ comap.to_excel(f"{folder}/output_share/comap_not_passed.xlsx")
 # %%
 
 
+if 'promo_term' not in final_df_all.columns:
+    final_df_all['promo_term'] = 0
 final_df_all[["SELLER Loan #","Orig. Balance","Purchase Price","promo_term","Current Balance","APR","Term","Property State","FICO Borrower",
               "loan program","Total Dealer $","Lender Price(%)","Dealer Fee","Income","Repurchase",	"Purchase_Date","Excess_Asset",
               "Borrowing_Base_eligible","Platform","tagging","type","new_programs"]].to_excel(f"{folder}/output/concentration_final_cibc.xlsx")
@@ -791,11 +793,12 @@ l2=final_df_all[(final_df_all["Excess_Asset"] == False) & (final_df_all.Repurcha
 print(l2)
 
 # %%
-l3=final_df_all[(final_df_all["Excess_Asset"] == False) & (final_df_all.Repurchase == False) & (final_df_all.type.isin( ['standard_bd', 'wpdi_bd']))]['Purchase Price'].sum() / final_df_all['Purchase Price'].sum()
+_pp_total = final_df_all['Purchase Price'].sum() if 'Purchase Price' in final_df_all.columns else 0
+l3 = final_df_all[(final_df_all["Excess_Asset"] == False) & (final_df_all.Repurchase == False) & (final_df_all.type.isin( ['standard_bd', 'wpdi_bd']))]['Purchase Price'].sum() / _pp_total if _pp_total else 0
 print(l3)
 
 # %%
-l4=final_df_all[(final_df_all["Excess_Asset"] == False) & (final_df_all.Repurchase == False) & (final_df_all.Repurchase == False) & (final_df_all.type.isin( ['standard_bd', 'wpdi_bd'])) & (final_df_all.Excess_Asset != True)]['Purchase Price'].sum() / final_df_all['Purchase Price'].sum()
+l4 = final_df_all[(final_df_all["Excess_Asset"] == False) & (final_df_all.Repurchase == False) & (final_df_all.Repurchase == False) & (final_df_all.type.isin( ['standard_bd', 'wpdi_bd'])) & (final_df_all.Excess_Asset != True)]['Purchase Price'].sum() / _pp_total if _pp_total else 0
 print(l4)
 
 # %%
