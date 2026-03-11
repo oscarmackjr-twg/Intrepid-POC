@@ -112,6 +112,8 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 5. Staging Deployment | 2/3 | In Progress|  |
 | 6. Final Funding & Cashflow | 3/5 | In Progress|  |
 | 7. Application Hardening | 7/7 | Complete   | 2026-03-11 |
+| 8. Fix Staging Auth & Smoke Test | 0/2 | Pending | |
+| 9. Write Missing Verification Records | 0/3 | Pending | |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
@@ -142,3 +144,26 @@ Plans:
 - [ ] 07-05-PLAN.md — HttpOnly cookie auth, rate limiting, CSP header, frontend localStorage removal (HARD-03)
 - [ ] 07-06-PLAN.md — CI security-quality-gate job blocking deploy + human checkpoint (HARD-05)
 - [ ] 07-07-PLAN.md — Wire db session to login audit calls + README credential cleanup (HARD-06, HARD-02)
+
+### Phase 8: Fix Staging Auth & Complete Smoke Test
+
+**Goal:** Unblock staging by adding `LOCAL_DEV_MODE=true` to the ECS task definition (fixing Secure cookie failure over HTTP ALB), apply the Terraform change, and run the Phase 05-03 smoke test to formally verify all three STAGE requirements end-to-end.
+**Requirements:** STAGE-01, STAGE-02, STAGE-03
+**Gap Closure:** Closes MISS-02 (High — Secure cookie breaks HTTP staging), MISS-01 (Medium — docker-compose.yml startup guard fragility), and satisfies STAGE-01 (unsatisfied) + formally verifies STAGE-02/STAGE-03 (partial)
+**Depends on:** Phase 7
+
+Plans:
+- [ ] 08-01-PLAN.md — Add LOCAL_DEV_MODE=true to ecs.tf + docker-compose.yml; terraform plan + apply (STAGE-01, MISS-01, MISS-02)
+- [ ] 08-02-PLAN.md — Trigger ECS deploy, run 05-03 smoke test, write Phase 5 VERIFICATION.md (STAGE-01, STAGE-02, STAGE-03)
+
+### Phase 9: Write Missing Verification Records
+
+**Goal:** Produce the VERIFICATION.md files absent from Phases 1 and 6, formalising evidence already confirmed by the integration checker and plan SUMMARYs. No code changes — documentation gap only.
+**Requirements:** LOCAL-01, LOCAL-02, LOCAL-03, LOCAL-04, LOCAL-05, LOCAL-06
+**Gap Closure:** Closes the verification record gap for LOCAL-01–06 (Phase 1) and the Final Funding integration (Phase 6)
+**Depends on:** Phase 8
+
+Plans:
+- [ ] 09-01-PLAN.md — Write Phase 1 VERIFICATION.md (evidence: integration checker, SUMMARYs, MEMORY.md sample run 9 loans E2E) (LOCAL-01–LOCAL-06)
+- [ ] 09-02-PLAN.md — Write Phase 6 VERIFICATION.md (evidence: 4 plan SUMMARYs, API confirmed working) (FF-01–FF-09)
+- [ ] 09-03-PLAN.md — Update REQUIREMENTS.md traceability to reflect gap closure and mark all LOCAL/STAGE reqs Complete

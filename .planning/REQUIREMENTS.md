@@ -86,12 +86,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LOCAL-01 | Phase 1 | Complete |
-| LOCAL-02 | Phase 1 | Complete |
-| LOCAL-03 | Phase 1 | Complete — 01-01 |
-| LOCAL-04 | Phase 1 | Complete — 01-01 |
-| LOCAL-05 | Phase 1 | Complete |
-| LOCAL-06 | Phase 1 | Complete |
+| LOCAL-01 | Phase 9 (gap closure) | Pending |
+| LOCAL-02 | Phase 9 (gap closure) | Pending |
+| LOCAL-03 | Phase 9 (gap closure) | Pending |
+| LOCAL-04 | Phase 9 (gap closure) | Pending |
+| LOCAL-05 | Phase 9 (gap closure) | Pending |
+| LOCAL-06 | Phase 9 (gap closure) | Pending |
 | DOCKER-01 | Phase 2 | Complete |
 | DOCKER-02 | Phase 2 | Complete |
 | DOCKER-03 | Phase 2 | Complete |
@@ -103,14 +103,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CICD-01 | Phase 4 | Complete |
 | CICD-02 | Phase 4 | Complete |
 | CICD-03 | Phase 4 | Complete |
-| STAGE-01 | Phase 5 | Pending |
-| STAGE-02 | Phase 5 | Complete |
-| STAGE-03 | Phase 5 | Complete |
+| STAGE-01 | Phase 8 (gap closure) | Pending |
+| STAGE-02 | Phase 8 (gap closure) | Pending |
+| STAGE-03 | Phase 8 (gap closure) | Pending |
 
 **Coverage:**
 - v1.0 requirements: 20 total
 - Mapped to phases: 20
 - Unmapped: 0 ✓
+- Gap closure phases: Phase 8 (STAGE-01–03), Phase 9 (LOCAL-01–06)
 
 ---
 *Requirements defined: 2026-03-05*
