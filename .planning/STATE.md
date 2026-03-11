@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 07-run-final-funding-via-api/07-06-PLAN.md — security-quality-gate CI gate and Phase 7 human verification complete
-last_updated: "2026-03-11T00:40:32.251Z"
+stopped_at: Completed 07-run-final-funding-via-api/07-07-PLAN.md — wire db to login audit calls + README admin123 cleanup complete
+last_updated: "2026-03-11T01:15:57.355Z"
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 25
-  completed_plans: 23
+  total_plans: 26
+  completed_plans: 24
 ---
 
 ---
@@ -150,6 +150,7 @@ Progress: [██████████] 100%
 | Phase 07-run-final-funding-via-api P03 | 25 | 2 tasks | 5 files |
 | Phase 07-run-final-funding-via-api P05 | 45 | 2 tasks | 12 files |
 | Phase 07-run-final-funding-via-api P06 | 10 | 2 tasks | 1 files |
+| Phase 07-run-final-funding-via-api P07 | 3 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -211,6 +212,7 @@ Recent decisions affecting current work:
 - [Phase 07-run-final-funding-via-api]: LOCAL_DEV_MODE gates cookie secure flag — False in dev (HTTP), True in staging (HTTPS)
 - [Phase 07-run-final-funding-via-api]: Authorization header fallback kept in get_current_user for API clients and CI scripts
 - [Phase 07-run-final-funding-via-api]: security-quality-gate CI job blocks deploy via needs: field; TruffleHog uses fetch-depth: 0 for full history
+- [Phase 07-07]: Pass db=db and explicit outcome= to log_user_action at both login call sites (login/login_failed); create_user and update_user out of scope per VERIFICATION.md
 
 ### Pending Todos
 
@@ -225,6 +227,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-11T00:40:32.243Z
-Stopped at: Completed 07-run-final-funding-via-api/07-06-PLAN.md — security-quality-gate CI gate and Phase 7 human verification complete
+Last session: 2026-03-11T01:15:57.347Z
+Stopped at: Completed 07-run-final-funding-via-api/07-07-PLAN.md — wire db to login audit calls + README admin123 cleanup complete
 Resume file: None
