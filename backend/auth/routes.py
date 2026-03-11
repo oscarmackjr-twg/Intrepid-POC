@@ -82,7 +82,7 @@ async def login(
     if not user or not verify_password(form_data.password, user.hashed_password):
         # Log failed attempt when user exists (don't reveal whether user exists)
         if user:
-            log_user_action('login_failed', user, details={'reason': 'invalid_password'})
+            log_user_action('login_failed', user, db=db, outcome='failure', details={'reason': 'invalid_password'})
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -109,7 +109,7 @@ async def login(
     )
 
     # Log successful login
-    log_user_action('login', user)
+    log_user_action('login', user, db=db, outcome='success')
 
     return {
         "user": {

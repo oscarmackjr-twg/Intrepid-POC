@@ -360,3 +360,41 @@ class TestPasswordPolicy:
             headers=auth_headers_admin,
         )
         assert response.status_code == 200
+
+
+class TestLoginAuditLog:
+    """Login events must be persisted to audit_log table (HARD-06)."""
+
+    def test_successful_login_writes_audit_row(self, client, sample_admin_user, test_db_session):
+        """Successful login writes a row to audit_log with event_type='login' outcome='success'."""
+        from db.models import AuditLog
+        client.post(
+            "/api/auth/login",
+            data={"username": "admin", "password": "testpass"},
+        )
+        rows = test_db_session.query(AuditLog).filter_by(event_type="login").all()
+        assert len(rows) == 1
+        assert rows[0].outcome == "success"
+        assert rows[0].user_id == sample_admin_user.id
+
+    def test_failed_login_writes_audit_row(self, client, sample_admin_user, test_db_session):
+        """Failed login (wrong password) writes a row to audit_log with event_type='login_failed' outcome='failure'."""
+        from db.models import AuditLog
+        client.post(
+            "/api/auth/login",
+            data={"username": "admin", "password": "wrongpassword"},
+        )
+        rows = test_db_session.query(AuditLog).filter_by(event_type="login_failed").all()
+        assert len(rows) == 1
+        assert rows[0].outcome == "failure"
+        assert rows[0].user_id == sample_admin_user.id
+
+    def test_unknown_user_login_does_not_write_audit_row(self, client, test_db_session):
+        """Login attempt for non-existent username does NOT write an audit row."""
+        from db.models import AuditLog
+        client.post(
+            "/api/auth/login",
+            data={"username": "nobody", "password": "anything"},
+        )
+        rows = test_db_session.query(AuditLog).all()
+        assert len(rows) == 0
