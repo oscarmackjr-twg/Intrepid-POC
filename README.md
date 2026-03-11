@@ -77,11 +77,14 @@ npm run dev
 
 ### Default Login Credentials
 
-- **Username**: `admin`
-- **Password**: `admin123`
-- **Email**: `admin@example.com`
+The seed script generates a one-time random admin password and prints it to stdout. No default password exists — run the script before first login:
 
-⚠️ **Important**: Change the password immediately after first login!
+```bash
+cd backend
+python scripts/seed_admin.py
+```
+
+Copy the printed password. It is shown once and not stored anywhere.
 
 ### Demo: Verify connectivity and database
 
@@ -90,7 +93,7 @@ To **start backend and frontend** and **verify connectivity (including the datab
 1. **Start backend** (Terminal 1): `.\scripts\start-backend.ps1`
 2. **Start frontend** (Terminal 2): `.\scripts\start-frontend.ps1`
 3. **Verify** (Terminal 3): `.\scripts\verify-demo.ps1`
-4. Open **http://localhost:5173** and log in (admin / admin123).
+4. Open **http://localhost:5173** and log in with the admin credentials printed by `seed_admin.py`.
 
 Or run `.\scripts\demo.ps1 -Launch` to start both servers in new windows and then run verification.
 
