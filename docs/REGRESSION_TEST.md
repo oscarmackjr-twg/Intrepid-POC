@@ -78,7 +78,16 @@ Prerequisites: input files present in files_required/ (for local: backend/data/s
 
 ## Sign-Off
 
-Local dry-run (Claude): [ ] PASS  [ ] FAIL — Date: ___________
-QA sign-off (Ops): [ ] PASS  [ ] FAIL — Date: ___________  Tester: ___________
+Local dry-run (Claude): [x] PASS  [ ] FAIL — Date: 2026-03-13
 
-Notes:
+Notes (Claude dry-run):
+
+- Build: frontend npm run build exits 0 in 1.12s, 99 modules, no TypeScript errors.
+- Nav active states: all 6 conditions verified in Layout.tsx — Program Runs uses !type= negation, SG/CIBC children use type=sg/type=cibc, Cash Flow admin link uses !type= negation. All unique.
+- Layout: max-w-5xl confirmed on outer wrapper in both ProgramRuns.tsx (line 401) and FileManager.tsx (line 179).
+- FileManager section order: File List JSX at line 228, Upload Area JSX at line 307 — file list is first. PASS.
+- Regression script: ast.parse reports SYNTAX OK.
+- REGRESSION_TEST.md: all 7 sections present plus Sign-Off block.
+- Visual items (active state highlighting, card appearance, background color, font rendering) require browser verification — see QA sign-off below.
+
+QA sign-off (Ops): [ ] PASS  [ ] FAIL — Date: ___________  Tester: ___________
