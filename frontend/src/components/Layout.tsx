@@ -39,7 +39,7 @@ export default function Layout() {
             <Link
               to="/program-runs"
               className={`px-5 py-2 text-sm flex items-center gap-2 border-l-4 ${
-                location.pathname.startsWith('/program-runs')
+                location.pathname.startsWith('/program-runs') && !location.search.includes('type=')
                   ? 'border-[#1a3868] text-[#1a3868] font-semibold bg-gray-50'
                   : 'border-transparent text-[#475569] hover:text-[#1a3868] hover:bg-gray-50'
               }`}
@@ -55,7 +55,7 @@ export default function Layout() {
             <Link
               to="/program-runs?type=sg"
               className={`pl-8 pr-5 py-2 text-sm flex items-center gap-2 border-l-4 ${
-                location.pathname.startsWith('/program-runs')
+                location.pathname.startsWith('/program-runs') && location.search.includes('type=sg')
                   ? 'border-[#1a3868] text-[#1a3868] font-semibold bg-gray-50'
                   : 'border-transparent text-[#475569] hover:text-[#1a3868] hover:bg-gray-50'
               }`}
@@ -66,7 +66,7 @@ export default function Layout() {
             <Link
               to="/cashflow?type=sg"
               className={`pl-8 pr-5 py-2 text-sm flex items-center gap-2 border-l-4 ${
-                location.pathname.startsWith('/cashflow')
+                location.pathname.startsWith('/cashflow') && location.search.includes('type=sg')
                   ? 'border-[#1a3868] text-[#1a3868] font-semibold bg-gray-50'
                   : 'border-transparent text-[#475569] hover:text-[#1a3868] hover:bg-gray-50'
               }`}
@@ -82,7 +82,7 @@ export default function Layout() {
             <Link
               to="/program-runs?type=cibc"
               className={`pl-8 pr-5 py-2 text-sm flex items-center gap-2 border-l-4 ${
-                location.pathname.startsWith('/program-runs')
+                location.pathname.startsWith('/program-runs') && location.search.includes('type=cibc')
                   ? 'border-[#1a3868] text-[#1a3868] font-semibold bg-gray-50'
                   : 'border-transparent text-[#475569] hover:text-[#1a3868] hover:bg-gray-50'
               }`}
@@ -93,7 +93,7 @@ export default function Layout() {
             <Link
               to="/cashflow?type=cibc"
               className={`pl-8 pr-5 py-2 text-sm flex items-center gap-2 border-l-4 ${
-                location.pathname.startsWith('/cashflow')
+                location.pathname.startsWith('/cashflow') && location.search.includes('type=cibc')
                   ? 'border-[#1a3868] text-[#1a3868] font-semibold bg-gray-50'
                   : 'border-transparent text-[#475569] hover:text-[#1a3868] hover:bg-gray-50'
               }`}
@@ -119,7 +119,7 @@ export default function Layout() {
                 <Link
                   to="/cashflow"
                   className={`px-5 py-2 text-sm flex items-center gap-2 border-l-4 ${
-                    location.pathname.startsWith('/cashflow')
+                    location.pathname.startsWith('/cashflow') && !location.search.includes('type=')
                       ? 'border-[#1a3868] text-[#1a3868] font-semibold bg-gray-50'
                       : 'border-transparent text-[#475569] hover:text-[#1a3868] hover:bg-gray-50'
                   }`}
