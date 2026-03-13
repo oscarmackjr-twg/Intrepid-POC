@@ -6,15 +6,27 @@
   --color-page-bg: #f8fafc;
   --color-content-bg: #ffffff;
   --color-text: #1e293b;
+  --line-height-body: 1.6;
+  --line-height-heading: 1.25;
 }
 
 body {
   margin: 0;
   font-family: 'Gotham', system-ui, -apple-system, sans-serif;
+  line-height: var(--line-height-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--color-text);
   background-color: var(--color-page-bg);
+}
+
+h1, h2, h3, h4 {
+  line-height: var(--line-height-heading);
+  letter-spacing: -0.01em;
+}
+
+table {
+  border-collapse: collapse;
 }
 
 code {
