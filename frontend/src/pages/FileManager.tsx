@@ -176,7 +176,7 @@ export default function FileManager() {
   }
 
   return (
-    <div className="px-4 py-6 sm:px-0">
+    <div className="max-w-5xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">File Manager</h1>
         <div className="flex items-center gap-3">
@@ -225,48 +225,9 @@ export default function FileManager() {
         )}
       </div>
 
-      {/* Upload Area */}
-      <div
-        className={`mb-6 border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-          dragActive
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 bg-gray-50 hover:border-gray-400'
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          id="file-upload"
-          multiple
-          className="hidden"
-          onChange={handleFileSelect}
-          disabled={uploading}
-        />
-        <label
-          htmlFor="file-upload"
-          className="cursor-pointer block"
-        >
-          <div className="text-gray-600">
-            {uploading ? (
-              <div>Uploading...</div>
-            ) : (
-              <>
-                <div className="text-lg font-medium mb-2">
-                  Drag and drop files here, or click to select
-                </div>
-                <div className="text-sm">Supports multiple files</div>
-              </>
-            )}
-          </div>
-        </label>
-      </div>
-
       {/* File List */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-4 py-5 sm:p-6">
+        <div className="p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Files</h2>
           {loading ? (
             <div className="text-center py-8 text-gray-500">Loading...</div>
@@ -340,6 +301,38 @@ export default function FileManager() {
               </table>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Upload Area */}
+      <div className="mt-4">
+        <div
+          className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+            dragActive
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+          }`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            id="file-upload"
+            multiple
+            className="hidden"
+            onChange={handleFileSelect}
+            disabled={uploading}
+          />
+          <label
+            htmlFor="file-upload"
+            className="cursor-pointer block"
+          >
+            <div className="text-sm text-gray-600">
+              {uploading ? 'Uploading...' : <><span className="font-medium text-[#1a3868]">Click to upload</span> or drag and drop files</>}
+            </div>
+          </label>
         </div>
       </div>
     </div>
