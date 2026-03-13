@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 11-refing-ui-for-regression-testing/11-03-PLAN.md — REGRESSION_TEST.md regression checklist created
-last_updated: "2026-03-13T23:19:09.380Z"
+stopped_at: Completed 11-refing-ui-for-regression-testing/11-04-PLAN.md — regression_test.py harness complete
+last_updated: "2026-03-13T23:20:07.506Z"
 progress:
   total_phases: 11
   completed_phases: 6
   total_plans: 36
-  completed_plans: 28
+  completed_plans: 30
 ---
 
 ---
@@ -181,6 +181,8 @@ Progress: [██████████] 100%
 | Phase 07-run-final-funding-via-api P07 | 3 | 2 tasks | 3 files |
 | Phase 10-revamp-user-interface-phase-10 P02 | 1 | 1 tasks | 1 files |
 | Phase 11-refing-ui-for-regression-testing P03 | 1 | 1 tasks | 1 files |
+| Phase 11-refing-ui-for-regression-testing P01 | 2 | 2 tasks | 2 files |
+| Phase 11-refing-ui-for-regression-testing P04 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -250,6 +252,9 @@ Recent decisions affecting current work:
 - [Phase 10-02]: No icon library imported — text-only nav items per user discretion
 - [Phase 10-revamp-user-interface-phase-10]: Phase 10 plan 03 was a pure verification plan — no code changes produced; human sign-off captured visual confirmation of all TWG brand rebrand items
 - [Phase 11-refing-ui-for-regression-testing]: [11-03] REGRESSION_TEST.md serves dual purpose: Claude dry-run and Ops QA sign-off at qa.oscarmackjr.com; binary pass/fail format with expected outcomes per item
+- [Phase 11-refing-ui-for-regression-testing]: [Phase 11-01]: Nav active state uses pathname+search query combination for child links differentiated only by query param
+- [Phase 11-refing-ui-for-regression-testing]: [Phase 11-01]: Admin Cash Flow link uses !type= negation to avoid co-highlighting with Cash Flow SG/CIBC child links
+- [Phase 11-04]: Output dir discovery uses mtime >= started_epoch to identify the run just launched; stdlib-only implementation with filecmp.cmp(shallow=False) for byte-level comparison; date derivation falls back from CLI args to folder name to today
 
 ### Pending Todos
 
@@ -264,6 +269,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-13T23:19:09.370Z
-Stopped at: Completed 11-refing-ui-for-regression-testing/11-03-PLAN.md — REGRESSION_TEST.md regression checklist created
+Last session: 2026-03-13T23:20:07.496Z
+Stopped at: Completed 11-refing-ui-for-regression-testing/11-04-PLAN.md — regression_test.py harness complete
 Resume file: None
