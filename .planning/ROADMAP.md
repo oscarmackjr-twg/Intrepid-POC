@@ -115,6 +115,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 8. Fix Staging Auth & Smoke Test | 0/2 | Pending | |
 | 9. Write Missing Verification Records | 0/3 | Pending | |
 | 10. Revamp User Interface | 3/3 | Complete    | 2026-03-13 |
+| 11. Refing UI for Regression Testing | 0/5 | In Progress | |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
@@ -180,3 +181,17 @@ Plans:
 - [ ] 10-01-PLAN.md — Brand globals (index.html title, index.css Gotham font + CSS vars, logo asset copy) + Login page rebrand (UI-01, UI-02)
 - [ ] 10-02-PLAN.md — Layout.tsx full sidebar rewrite: TWG navy sidebar, logo, SG/CIBC nav groups, admin gate, user footer (UI-03, UI-04, UI-05)
 - [ ] 10-03-PLAN.md — Human visual verification of all pages: sidebar, branding, active states, StagingBanner (UI-01–UI-05)
+
+### Phase 11: Refing UI for Regression Testing
+
+**Goal:** Fix nav active-state bugs from Phase 10, apply spacing/typography polish and structural layout improvements to Program Runs and File Manager, create a manual regression test checklist (docs/REGRESSION_TEST.md), and build a data regression script that runs the pipeline CLI against local test cases and diffs outputs byte-for-byte.
+**Requirements**: UI-06, UI-07, REG-01, REG-02
+**Depends on:** Phase 10
+**Plans:** 5 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Fix nav active-state bugs in Layout.tsx + typography polish in index.css (UI-06)
+- [ ] 11-02-PLAN.md — Layout restructure: max-w-5xl + section reordering for ProgramRuns.tsx and FileManager.tsx (UI-07)
+- [ ] 11-03-PLAN.md — Create docs/REGRESSION_TEST.md manual checklist covering all pages and core ops workflow (REG-01)
+- [ ] 11-04-PLAN.md — Create backend/scripts/regression_test.py data regression harness (REG-02)
+- [ ] 11-05-PLAN.md — Claude dry-run of REGRESSION_TEST.md + human visual verification checkpoint (UI-06, UI-07, REG-01, REG-02)
