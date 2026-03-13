@@ -114,6 +114,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 7. Application Hardening | 7/7 | Complete   | 2026-03-11 |
 | 8. Fix Staging Auth & Smoke Test | 0/2 | Pending | |
 | 9. Write Missing Verification Records | 0/3 | Pending | |
+| 10. Revamp User Interface | 0/3 | Pending | |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
@@ -167,3 +168,15 @@ Plans:
 - [ ] 09-01-PLAN.md — Write Phase 1 VERIFICATION.md (evidence: integration checker, SUMMARYs, MEMORY.md sample run 9 loans E2E) (LOCAL-01–LOCAL-06)
 - [ ] 09-02-PLAN.md — Write Phase 6 VERIFICATION.md (evidence: 4 plan SUMMARYs, API confirmed working) (FF-01–FF-09)
 - [ ] 09-03-PLAN.md — Update REQUIREMENTS.md traceability to reflect gap closure and mark all LOCAL/STAGE reqs Complete
+
+### Phase 10: Revamp User Interface - Phase 10
+
+**Goal:** Redesign the ops dashboard look, feel, and navigation to align with TWG Global brand guidelines — replace horizontal nav with a fixed left sidebar, apply navy brand color throughout, rename app to "Intrepid Loan Platform", add TWG logo, and restructure nav with SG/CIBC group labels. Visual and structural changes only; no new data features.
+**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05
+**Depends on:** Phase 9
+**Plans:** 3 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Brand globals (index.html title, index.css Gotham font + CSS vars, logo asset copy) + Login page rebrand (UI-01, UI-02)
+- [ ] 10-02-PLAN.md — Layout.tsx full sidebar rewrite: TWG navy sidebar, logo, SG/CIBC nav groups, admin gate, user footer (UI-03, UI-04, UI-05)
+- [ ] 10-03-PLAN.md — Human visual verification of all pages: sidebar, branding, active states, StagingBanner (UI-01–UI-05)
