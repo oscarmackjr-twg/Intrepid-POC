@@ -398,12 +398,12 @@ export default function ProgramRuns() {
   }
 
   return (
-    <div className="px-4 py-6 sm:px-0">
+    <div className="max-w-5xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Program Runs</h1>
       </div>
 
-      <div className="bg-white shadow rounded-lg p-4 mb-6">
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
         <h2 className="text-lg font-medium text-gray-900 mb-3">Run program</h2>
         <div className="flex flex-wrap gap-3">
           <button
@@ -462,7 +462,7 @@ export default function ProgramRuns() {
         </p>
       </div>
 
-      <div className="bg-white shadow rounded-lg p-4 mb-6">
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
         <h2 className="text-lg font-medium text-gray-900 mb-2">Standard Output</h2>
         <p className="text-xs text-gray-500 mb-2">
           Shows storage configuration and the most recent run&apos;s status and errors. Cleared at the start of each new Pre-Funding run.
@@ -546,7 +546,7 @@ export default function ProgramRuns() {
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-4 py-5 sm:p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Output directory</h2>
+            <h2 className="text-lg font-medium text-gray-900">Output Directory</h2>
             <div className="flex items-center gap-2">
               {outputPath && (
                 <button
