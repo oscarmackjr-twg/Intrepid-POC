@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import StagingBanner from '../components/StagingBanner'
+import twgLogo from '../assets/twg-logo.png'
 
 export default function Login() {
   const [username, setUsername] = useState('')
@@ -47,11 +48,13 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <StagingBanner />
+      <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-bold text-[#1a3868]">
+          <img src={twgLogo} alt="TWG Global" className="mx-auto h-12 w-auto" />
+          <h2 className="mt-4 text-center text-3xl font-bold text-[#1a3868]">
             Intrepid Loan Platform
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
@@ -112,6 +115,7 @@ export default function Login() {
             </button>
           </div>
         </form>
+      </div>
       </div>
     </div>
   )
