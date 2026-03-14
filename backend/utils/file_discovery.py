@@ -96,47 +96,49 @@ def find_tape_loans_file(directory: str, yesterday: str, required: bool = True) 
 def find_sfy_file(directory: str, date_str: Optional[str] = None, required: bool = True) -> Optional[Path]:
     """
     Find SFY Exhibit file.
-    
+
     Expected pattern: SFY_MM-DD-YYYY_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx
+    Off-cycle fallback: SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-Cycle.xlsx
     If date_str not provided, searches for most recent matching file.
     """
+    files_dir = f"{directory}/files_required"
     if date_str:
-        pattern = f"SFY_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx"
-        return find_file_by_pattern(
-            f"{directory}/files_required",
-            pattern,
-            required=required
-        )
+        result = find_file_by_pattern(files_dir, f"SFY_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
+        if result:
+            return result
+        result = find_file_by_pattern(files_dir, f"SFY_*_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-Cycle.xlsx", required=False)
+        if result:
+            return result
+        return find_file_by_pattern(files_dir, f"SFY_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=required)
     else:
-        # Search for any SFY file matching pattern
-        return find_file_by_pattern(
-            f"{directory}/files_required",
-            "SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx",
-            required=required
-        )
+        result = find_file_by_pattern(files_dir, "SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
+        if result:
+            return result
+        return find_file_by_pattern(files_dir, "SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-Cycle.xlsx", required=required)
 
 
 def find_prime_file(directory: str, date_str: Optional[str] = None, required: bool = True) -> Optional[Path]:
     """
     Find PRIME Exhibit file.
-    
+
     Expected pattern: PRIME_MM-DD-YYYY_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx
+    Off-cycle fallback: PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-Cycle.xlsx
     If date_str not provided, searches for most recent matching file.
     """
+    files_dir = f"{directory}/files_required"
     if date_str:
-        pattern = f"PRIME_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx"
-        return find_file_by_pattern(
-            f"{directory}/files_required",
-            pattern,
-            required=required
-        )
+        result = find_file_by_pattern(files_dir, f"PRIME_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
+        if result:
+            return result
+        result = find_file_by_pattern(files_dir, f"PRIME_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-cycle.xlsx", required=False)
+        if result:
+            return result
+        return find_file_by_pattern(files_dir, f"PRIME_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=required)
     else:
-        # Search for any PRIME file matching pattern
-        return find_file_by_pattern(
-            f"{directory}/files_required",
-            "PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx",
-            required=required
-        )
+        result = find_file_by_pattern(files_dir, "PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
+        if result:
+            return result
+        return find_file_by_pattern(files_dir, "PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-cycle.xlsx", required=required)
 
 
 def find_fx_file(directory: str, last_end: str, fx_number: int = 3, required: bool = False) -> Optional[Path]:

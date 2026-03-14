@@ -70,7 +70,7 @@ def discover_test_cases(test_data_dir: Path) -> list[Path]:
         files_required = subdir / "files_required"
         has_files = files_required.is_dir() and any(f.is_file() for f in files_required.iterdir())
         # Must have outputs/ or output_share/
-        has_expected = (subdir / "outputs").is_dir() or (subdir / "output_share").is_dir()
+        has_expected = (subdir / "output").is_dir() or (subdir / "output_share").is_dir()
         if not has_files:
             print(f"[WARN] Skipping {subdir.name}: no input files found in files_required/")
             continue
@@ -248,7 +248,7 @@ def run_test_case(
     print(f"  pdate={pdate}  tday={tday}")
     print(f"  Input dir: {input_dir}")
 
-    cli_debug_dir = backend_dir / "cli_debug"
+    cli_debug_dir = backend_dir / "data" / "outputs" / "cli_debug"
 
     try:
         started_epoch = datetime.now().timestamp()
@@ -295,7 +295,7 @@ def run_test_case(
         print(f"  Output dir: {generated_dir}")
 
         # Diff outputs/
-        expected_outputs = test_case_dir / "outputs"
+        expected_outputs = test_case_dir / "output"
         if expected_outputs.exists():
             d, m, e = _diff_directories(generated_dir, expected_outputs, "outputs")
             result["diffs"].extend(d)
