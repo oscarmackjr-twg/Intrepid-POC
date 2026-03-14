@@ -110,8 +110,8 @@ def find_sfy_file(directory: str, date_str: Optional[str] = None, required: bool
         result = find_file_by_pattern(files_dir, "SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
         if result:
             return result
-    # Off-cycle fallback: date-agnostic (off-cycle buys may have a different exhibit date)
-    result = find_file_by_pattern(files_dir, "SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-Cycle.xlsx", required=False)
+    # Off-cycle fallback: spacing-agnostic (filenames may have extra spaces before Off-Cycle)
+    result = find_file_by_pattern(files_dir, "SFY_*Off-Cycle*.xlsx", required=False)
     if result:
         return result
     # Re-run with required=True to surface a clean error
@@ -136,8 +136,8 @@ def find_prime_file(directory: str, date_str: Optional[str] = None, required: bo
         result = find_file_by_pattern(files_dir, "PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
         if result:
             return result
-    # Off-cycle fallback: date-agnostic (off-cycle buys may have a different exhibit date)
-    result = find_file_by_pattern(files_dir, "PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-cycle.xlsx", required=False)
+    # Off-cycle fallback: spacing-agnostic (filenames may have extra spaces before Off-cycle)
+    result = find_file_by_pattern(files_dir, "PRIME_*Off-cycle*.xlsx", required=False)
     if result:
         return result
     # Re-run with required=True to surface a clean error
