@@ -257,7 +257,7 @@ def run_test_case(
             [
                 sys.executable,
                 "scripts/run_pipeline_cli.py",
-                "--folder", str(input_dir),
+                "--folder", str(test_case_dir),
                 "--pdate", pdate,
                 "--tday", tday,
             ],
