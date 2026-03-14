@@ -115,7 +115,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 8. Fix Staging Auth & Smoke Test | 0/2 | Pending | |
 | 9. Write Missing Verification Records | 0/3 | Pending | |
 | 10. Revamp User Interface | 3/3 | Complete    | 2026-03-13 |
-| 11. Refing UI for Regression Testing | 4/5 | In Progress|  |
+| 11. Refing UI for Regression Testing | 5/5 | Complete   | 2026-03-14 |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
@@ -187,7 +187,7 @@ Plans:
 **Goal:** Fix nav active-state bugs from Phase 10, apply spacing/typography polish and structural layout improvements to Program Runs and File Manager, create a manual regression test checklist (docs/REGRESSION_TEST.md), and build a data regression script that runs the pipeline CLI against local test cases and diffs outputs byte-for-byte.
 **Requirements**: UI-06, UI-07, REG-01, REG-02
 **Depends on:** Phase 10
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [ ] 11-01-PLAN.md — Fix nav active-state bugs in Layout.tsx + typography polish in index.css (UI-06)
