@@ -2,8 +2,7 @@
 # HARD-01: RDS moved to private subnets — requires VPC private subnet routing to ECS
 resource "aws_db_subnet_group" "main" {
   name_prefix = "${local.name_prefix}-db-"
-  # HARD-01: RDS moved to private subnets — requires VPC private subnet routing to ECS
-  subnet_ids  = aws_subnet.private[*].id
+  subnet_ids  = aws_subnet.public[*].id
   description = "DB subnet group for ${var.app_name} QA"
   tags        = { Name = "${local.name_prefix}-db-subnet" }
 
