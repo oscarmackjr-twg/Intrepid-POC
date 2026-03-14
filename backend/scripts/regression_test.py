@@ -30,6 +30,7 @@ Exit code: 0 if all cases PASS, 1 if any case FAILS.
 """
 import argparse
 import filecmp
+import json
 import os
 import shutil
 import subprocess
@@ -85,18 +86,39 @@ def discover_test_cases(test_data_dir: Path) -> list[Path]:
 # Date helpers
 # ---------------------------------------------------------------------------
 
-def _derive_dates(folder_name: str, cli_pdate: str | None, cli_tday: str | None) -> tuple[str, str]:
+def _load_dates_config(test_data_dir: Path) -> dict:
+    """Load optional dates.json from TestData root. Returns {folder_name: {pdate, tday}}."""
+    config_path = test_data_dir / "dates.json"
+    if not config_path.exists():
+        return {}
+    try:
+        with open(config_path) as f:
+            return json.load(f)
+    except Exception as exc:
+        print(f"[WARN] Could not read dates.json: {exc}")
+        return {}
+
+
+def _derive_dates(folder_name: str, cli_pdate: str | None, cli_tday: str | None, dates_config: dict | None = None) -> tuple[str, str]:
     """Return (pdate, tday) for a test case.
 
     Priority:
     1. CLI args (--pdate / --tday) override everything.
-    2. If folder name looks like YYYY-MM-DD use it as pdate; tday = today.
-    3. Fall back: folder name as pdate, today as tday.
+    2. dates.json entry for this folder name.
+    3. If folder name looks like YYYY-MM-DD use it as pdate; tday = today.
+    4. Fall back: folder name as pdate, today as tday.
     """
     today_str = date.today().isoformat()
 
     if cli_pdate and cli_tday:
         return cli_pdate, cli_tday
+
+    # Check dates.json config
+    if dates_config and folder_name in dates_config:
+        entry = dates_config[folder_name]
+        pdate = cli_pdate or entry.get("pdate", folder_name)
+        tday = cli_tday or entry.get("tday", today_str)
+        return pdate, tday
 
     # Try to parse folder name as YYYY-MM-DD
     try:
@@ -206,6 +228,7 @@ def run_test_case(
     cli_pdate: str | None,
     cli_tday: str | None,
     no_cleanup: bool,
+    dates_config: dict | None = None,
 ) -> dict:
     """Run one test case. Returns result dict."""
     result = {
@@ -219,7 +242,7 @@ def run_test_case(
         "generated_dir": None,
     }
 
-    pdate, tday = _derive_dates(test_case_dir.name, cli_pdate, cli_tday)
+    pdate, tday = _derive_dates(test_case_dir.name, cli_pdate, cli_tday, dates_config)
     input_dir = test_case_dir / "files_required"
     print(f"\n[BUY DATE: {test_case_dir.name}]")
     print(f"  pdate={pdate}  tday={tday}")
@@ -407,6 +430,7 @@ Examples:
     print("=" * 60)
 
     test_cases = discover_test_cases(test_data_dir)
+    dates_config = _load_dates_config(test_data_dir)
 
     if not test_cases:
         print("\nNo valid test cases found. Nothing to run.")
@@ -423,6 +447,7 @@ Examples:
             cli_pdate=args.pdate,
             cli_tday=args.tday,
             no_cleanup=args.no_cleanup,
+            dates_config=dates_config,
         )
         results.append(result)
 
