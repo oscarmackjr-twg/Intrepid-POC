@@ -17,11 +17,8 @@ pd.options.display.max_rows = 500
 # %%
 #Setting IRR
 folder = Path(os.environ.get("FOLDER", ".")).resolve()
-# NOTE: Date variables below (pdate, curr_date, etc.) are set to 93rd buy dates.
-# For a new buy cycle, update these to match the filenames in files_required/.
-# Known limitation: these must be manually updated per buy cycle.
-folderx = '93rd'
-irr_target = 7.9
+folderx = os.environ.get("BUY_NUM", '93rd')
+irr_target = float(os.environ.get("IRR_TARGET", "7.9"))
 
 # %%
 # #Setting date (running on thursday)
@@ -55,12 +52,12 @@ irr_target = 7.9
 # print("first date of month for fx files",fd)
 
 # %%
-#manual dates
-yestarday='02-18-2026'
-pdate='2026-02-24'
-curr_date='02-19-2026'
-last_end='2026_001_31'
-fd='2026-02-01'
+#manual dates (overridable via environment variables for regression testing)
+pdate = os.environ.get("PDATE", '2026-02-24')
+curr_date = os.environ.get("CURR_DATE", '02-19-2026')
+last_end = os.environ.get("LAST_END", '2026_001_31')
+fd = os.environ.get("FD", '2026-02-01')
+yestarday = os.environ.get("YESTERDAY", '02-18-2026')
 
 # %%
 #file location and importing
