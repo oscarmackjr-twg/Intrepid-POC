@@ -106,15 +106,17 @@ def find_sfy_file(directory: str, date_str: Optional[str] = None, required: bool
         result = find_file_by_pattern(files_dir, f"SFY_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
         if result:
             return result
-        result = find_file_by_pattern(files_dir, f"SFY_*_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-Cycle.xlsx", required=False)
-        if result:
-            return result
-        return find_file_by_pattern(files_dir, f"SFY_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=required)
     else:
         result = find_file_by_pattern(files_dir, "SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
         if result:
             return result
-        return find_file_by_pattern(files_dir, "SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-Cycle.xlsx", required=required)
+    # Off-cycle fallback: date-agnostic (off-cycle buys may have a different exhibit date)
+    result = find_file_by_pattern(files_dir, "SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-Cycle.xlsx", required=False)
+    if result:
+        return result
+    # Re-run with required=True to surface a clean error
+    primary_pattern = f"SFY_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx" if date_str else "SFY_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx"
+    return find_file_by_pattern(files_dir, primary_pattern, required=required)
 
 
 def find_prime_file(directory: str, date_str: Optional[str] = None, required: bool = True) -> Optional[Path]:
@@ -130,15 +132,17 @@ def find_prime_file(directory: str, date_str: Optional[str] = None, required: bo
         result = find_file_by_pattern(files_dir, f"PRIME_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
         if result:
             return result
-        result = find_file_by_pattern(files_dir, f"PRIME_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-cycle.xlsx", required=False)
-        if result:
-            return result
-        return find_file_by_pattern(files_dir, f"PRIME_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=required)
     else:
         result = find_file_by_pattern(files_dir, "PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx", required=False)
         if result:
             return result
-        return find_file_by_pattern(files_dir, "PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-cycle.xlsx", required=required)
+    # Off-cycle fallback: date-agnostic (off-cycle buys may have a different exhibit date)
+    result = find_file_by_pattern(files_dir, "PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding - Off-cycle.xlsx", required=False)
+    if result:
+        return result
+    # Re-run with required=True to surface a clean error
+    primary_pattern = f"PRIME_{date_str}_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx" if date_str else "PRIME_*_ExhibitAtoFormofSaleNotice - Pre-Funding.xlsx"
+    return find_file_by_pattern(files_dir, primary_pattern, required=required)
 
 
 def find_fx_file(directory: str, last_end: str, fx_number: int = 3, required: bool = False) -> Optional[Path]:
