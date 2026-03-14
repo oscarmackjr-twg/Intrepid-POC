@@ -12,8 +12,8 @@ Usage (from repo root):
 
 TestData folder structure:
     <test-data-dir>/
-        {buy_date_folder}/          # e.g. 2026-02-24 or any name
-            <pipeline input files>
+        {buy_date_folder}/          # e.g. 93rd_buy or any name
+            files_required/         # pipeline input files live here
             outputs/
                 <expected output files>
             output_share/           # optional
@@ -65,12 +65,13 @@ def discover_test_cases(test_data_dir: Path) -> list[Path]:
     for subdir in sorted(test_data_dir.iterdir()):
         if not subdir.is_dir():
             continue
-        # Must contain at least one non-directory file
-        has_files = any(f.is_file() for f in subdir.iterdir())
+        # Input files live in files_required/ subdirectory
+        files_required = subdir / "files_required"
+        has_files = files_required.is_dir() and any(f.is_file() for f in files_required.iterdir())
         # Must have outputs/ or output_share/
         has_expected = (subdir / "outputs").is_dir() or (subdir / "output_share").is_dir()
         if not has_files:
-            print(f"[WARN] Skipping {subdir.name}: no input files found")
+            print(f"[WARN] Skipping {subdir.name}: no input files found in files_required/")
             continue
         if not has_expected:
             print(f"[WARN] Skipping {subdir.name}: no outputs/ or output_share/ directory")
@@ -219,9 +220,10 @@ def run_test_case(
     }
 
     pdate, tday = _derive_dates(test_case_dir.name, cli_pdate, cli_tday)
+    input_dir = test_case_dir / "files_required"
     print(f"\n[BUY DATE: {test_case_dir.name}]")
     print(f"  pdate={pdate}  tday={tday}")
-    print(f"  Input dir: {test_case_dir}")
+    print(f"  Input dir: {input_dir}")
 
     cli_debug_dir = backend_dir / "cli_debug"
 
@@ -232,7 +234,7 @@ def run_test_case(
             [
                 sys.executable,
                 "scripts/run_pipeline_cli.py",
-                "--folder", str(test_case_dir),
+                "--folder", str(input_dir),
                 "--pdate", pdate,
                 "--tday", tday,
             ],
@@ -344,7 +346,7 @@ def main() -> None:
 TestData structure:
   <test-data-dir>/
     {buy_date_folder}/
-      <pipeline input files>
+      files_required/    <- pipeline input files
       outputs/           <- expected pipeline outputs
       output_share/      <- expected output_share files (optional)
 
