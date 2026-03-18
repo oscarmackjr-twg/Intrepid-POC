@@ -1,39 +1,36 @@
-"""Data regression test harness for pipeline output validation.
+"""Funding & CashFlow regression test harness.
 
-Discovers buy-date test case folders and runs all four pipeline phases against
-each, diffs generated outputs against expected outputs byte-for-byte, and prints
-a summary report.  Optionally writes an Excel report following the TestMatrix
-template format.
+Runs only the Final Funding (SG + CIBC) and CashFlow phases against each
+buy-date folder in TestData and diffs outputs against golden expected files.
+Assumes files_required/ already contains the split _sg/_cibc exhibit files
+(i.e. tagging has already been run and its outputs are part of the golden data).
 
 Phases run per test case:
-  1. Pre-Funding  — scripts/run_pipeline_cli.py (validates eligibility checks)
-  2. Tagging      — scripts/tagging.py (splits exhibit files into _sg/_cibc)
-  3. Funding SG   — scripts/final_funding_sg.py
-  4. Funding CIBC — scripts/final_funding_cibc.py
-  5. CashFlow     — cashflow/compute/run_purchase_package.py (SG and CIBC)
+  1. Funding SG   — scripts/final_funding_sg.py
+  2. Funding CIBC — scripts/final_funding_cibc.py
+  3. CashFlow     — cashflow/compute/run_purchase_package.py (SG and CIBC)
 
-Phases 2-5 run against a temp copy of files_required/ so the golden TestData
-directory is never modified.  Generated outputs land in temp_dir/output/ and
-temp_dir/output_share/, which are then diffed against the golden
-test_case_dir/output/ and test_case_dir/output_share/.
+Each test case runs against a temp copy of files_required/ so the golden
+TestData directory is never modified.  Generated outputs land in
+temp_dir/output/ and temp_dir/output_share/, which are then diffed against the
+golden test_case_dir/output/ and test_case_dir/output_share/.
 
 Usage (from repo root):
-    python backend/scripts/regression_test.py
-    python backend/scripts/regression_test.py --test-data C:\\Users\\omack\\Downloads\\TestData
-    python backend/scripts/regression_test.py --pdate 2026-02-24 --tday 2026-02-19
-    python backend/scripts/regression_test.py --no-cleanup  # keep temp dirs for inspection
-    python backend/scripts/regression_test.py --skip-phase1  # skip pre-funding (faster)
-    python backend/scripts/regression_test.py --report report.xlsx  # custom report path
+    python backend/scripts/regression_test_funding.py
+    python backend/scripts/regression_test_funding.py --test-data C:\\Users\\omack\\Downloads\\TestData
+    python backend/scripts/regression_test_funding.py --pdate 2026-02-24 --tday 2026-02-19
+    python backend/scripts/regression_test_funding.py --no-cleanup
+    python backend/scripts/regression_test_funding.py --report report.xlsx
 
 TestData folder structure:
     <test-data-dir>/
-        {buy_date_folder}/          # e.g. 93rd_buy or any name
-            files_required/         # all pipeline input + intermediate files
+        {buy_date_folder}/
+            files_required/     # must include _sg and _cibc split exhibit files
             output/
                 <expected output files>
-            output_share/           # optional
+            output_share/
                 <expected output_share files>
-        dates.json                  # optional per-folder date config
+        dates.json              # optional per-folder date config
 
 Exit code: 0 if all cases PASS, 1 if any case FAILS.
 """
@@ -63,7 +60,6 @@ def _add_us_business_days(tday_str: str, n: int) -> str:
                 count += 1
         return d.strftime("%Y-%m-%d")
     except ImportError:
-        # Fallback: skip weekends only (no holiday awareness)
         d = datetime.strptime(tday_str, "%Y-%m-%d").date()
         count = 0
         while count < n:
@@ -78,7 +74,6 @@ def _add_us_business_days(tday_str: str, n: int) -> str:
 # ---------------------------------------------------------------------------
 
 def _repo_root() -> Path:
-    """Return the repo root (parent of backend/)."""
     return Path(__file__).resolve().parent.parent.parent
 
 
@@ -109,6 +104,18 @@ def discover_test_cases(test_data_dir: Path) -> list[Path]:
         if not has_expected:
             print(f"[WARN] Skipping {subdir.name}: no output/ or output_share/ directory")
             continue
+
+        # Check for split exhibit files (_sg / _cibc) — required for this harness
+        fr = subdir / "files_required"
+        sg_files  = list(fr.glob("*_sg.xlsx"))
+        cibc_files = list(fr.glob("*_cibc.xlsx"))
+        if not sg_files or not cibc_files:
+            print(
+                f"[WARN] Skipping {subdir.name}: no _sg.xlsx or _cibc.xlsx exhibit files "
+                "found in files_required/ (run tagging first)"
+            )
+            continue
+
         cases.append(subdir)
 
     return cases
@@ -119,7 +126,6 @@ def discover_test_cases(test_data_dir: Path) -> list[Path]:
 # ---------------------------------------------------------------------------
 
 def _load_dates_config(test_data_dir: Path) -> dict:
-    """Load optional dates.json from TestData root. Returns {folder_name: {pdate, tday}}."""
     config_path = test_data_dir / "dates.json"
     if not config_path.exists():
         return {}
@@ -140,13 +146,10 @@ def _derive_dates(
     """Return (pdate, tday) for a test case.
 
     tday is resolved from: CLI arg → dates.json → today.
-    pdate is resolved from: CLI arg → tday + 3 US business days.
-    dates.json pdate is intentionally ignored; pdate is always derived
-    from tday so the two stay in sync across runs.
+    pdate is always tday + 3 US business days unless overridden via --pdate.
     """
     today_str = date.today().isoformat()
 
-    # Resolve tday first
     if cli_tday:
         tday = cli_tday
     elif dates_config and folder_name in dates_config:
@@ -154,14 +157,12 @@ def _derive_dates(
     else:
         tday = today_str
 
-    # pdate: explicit CLI override OR tday + 3 US business days
     pdate = cli_pdate if cli_pdate else _add_us_business_days(tday, 3)
 
     return pdate, tday
 
 
 def _derive_date_vars(tday: str) -> dict:
-    """Derive date variables needed by final_funding scripts from tday (YYYY-MM-DD)."""
     tday_dt = datetime.strptime(tday, "%Y-%m-%d")
     yesterday_dt = tday_dt - timedelta(days=1)
     curr_date = tday_dt.strftime("%m-%d-%Y")
@@ -171,57 +172,44 @@ def _derive_date_vars(tday: str) -> dict:
     last_end = f"{last_of_prev_month.year}_{last_of_prev_month.month:03}_{last_of_prev_month.day:02}"
     fd = first_of_month.strftime("%Y-%m-%d")
     return {
-        "curr_date": curr_date,
-        "yesterday": yesterday_str,
-        "last_end": last_end,
-        "fd": fd,
+        "curr_date":  curr_date,
+        "yesterday":  yesterday_str,
+        "last_end":   last_end,
+        "fd":         fd,
     }
 
 
 # ---------------------------------------------------------------------------
-# Phase classification helpers (used by report generator)
+# Phase classification helpers
 # ---------------------------------------------------------------------------
 
-# Column order for Excel report phases
 PHASE_COLS = [
-    "Pre-Funding\n(AllInOne)",
-    "Tagging",
     "Final Funding\nSG",
     "Final Funding\nCIBC",
     "CashFlow",
 ]
-PHASE_KEYS = ["prefunding", "tagging", "funding_sg", "funding_cibc", "cashflow"]
+PHASE_KEYS = ["funding_sg", "funding_cibc", "cashflow"]
 
 
 def _classify_output_file(filename: str) -> str:
-    """Return PHASE_KEYS entry for an output file based on its name."""
     name = Path(filename).name
     nl = name.lower()
 
-    # CashFlow
     for pat in ["sfc_cashflows_*", "twg_cashflows_*", "loans_data_*",
                 "cashflows_*", "cashflow profile*"]:
         if fnmatch.fnmatch(nl, pat):
             return "cashflow"
 
-    # Final Funding SG-specific
     for pat in ["everyloan_sg*", "borrowing_file_sg*", "concentration_final_sg*",
                 "flagged_loans_*_sg*", "notes_flagged_loans_*_sg*"]:
         if fnmatch.fnmatch(nl, pat):
             return "funding_sg"
 
-    # Final Funding CIBC-specific
     for pat in ["everyloan_cibc*", "borrowing_file_cibc*", "concentration_final_cibc*",
                 "flagged_loans_*_cibc*", "notes_flagged_loans_*_cibc*"]:
         if fnmatch.fnmatch(nl, pat):
             return "funding_cibc"
 
-    # Tagging outputs (split exhibit files written to output/)
-    for pat in ["tagging_summary*", "tagging_allocation*"]:
-        if fnmatch.fnmatch(nl, pat):
-            return "tagging"
-
-    # Final Funding shared (comap, flags, purchase price)
     for pat in ["comap_not_passed*", "purchase_price_mismatch*",
                 "flagged_loans_*", "notes_flagged_loans_*"]:
         if fnmatch.fnmatch(nl, pat):
@@ -230,40 +218,11 @@ def _classify_output_file(filename: str) -> str:
     return "funding_sg"  # default
 
 
-def _classify_input_file(filename: str) -> str:
-    """Return PHASE_KEYS entry for an input file (which phase introduces it)."""
-    name = Path(filename).name
-    nl = name.lower()
-
-    # Tagging outputs (split exhibit files)
-    if ("_sg" in nl or "_cibc" in nl) and ("exhibit" in nl or "fx3_" in nl):
-        return "tagging"
-
-    # Pre-Funding outputs (raw exhibit files generated by AllInOne)
-    if ("exhibitatoformofsalenotice" in nl.replace(" ", "").replace("-", "")
-            and "_sg" not in nl and "_cibc" not in nl
-            and "pre-funding" not in nl):
-        return "prefunding"
-
-    # Pre-Funding inputs (SFC / SFTP)
-    for pat in ["tape20loans_*", "sfy_*pre-funding*", "prime_*pre-funding*",
-                "fx3 - twg*", "fx4 - twg*", "funding request*"]:
-        if fnmatch.fnmatch(nl, pat):
-            return "prefunding"
-
-    # Monthly servicing files
-    if fnmatch.fnmatch(nl, "fx3_2*") or fnmatch.fnmatch(nl, "fx4_2*"):
-        return "prefunding"
-
-    return ""  # baseline/fixed files
-
-
 # ---------------------------------------------------------------------------
 # Diff logic
 # ---------------------------------------------------------------------------
 
 def _collect_files(directory: Path) -> dict[str, Path]:
-    """Return {relative_path_str: absolute_path} for all files recursively."""
     result = {}
     if not directory.exists():
         return result
@@ -279,7 +238,6 @@ def _diff_directories(
     expected_dir: Path,
     label: str,
 ) -> tuple[list[str], list[str], list[str]]:
-    """Compare two directories. Returns (diffs, missing, extras)."""
     diffs: list[str] = []
     missing: list[str] = []
     extras: list[str] = []
@@ -287,7 +245,7 @@ def _diff_directories(
     if not expected_dir.exists():
         return diffs, missing, extras
 
-    expected_files = _collect_files(expected_dir)
+    expected_files  = _collect_files(expected_dir)
     generated_files = _collect_files(generated_dir) if generated_dir.exists() else {}
 
     for rel, exp_path in expected_files.items():
@@ -311,14 +269,10 @@ def _diff_directories(
 
 
 def _compare_tabular_files(actual_path: Path, expected_path: Path) -> list[dict]:
-    """
-    Compare two tabular files (Excel or CSV) and return a list of cell-level
-    differences.  Each entry: {loan_num, column, expected, actual, note}.
-    """
     import pandas as pd
 
     KEY_COLS = ["SELLER Loan #", "Account Number", "Loan #", "loan_num", "dates"]
-    MAX_DIFFS = 200  # cap per file to avoid huge reports
+    MAX_DIFFS = 200
 
     def _load(p: Path):
         try:
@@ -334,11 +288,9 @@ def _compare_tabular_files(actual_path: Path, expected_path: Path) -> list[dict]
     expected = _load(expected_path)
 
     if actual is None or expected is None:
-        return [{
-            "loan_num": "—", "column": "(binary)",
-            "expected": "—", "actual": "—",
-            "note": "cannot compare non-tabular file",
-        }]
+        return [{"loan_num": "—", "column": "(binary)",
+                 "expected": "—", "actual": "—",
+                 "note": "cannot compare non-tabular file"}]
 
     # everyloan files have an auto-generated row-number first column; skip it
     import fnmatch as _fnmatch
@@ -362,12 +314,9 @@ def _compare_tabular_files(actual_path: Path, expected_path: Path) -> list[dict]
     expected = expected.fillna("").astype(str)
 
     diffs: list[dict] = []
-
-    # Try key-based comparison first
     key_col = None if _force_positional else next((k for k in KEY_COLS if k in actual.columns and k in expected.columns), None)
 
     if key_col is None:
-        # Positional comparison
         if actual.shape != expected.shape:
             diffs.append({
                 "loan_num": "—", "column": "(shape)",
@@ -389,7 +338,6 @@ def _compare_tabular_files(actual_path: Path, expected_path: Path) -> list[dict]
                         return diffs
         return diffs
 
-    # Key-based comparison
     try:
         act_idx = actual.set_index(key_col)
         exp_idx = expected.set_index(key_col)
@@ -398,7 +346,6 @@ def _compare_tabular_files(actual_path: Path, expected_path: Path) -> list[dict]
                  "expected": "—", "actual": "—",
                  "note": "could not index on key column"}]
 
-    # Loans missing from actual output
     for loan in exp_idx.index.difference(act_idx.index):
         diffs.append({"loan_num": str(loan), "column": "(row)",
                       "expected": "present", "actual": "missing",
@@ -406,7 +353,6 @@ def _compare_tabular_files(actual_path: Path, expected_path: Path) -> list[dict]
         if len(diffs) >= MAX_DIFFS:
             return diffs
 
-    # Extra loans in actual output
     for loan in act_idx.index.difference(exp_idx.index):
         diffs.append({"loan_num": str(loan), "column": "(row)",
                       "expected": "absent", "actual": "present",
@@ -414,7 +360,6 @@ def _compare_tabular_files(actual_path: Path, expected_path: Path) -> list[dict]
         if len(diffs) >= MAX_DIFFS:
             return diffs
 
-    # Cell-level diffs for matching loans
     common_loans = exp_idx.index.intersection(act_idx.index)
     common_cols  = [c for c in exp_idx.columns if c in act_idx.columns]
     for loan in common_loans:
@@ -433,7 +378,7 @@ def _compare_tabular_files(actual_path: Path, expected_path: Path) -> list[dict]
 
 
 # ---------------------------------------------------------------------------
-# Phase runners
+# Phase runner
 # ---------------------------------------------------------------------------
 
 def _run_phase(
@@ -443,7 +388,6 @@ def _run_phase(
     env: dict | None = None,
     timeout: int = 300,
 ) -> tuple[bool, str | None]:
-    """Run a subprocess for a pipeline phase. Returns (ok, error_msg)."""
     run_env = os.environ.copy()
     if env:
         run_env.update(env)
@@ -484,64 +428,35 @@ def run_test_case(
     cli_pdate: str | None,
     cli_tday: str | None,
     no_cleanup: bool,
-    skip_phase1: bool,
     dates_config: dict | None = None,
+    update_golden: bool = False,
 ) -> dict:
-    """Run all pipeline phases for one test case. Returns result dict."""
     pdate, tday = _derive_dates(test_case_dir.name, cli_pdate, cli_tday, dates_config)
     date_vars = _derive_date_vars(tday)
     buy_num = test_case_dir.name.replace("_buy", "")
 
     result = {
-        "name": test_case_dir.name,
+        "name":          test_case_dir.name,
         "test_case_dir": test_case_dir,
-        "pdate": pdate,
-        "tday": tday,
-        "buy_num": buy_num,
-        "date_vars": date_vars,
-        "status": "FAILED",
-        "phases_ok": [],
+        "pdate":         pdate,
+        "tday":          tday,
+        "buy_num":       buy_num,
+        "date_vars":     date_vars,
+        "status":        "FAILED",
+        "phases_ok":     [],
         "phases_failed": [],
-        "diffs": [],
-        "missing": [],
-        "extra": [],
-        "exceptions": [],
-        "error": None,
-        "work_dir": None,
+        "diffs":         [],
+        "missing":       [],
+        "extra":         [],
+        "exceptions":    [],
+        "error":         None,
+        "work_dir":      None,
     }
 
     print(f"\n[BUY DATE: {test_case_dir.name}]")
     print(f"  pdate={pdate}  tday={tday}  curr_date={date_vars['curr_date']}  buy_num={buy_num}")
 
-    # Phase 1: Pre-Funding
-    if not skip_phase1:
-        print("  [Phase 1] Pre-Funding...")
-        ok, err = _run_phase(
-            "Phase1",
-            [
-                sys.executable,
-                "scripts/run_pipeline_cli.py",
-                "--folder", str(test_case_dir),
-                "--pdate", pdate,
-                "--tday", tday,
-            ],
-            cwd=str(backend_dir),
-            timeout=300,
-        )
-        if ok:
-            result["phases_ok"].append("Phase1:PreFunding")
-            print("  [Phase 1] OK")
-        else:
-            result["phases_failed"].append(f"Phase1:PreFunding — {err}")
-            result["error"] = err
-            print(f"  [Phase 1] FAILED: {err}")
-            return result
-    else:
-        print("  [Phase 1] Pre-Funding skipped (--skip-phase1)")
-        result["phases_ok"].append("Phase1:PreFunding(skipped)")
-
-    # Set up temp work dir for Phases 2-5
-    tmp_parent = Path(tempfile.mkdtemp(prefix="regression_test_"))
+    tmp_parent = Path(tempfile.mkdtemp(prefix="regression_funding_"))
     work_dir = tmp_parent / "work"
     work_dir.mkdir()
     result["work_dir"] = work_dir
@@ -553,105 +468,108 @@ def run_test_case(
         print(f"  Work dir: {work_dir}")
 
         funding_env = {
-            "FOLDER": str(work_dir),
-            "PDATE": pdate,
-            "CURR_DATE": date_vars["curr_date"],
-            "YESTERDAY": date_vars["yesterday"],
-            "LAST_END": date_vars["last_end"],
-            "FD": date_vars["fd"],
-            "BUY_NUM": buy_num,
+            "FOLDER":     str(work_dir),
+            "PDATE":      pdate,
+            "CURR_DATE":  date_vars["curr_date"],
+            "YESTERDAY":  date_vars["yesterday"],
+            "LAST_END":   date_vars["last_end"],
+            "FD":         date_vars["fd"],
+            "BUY_NUM":    buy_num,
         }
 
-        # Phase 2: Tagging
-        print("  [Phase 2] Tagging...")
+        # Phase 1: Funding SG
+        print("  [Phase 1] Funding SG...")
         ok, err = _run_phase(
-            "Phase2",
-            [sys.executable, "scripts/tagging.py"],
-            cwd=str(backend_dir),
-            env={"FOLDER": str(work_dir), "PDATE": pdate},
-            timeout=120,
-        )
-        if ok:
-            result["phases_ok"].append("Phase2:Tagging")
-            print("  [Phase 2] OK")
-        else:
-            result["phases_failed"].append(f"Phase2:Tagging — {err}")
-            result["error"] = err
-            print(f"  [Phase 2] FAILED: {err}")
-            return result
-
-        # Phase 3a: Funding SG
-        print("  [Phase 3a] Funding SG...")
-        ok, err = _run_phase(
-            "Phase3-SG",
+            "FundingSG",
             [sys.executable, "scripts/final_funding_sg.py"],
             cwd=str(backend_dir),
             env=funding_env,
             timeout=300,
         )
         if ok:
-            result["phases_ok"].append("Phase3a:FundingSG")
-            print("  [Phase 3a] OK")
+            result["phases_ok"].append("Phase1:FundingSG")
+            print("  [Phase 1] OK")
         else:
-            result["phases_failed"].append(f"Phase3a:FundingSG — {err}")
+            result["phases_failed"].append(f"Phase1:FundingSG — {err}")
             result["error"] = err
-            print(f"  [Phase 3a] FAILED: {err}")
+            print(f"  [Phase 1] FAILED: {err}")
             return result
 
-        # Phase 3b: Funding CIBC
-        print("  [Phase 3b] Funding CIBC...")
+        # Phase 2: Funding CIBC
+        print("  [Phase 2] Funding CIBC...")
         ok, err = _run_phase(
-            "Phase3-CIBC",
+            "FundingCIBC",
             [sys.executable, "scripts/final_funding_cibc.py"],
             cwd=str(backend_dir),
             env=funding_env,
             timeout=300,
         )
         if ok:
-            result["phases_ok"].append("Phase3b:FundingCIBC")
-            print("  [Phase 3b] OK")
+            result["phases_ok"].append("Phase2:FundingCIBC")
+            print("  [Phase 2] OK")
         else:
-            result["phases_failed"].append(f"Phase3b:FundingCIBC — {err}")
+            result["phases_failed"].append(f"Phase2:FundingCIBC — {err}")
             result["error"] = err
-            print(f"  [Phase 3b] FAILED: {err}")
+            print(f"  [Phase 2] FAILED: {err}")
             return result
 
-        # Phase 4: CashFlow (SG and CIBC)
-        files_req = work_dir / "files_required"
+        # Phase 3: CashFlow (SG and CIBC)
+        files_req  = work_dir / "files_required"
         output_dir = work_dir / "output"
-        curr_date = date_vars["curr_date"]
+        curr_date  = date_vars["curr_date"]
 
         for buyer in ("sg", "cibc"):
-            sfy_file = files_req / f"FX3_{curr_date}_ExhibitAtoFormofSaleNotice_{buyer}.xlsx"
+            sfy_file   = files_req / f"FX3_{curr_date}_ExhibitAtoFormofSaleNotice_{buyer}.xlsx"
             prime_file = files_req / f"{curr_date} Exhibit A To Form Of Sale Notice_{buyer}.xlsx"
 
             if not sfy_file.exists() or not prime_file.exists():
-                print(f"  [Phase 4 {buyer.upper()}] Skipped — exhibit files not found")
+                print(f"  [Phase 3 {buyer.upper()}] Skipped — exhibit files not found")
                 continue
 
-            print(f"  [Phase 4 {buyer.upper()}] CashFlow...")
+            print(f"  [Phase 3 {buyer.upper()}] CashFlow...")
             ok, err = _run_phase(
-                f"Phase4-{buyer.upper()}",
+                f"CashFlow-{buyer.upper()}",
                 [
                     sys.executable, "-m", "cashflow.compute.run_purchase_package",
-                    "--prime-file", str(prime_file),
-                    "--sfy-file", str(sfy_file),
-                    "--master-sheet", str(files_req / "MASTER_SHEET.xlsx"),
-                    "--notes-sheet", str(files_req / "MASTER_SHEET - Notes.xlsx"),
+                    "--prime-file",    str(prime_file),
+                    "--sfy-file",      str(sfy_file),
+                    "--master-sheet",  str(files_req / "MASTER_SHEET.xlsx"),
+                    "--notes-sheet",   str(files_req / "MASTER_SHEET - Notes.xlsx"),
                     "--purchase-date", pdate,
-                    "--output-dir", str(output_dir),
-                    "--buy-num", buy_num,
-                    "--buyer", buyer,
+                    "--output-dir",    str(output_dir),
+                    "--buy-num",       buy_num,
+                    "--buyer",         buyer,
                 ],
                 cwd=str(backend_dir),
                 timeout=300,
             )
             if ok:
-                result["phases_ok"].append(f"Phase4:CashFlow{buyer.upper()}")
-                print(f"  [Phase 4 {buyer.upper()}] OK")
+                result["phases_ok"].append(f"Phase3:CashFlow{buyer.upper()}")
+                print(f"  [Phase 3 {buyer.upper()}] OK")
             else:
-                result["phases_failed"].append(f"Phase4:CashFlow{buyer.upper()} — {err}")
-                print(f"  [Phase 4 {buyer.upper()}] FAILED: {err}")
+                result["phases_failed"].append(f"Phase3:CashFlow{buyer.upper()} — {err}")
+                print(f"  [Phase 3 {buyer.upper()}] FAILED: {err}")
+
+        # --update-golden: overwrite golden expected files with actual outputs
+        if update_golden:
+            updated_files = []
+            for subdir in ("output", "output_share"):
+                actual_dir  = work_dir / subdir
+                golden_dir  = test_case_dir / subdir
+                golden_dir.mkdir(exist_ok=True)
+                for actual_file in actual_dir.rglob("*"):
+                    if not actual_file.is_file():
+                        continue
+                    rel = actual_file.relative_to(actual_dir)
+                    dest = golden_dir / rel
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(str(actual_file), str(dest))
+                    updated_files.append(f"{subdir}/{rel}")
+            print(f"  [update-golden] Wrote {len(updated_files)} files to {test_case_dir}")
+            for f in updated_files:
+                print(f"    {f}")
+            result["status"] = "PASS"
+            return result
 
         # Diff outputs vs golden
         expected_outputs = test_case_dir / "output"
@@ -668,7 +586,7 @@ def run_test_case(
             result["missing"].extend(m)
             result["extra"].extend(e)
 
-        # Collect cell-level exceptions for DIFFER files while work_dir is still alive
+        # Collect cell-level exceptions for differing files
         for rel_path in result["diffs"]:
             parts = Path(rel_path).parts
             if len(parts) < 2:
@@ -719,7 +637,6 @@ def run_test_case(
 # ---------------------------------------------------------------------------
 
 def _file_status(rel_path: str, result: dict) -> str:
-    """Return status string for a file path like 'output/foo.xlsx'."""
     if rel_path in result["diffs"]:
         return "DIFFER"
     if rel_path in result["missing"]:
@@ -729,36 +646,49 @@ def _file_status(rel_path: str, result: dict) -> str:
     return "MATCH"
 
 
+def _all_expected_files(result: dict) -> list[str]:
+    files = []
+    test_case_dir = result.get("test_case_dir")
+    if test_case_dir is None:
+        return files
+    for subdir_label in ("output", "output_share"):
+        golden_dir = Path(test_case_dir) / subdir_label
+        if golden_dir.exists():
+            for f in golden_dir.rglob("*"):
+                if f.is_file():
+                    rel = f"{subdir_label}/{f.relative_to(golden_dir)}"
+                    files.append(rel)
+    return files
+
+
 def write_excel_report(results: list, report_path: Path) -> None:
-    """Write test results to Excel following the TestMatrix template format."""
     from openpyxl import Workbook
     from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
 
-    # Fills
-    FILL_GREEN  = PatternFill("solid", fgColor="C6EFCE")   # MATCH / PASS
-    FILL_RED    = PatternFill("solid", fgColor="FFC7CE")   # MISSING / FAILED
-    FILL_ORANGE = PatternFill("solid", fgColor="FFCC99")   # DIFFER
-    FILL_YELLOW = PatternFill("solid", fgColor="FFEB9C")   # EXTRA
-    FILL_BLUE   = PatternFill("solid", fgColor="BDD7EE")   # header
-    FILL_DKBLUE = PatternFill("solid", fgColor="4472C4")   # section header
-    FILL_GRAY   = PatternFill("solid", fgColor="EEEEEE")   # baseline/input rows
+    FILL_GREEN  = PatternFill("solid", fgColor="C6EFCE")
+    FILL_RED    = PatternFill("solid", fgColor="FFC7CE")
+    FILL_ORANGE = PatternFill("solid", fgColor="FFCC99")
+    FILL_YELLOW = PatternFill("solid", fgColor="FFEB9C")
+    FILL_BLUE   = PatternFill("solid", fgColor="BDD7EE")
+    FILL_DKBLUE = PatternFill("solid", fgColor="4472C4")
+    FILL_GRAY   = PatternFill("solid", fgColor="EEEEEE")
     FILL_NONE   = PatternFill("none")
 
     FONT_BOLD  = Font(bold=True)
     FONT_WHITE = Font(bold=True, color="FFFFFF")
     ALIGN_CTR  = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    ALIGN_LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ALIGN_LEFT = Alignment(horizontal="left",   vertical="center", wrap_text=True)
 
-    thin = Side(style="thin", color="AAAAAA")
+    thin   = Side(style="thin", color="AAAAAA")
     BORDER = Border(left=thin, right=thin, top=thin, bottom=thin)
 
     def _cell(ws, row, col, value=None, fill=None, font=None, align=None, border=None):
         c = ws.cell(row=row, column=col, value=value)
-        if fill:   c.fill   = fill
-        if font:   c.font   = font
+        if fill:   c.fill      = fill
+        if font:   c.font      = font
         if align:  c.alignment = align
-        if border: c.border = border
+        if border: c.border    = border
         return c
 
     def _status_fill(status: str) -> PatternFill:
@@ -772,25 +702,24 @@ def write_excel_report(results: list, report_path: Path) -> None:
         }.get(status, FILL_NONE)
 
     wb = Workbook()
-    wb.remove(wb.active)  # remove default sheet
+    wb.remove(wb.active)
 
     # -----------------------------------------------------------------------
     # Summary sheet
     # -----------------------------------------------------------------------
     sum_ws = wb.create_sheet("Summary")
     sum_ws.column_dimensions["A"].width = 22
-    for col_letter in ["B", "C", "D", "E", "F"]:
+    for col_letter in ["B", "C", "D", "E"]:
         sum_ws.column_dimensions[col_letter].width = 18
 
-    # Title
-    title_cell = sum_ws.cell(row=1, column=1, value="Test Summary")
+    title_cell = sum_ws.cell(row=1, column=1, value="Funding & CashFlow Test Summary")
     title_cell.font = Font(bold=True, size=14)
     sum_ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=1 + len(results))
 
-    # Column headers (test case names)
     _cell(sum_ws, 2, 1, "Metric", fill=FILL_BLUE, font=FONT_BOLD, align=ALIGN_CTR, border=BORDER)
     for col_idx, r in enumerate(results, start=2):
-        _cell(sum_ws, 2, col_idx, r["name"], fill=FILL_BLUE, font=FONT_BOLD, align=ALIGN_CTR, border=BORDER)
+        _cell(sum_ws, 2, col_idx, r["name"], fill=FILL_BLUE, font=FONT_BOLD,
+              align=ALIGN_CTR, border=BORDER)
 
     rows_data = [
         ("pdate",          lambda r: r["pdate"]),
@@ -817,41 +746,42 @@ def write_excel_report(results: list, report_path: Path) -> None:
                 fill = FILL_GREEN if val == 0 else FILL_RED
             _cell(sum_ws, row_offset, col_idx, val, fill=fill, align=ALIGN_CTR, border=BORDER)
 
-    # Phase breakdown rows
-    sum_ws.cell(row=len(rows_data) + 4, column=1, value="Phases").font = Font(bold=True, italic=True)
-    all_phases = []
+    # Phase breakdown
+    phase_row_start = len(rows_data) + 4
+    sum_ws.cell(row=phase_row_start, column=1, value="Phases").font = Font(bold=True, italic=True)
+
+    all_phases: list[str] = []
     for r in results:
         for p in r["phases_ok"] + [p.split(" — ")[0] for p in r["phases_failed"]]:
             if p not in all_phases:
                 all_phases.append(p)
 
-    for row_offset, phase in enumerate(all_phases, start=len(rows_data) + 5):
+    for row_offset, phase in enumerate(all_phases, start=phase_row_start + 1):
         _cell(sum_ws, row_offset, 1, phase, fill=FILL_GRAY, align=ALIGN_LEFT, border=BORDER)
+        fail_names = [p.split(" — ")[0] for p in r["phases_failed"]]
         for col_idx, r in enumerate(results, start=2):
-            ok_names = [p.split(":")[0] + ":" + p.split(":")[1] if ":" in p else p for p in r["phases_ok"]]
             fail_names = [p.split(" — ")[0] for p in r["phases_failed"]]
             if phase in r["phases_ok"]:
-                _cell(sum_ws, row_offset, col_idx, "OK", fill=FILL_GREEN, align=ALIGN_CTR, border=BORDER)
+                _cell(sum_ws, row_offset, col_idx, "OK",     fill=FILL_GREEN, align=ALIGN_CTR, border=BORDER)
             elif phase in fail_names:
-                _cell(sum_ws, row_offset, col_idx, "FAILED", fill=FILL_RED, align=ALIGN_CTR, border=BORDER)
+                _cell(sum_ws, row_offset, col_idx, "FAILED", fill=FILL_RED,   align=ALIGN_CTR, border=BORDER)
             else:
-                _cell(sum_ws, row_offset, col_idx, "—", fill=FILL_NONE, align=ALIGN_CTR, border=BORDER)
+                _cell(sum_ws, row_offset, col_idx, "—",      fill=FILL_NONE,  align=ALIGN_CTR, border=BORDER)
 
     # -----------------------------------------------------------------------
-    # Per-test sheets
+    # Per-test-case sheets
     # -----------------------------------------------------------------------
     for result in results:
         test_case_dir = result["test_case_dir"]
-        sheet_name = result["name"][:31]  # Excel sheet name limit
+        sheet_name    = result["name"][:31]
         ws = wb.create_sheet(sheet_name)
 
-        # Column widths
-        ws.column_dimensions["A"].width = 12   # Item
-        ws.column_dimensions["B"].width = 48   # File Name
+        ws.column_dimensions["A"].width = 12
+        ws.column_dimensions["B"].width = 48
         for i in range(len(PHASE_COLS)):
             ws.column_dimensions[get_column_letter(3 + i)].width = 18
 
-        # Row 1: phase group headers
+        # Row 1: column headers
         _cell(ws, 1, 1, "Item",      fill=FILL_BLUE, font=FONT_BOLD, align=ALIGN_CTR, border=BORDER)
         _cell(ws, 1, 2, "File Name", fill=FILL_BLUE, font=FONT_BOLD, align=ALIGN_LEFT, border=BORDER)
         for i, phase_label in enumerate(PHASE_COLS):
@@ -869,30 +799,32 @@ def write_excel_report(results: list, report_path: Path) -> None:
         ws.merge_cells(start_row=2, start_column=2, end_row=2, end_column=2 + len(PHASE_COLS))
         _cell(ws, 2, 1, "Dates", fill=FILL_GRAY, font=FONT_BOLD, align=ALIGN_CTR)
         meta_cell = ws.cell(row=2, column=2, value=meta)
-        meta_cell.font = Font(italic=True)
+        meta_cell.font      = Font(italic=True)
         meta_cell.alignment = ALIGN_LEFT
 
         current_row = 3
 
-        # ---- INPUTS section ------------------------------------------------
+        # INPUT FILES section
         ws.merge_cells(start_row=current_row, start_column=1,
                        end_row=current_row, end_column=2 + len(PHASE_COLS))
-        sec_cell = ws.cell(row=current_row, column=1, value="INPUT FILES (files_required/)")
-        sec_cell.fill = FILL_DKBLUE
-        sec_cell.font = FONT_WHITE
-        sec_cell.alignment = ALIGN_CTR
+        sec = ws.cell(row=current_row, column=1, value="INPUT FILES (files_required/)")
+        sec.fill = FILL_DKBLUE; sec.font = FONT_WHITE; sec.alignment = ALIGN_CTR
         current_row += 1
 
-        # List all files in test_case_dir/files_required/
         files_required_dir = test_case_dir / "files_required"
         input_files = sorted(f.name for f in files_required_dir.iterdir() if f.is_file())
 
         for idx, fname in enumerate(input_files, start=1):
-            phase_key = _classify_input_file(fname)
+            # Mark split exhibit files under the phase that consumes them
+            nl = fname.lower()
+            if ("_sg" in nl or "_cibc" in nl) and ("exhibit" in nl or "fx3_" in nl):
+                phase_key = "funding_sg" if "_sg" in nl else "funding_cibc"
+            else:
+                phase_key = ""
             phase_idx = PHASE_KEYS.index(phase_key) if phase_key in PHASE_KEYS else -1
 
             _cell(ws, current_row, 1, f"Input {idx}", fill=FILL_GRAY, align=ALIGN_CTR, border=BORDER)
-            _cell(ws, current_row, 2, fname, fill=FILL_GRAY, align=ALIGN_LEFT, border=BORDER)
+            _cell(ws, current_row, 2, fname,           fill=FILL_GRAY, align=ALIGN_LEFT, border=BORDER)
             for i in range(len(PHASE_COLS)):
                 if i == phase_idx:
                     _cell(ws, current_row, 3 + i, "PRESENT",
@@ -902,17 +834,15 @@ def write_excel_report(results: list, report_path: Path) -> None:
                           fill=FILL_NONE, align=ALIGN_CTR, border=BORDER)
             current_row += 1
 
-        # ---- EXPECTED OUTPUTS section --------------------------------------
+        # EXPECTED OUTPUTS section
         current_row += 1
         ws.merge_cells(start_row=current_row, start_column=1,
                        end_row=current_row, end_column=2 + len(PHASE_COLS))
-        sec_cell = ws.cell(row=current_row, column=1, value="EXPECTED OUTPUT FILES (output/ and output_share/)")
-        sec_cell.fill = FILL_DKBLUE
-        sec_cell.font = FONT_WHITE
-        sec_cell.alignment = ALIGN_CTR
+        sec = ws.cell(row=current_row, column=1,
+                      value="EXPECTED OUTPUT FILES (output/ and output_share/)")
+        sec.fill = FILL_DKBLUE; sec.font = FONT_WHITE; sec.alignment = ALIGN_CTR
         current_row += 1
 
-        # Collect all expected files from golden output/ and output_share/
         expected_output_files = []
         for subdir_label in ("output", "output_share"):
             golden_dir = test_case_dir / subdir_label
@@ -923,15 +853,15 @@ def write_excel_report(results: list, report_path: Path) -> None:
                         expected_output_files.append(rel)
 
         for idx, rel_path in enumerate(expected_output_files, start=1):
-            fname = Path(rel_path).name
-            status = _file_status(rel_path, result)
-            phase_key = _classify_output_file(fname)
-            phase_idx = PHASE_KEYS.index(phase_key) if phase_key in PHASE_KEYS else -1
+            fname       = Path(rel_path).name
+            status      = _file_status(rel_path, result)
+            phase_key   = _classify_output_file(fname)
+            phase_idx   = PHASE_KEYS.index(phase_key) if phase_key in PHASE_KEYS else -1
             status_fill = _status_fill(status)
-            row_fill = FILL_GRAY if status == "MATCH" else FILL_NONE
+            row_fill    = FILL_GRAY if status == "MATCH" else FILL_NONE
 
             _cell(ws, current_row, 1, f"Output {idx}", fill=row_fill, align=ALIGN_CTR, border=BORDER)
-            _cell(ws, current_row, 2, rel_path, fill=row_fill, align=ALIGN_LEFT, border=BORDER)
+            _cell(ws, current_row, 2, rel_path,         fill=row_fill, align=ALIGN_LEFT, border=BORDER)
             for i in range(len(PHASE_COLS)):
                 if i == phase_idx:
                     _cell(ws, current_row, 3 + i, status,
@@ -941,27 +871,25 @@ def write_excel_report(results: list, report_path: Path) -> None:
                           fill=FILL_NONE, align=ALIGN_CTR, border=BORDER)
             current_row += 1
 
-        # ---- EXTRA FILES section (generated but not expected) --------------
-        extra_files = [e for e in result["extra"]]
+        # EXTRA FILES section
+        extra_files = result["extra"]
         if extra_files:
             current_row += 1
             ws.merge_cells(start_row=current_row, start_column=1,
                            end_row=current_row, end_column=2 + len(PHASE_COLS))
-            sec_cell = ws.cell(row=current_row, column=1,
-                               value="EXTRA FILES (generated but not in golden)")
-            sec_cell.fill = FILL_DKBLUE
-            sec_cell.font = FONT_WHITE
-            sec_cell.alignment = ALIGN_CTR
+            sec = ws.cell(row=current_row, column=1,
+                          value="EXTRA FILES (generated but not in golden)")
+            sec.fill = FILL_DKBLUE; sec.font = FONT_WHITE; sec.alignment = ALIGN_CTR
             current_row += 1
 
             for idx, rel_path in enumerate(extra_files, start=1):
-                fname = Path(rel_path).name
+                fname     = Path(rel_path).name
                 phase_key = _classify_output_file(fname)
                 phase_idx = PHASE_KEYS.index(phase_key) if phase_key in PHASE_KEYS else -1
 
                 _cell(ws, current_row, 1, f"Extra {idx}", fill=FILL_YELLOW,
                       align=ALIGN_CTR, border=BORDER)
-                _cell(ws, current_row, 2, rel_path, fill=FILL_YELLOW,
+                _cell(ws, current_row, 2, rel_path,        fill=FILL_YELLOW,
                       align=ALIGN_LEFT, border=BORDER)
                 for i in range(len(PHASE_COLS)):
                     if i == phase_idx:
@@ -972,38 +900,31 @@ def write_excel_report(results: list, report_path: Path) -> None:
                               fill=FILL_NONE, align=ALIGN_CTR, border=BORDER)
                 current_row += 1
 
-        # ---- PHASE STATUS section ------------------------------------------
+        # PHASE EXECUTION STATUS section
         current_row += 1
         ws.merge_cells(start_row=current_row, start_column=1,
                        end_row=current_row, end_column=2 + len(PHASE_COLS))
-        sec_cell = ws.cell(row=current_row, column=1, value="PHASE EXECUTION STATUS")
-        sec_cell.fill = FILL_DKBLUE
-        sec_cell.font = FONT_WHITE
-        sec_cell.alignment = ALIGN_CTR
+        sec = ws.cell(row=current_row, column=1, value="PHASE EXECUTION STATUS")
+        sec.fill = FILL_DKBLUE; sec.font = FONT_WHITE; sec.alignment = ALIGN_CTR
         current_row += 1
 
         phase_ok_set = set(result["phases_ok"])
-        fail_map = {p.split(" — ")[0]: p.split(" — ", 1)[1] if " — " in p else ""
-                    for p in result["phases_failed"]}
+        fail_map     = {p.split(" — ")[0]: p.split(" — ", 1)[1] if " — " in p else ""
+                        for p in result["phases_failed"]}
 
         phase_display = [
-            ("Phase 1: Pre-Funding",  "Phase1:PreFunding"),
-            ("Phase 2: Tagging",      "Phase2:Tagging"),
-            ("Phase 3a: Funding SG",  "Phase3a:FundingSG"),
-            ("Phase 3b: Funding CIBC","Phase3b:FundingCIBC"),
-            ("Phase 4: CashFlow SG",  "Phase4:CashFlowSG"),
-            ("Phase 4: CashFlow CIBC","Phase4:CashFlowCIBC"),
+            ("Phase 1: Funding SG",   "Phase1:FundingSG"),
+            ("Phase 2: Funding CIBC", "Phase2:FundingCIBC"),
+            ("Phase 3: CashFlow SG",  "Phase3:CashFlowSG"),
+            ("Phase 3: CashFlow CIBC","Phase3:CashFlowCIBC"),
         ]
         for phase_label, phase_key in phase_display:
-            if phase_key in phase_ok_set or f"{phase_key}(skipped)" in phase_ok_set:
-                status_val = "OK (skipped)" if f"{phase_key}(skipped)" in phase_ok_set else "OK"
-                s_fill = FILL_GREEN
+            if phase_key in phase_ok_set:
+                status_val, s_fill = "OK", FILL_GREEN
             elif phase_key in fail_map:
-                status_val = f"FAILED: {fail_map[phase_key]}"
-                s_fill = FILL_RED
+                status_val, s_fill = f"FAILED: {fail_map[phase_key]}", FILL_RED
             else:
-                status_val = "—"
-                s_fill = FILL_NONE
+                status_val, s_fill = "—", FILL_NONE
 
             _cell(ws, current_row, 1, phase_label, fill=FILL_GRAY,
                   font=FONT_BOLD, align=ALIGN_LEFT, border=BORDER)
@@ -1012,61 +933,57 @@ def write_excel_report(results: list, report_path: Path) -> None:
             _cell(ws, current_row, 2, status_val, fill=s_fill, align=ALIGN_LEFT, border=BORDER)
             current_row += 1
 
-        # ---- SUMMARY row ---------------------------------------------------
+        # Overall summary row
         current_row += 1
-        total_issues = len(result["diffs"]) + len(result["missing"]) + len(result["extra"])
+        total_issues   = len(result["diffs"]) + len(result["missing"]) + len(result["extra"])
         overall_status = "PASS" if result["status"] == "PASS" else f"FAILED ({total_issues} issues)"
-        _cell(ws, current_row, 1, "Overall", fill=FILL_GRAY, font=FONT_BOLD, align=ALIGN_CTR, border=BORDER)
+        _cell(ws, current_row, 1, "Overall", fill=FILL_GRAY, font=FONT_BOLD,
+              align=ALIGN_CTR, border=BORDER)
         ws.merge_cells(start_row=current_row, start_column=2,
                        end_row=current_row, end_column=2 + len(PHASE_COLS))
         _cell(ws, current_row, 2, overall_status,
               fill=_status_fill(result["status"]), font=FONT_BOLD, align=ALIGN_CTR, border=BORDER)
 
-        # ---- EXCEPTIONS section (cell-level diffs) -------------------------
-        exceptions = result.get("exceptions", [])
-        # Also synthesise rows for MISSING/EXTRA files (no cell detail available)
-        missing_rows = [{"file": f, "loan_num": "—", "column": "(file)", "expected": "present", "actual": "missing", "note": "file not generated"}
+        # EXCEPTIONS section
+        exceptions   = result.get("exceptions", [])
+        missing_rows = [{"file": f, "loan_num": "—", "column": "(file)",
+                         "expected": "present", "actual": "missing",
+                         "note": "file not generated"}
                         for f in result.get("missing", [])]
-        extra_rows   = [{"file": f, "loan_num": "—", "column": "(file)", "expected": "absent",  "actual": "present",  "note": "unexpected file generated"}
+        extra_rows   = [{"file": f, "loan_num": "—", "column": "(file)",
+                         "expected": "absent", "actual": "present",
+                         "note": "unexpected file generated"}
                         for f in result.get("extra", [])]
         all_exceptions = exceptions + missing_rows + extra_rows
 
         current_row += 2
-        # Section header spanning all columns
         n_cols = 2 + len(PHASE_COLS)
         ws.merge_cells(start_row=current_row, start_column=1,
                        end_row=current_row, end_column=n_cols)
-        sec_cell = ws.cell(row=current_row, column=1,
-                           value=f"EXCEPTIONS / DIFFERENCES  ({len(all_exceptions)} items)")
-        sec_cell.fill = FILL_DKBLUE
-        sec_cell.font = FONT_WHITE
-        sec_cell.alignment = ALIGN_CTR
+        sec = ws.cell(row=current_row, column=1,
+                      value=f"EXCEPTIONS / DIFFERENCES  ({len(all_exceptions)} items)")
+        sec.fill = FILL_DKBLUE; sec.font = FONT_WHITE; sec.alignment = ALIGN_CTR
         current_row += 1
 
-        # Sub-header row  (reuse columns A–G: #, File, Loan #, Column, Expected, Actual, Notes)
         exc_headers = ["#", "File", "Loan #", "Column", "Expected Value", "Actual Value", "Notes"]
         for i, h in enumerate(exc_headers, start=1):
             _cell(ws, current_row, i, h, fill=FILL_BLUE, font=FONT_BOLD,
                   align=ALIGN_CTR, border=BORDER)
         current_row += 1
 
-        # Widen columns D–G now that we know exceptions exist
-        ws.column_dimensions["C"].width = 20   # Loan #
-        ws.column_dimensions["D"].width = 22   # Column name
-        ws.column_dimensions["E"].width = 28   # Expected
-        ws.column_dimensions["F"].width = 28   # Actual
-        ws.column_dimensions["G"].width = 34   # Notes
+        ws.column_dimensions["C"].width = 20
+        ws.column_dimensions["D"].width = 22
+        ws.column_dimensions["E"].width = 28
+        ws.column_dimensions["F"].width = 28
+        ws.column_dimensions["G"].width = 34
 
         if not all_exceptions:
             ws.merge_cells(start_row=current_row, start_column=1,
                            end_row=current_row, end_column=n_cols)
             _cell(ws, current_row, 1, "No differences found — all outputs match golden.",
                   fill=FILL_GREEN, align=ALIGN_CTR)
-            current_row += 1
         else:
             for idx, exc in enumerate(all_exceptions, start=1):
-                # Colour by exception type
-                col_name = exc.get("column", "")
                 if exc.get("actual") == "missing" or exc.get("note", "").startswith("loan absent"):
                     row_fill = FILL_RED
                 elif exc.get("actual") == "present" and exc.get("expected") == "absent":
@@ -1074,33 +991,17 @@ def write_excel_report(results: list, report_path: Path) -> None:
                 else:
                     row_fill = FILL_ORANGE
 
-                _cell(ws, current_row, 1, idx,                         fill=row_fill, align=ALIGN_CTR, border=BORDER)
-                _cell(ws, current_row, 2, exc.get("file", ""),          fill=row_fill, align=ALIGN_LEFT, border=BORDER)
-                _cell(ws, current_row, 3, exc.get("loan_num", ""),      fill=row_fill, align=ALIGN_CTR, border=BORDER)
-                _cell(ws, current_row, 4, col_name,                     fill=row_fill, align=ALIGN_LEFT, border=BORDER)
-                _cell(ws, current_row, 5, exc.get("expected", ""),      fill=row_fill, align=ALIGN_LEFT, border=BORDER)
-                _cell(ws, current_row, 6, exc.get("actual", ""),        fill=row_fill, align=ALIGN_LEFT, border=BORDER)
-                _cell(ws, current_row, 7, exc.get("note", ""),          fill=row_fill, align=ALIGN_LEFT, border=BORDER)
+                _cell(ws, current_row, 1, idx,                    fill=row_fill, align=ALIGN_CTR,  border=BORDER)
+                _cell(ws, current_row, 2, exc.get("file", ""),    fill=row_fill, align=ALIGN_LEFT, border=BORDER)
+                _cell(ws, current_row, 3, exc.get("loan_num",""), fill=row_fill, align=ALIGN_CTR,  border=BORDER)
+                _cell(ws, current_row, 4, exc.get("column", ""),  fill=row_fill, align=ALIGN_LEFT, border=BORDER)
+                _cell(ws, current_row, 5, exc.get("expected",""), fill=row_fill, align=ALIGN_LEFT, border=BORDER)
+                _cell(ws, current_row, 6, exc.get("actual", ""),  fill=row_fill, align=ALIGN_LEFT, border=BORDER)
+                _cell(ws, current_row, 7, exc.get("note",  ""),   fill=row_fill, align=ALIGN_LEFT, border=BORDER)
                 current_row += 1
 
     wb.save(str(report_path))
     print(f"\nExcel report written: {report_path}")
-
-
-def _all_expected_files(result: dict) -> list[str]:
-    """Return all expected output file paths (relative, prefixed with output/ or output_share/)."""
-    files = []
-    test_case_dir = result.get("test_case_dir")
-    if test_case_dir is None:
-        return files
-    for subdir_label in ("output", "output_share"):
-        golden_dir = Path(test_case_dir) / subdir_label
-        if golden_dir.exists():
-            for f in golden_dir.rglob("*"):
-                if f.is_file():
-                    rel = f"{subdir_label}/{f.relative_to(golden_dir)}"
-                    files.append(rel)
-    return files
 
 
 # ---------------------------------------------------------------------------
@@ -1110,33 +1011,31 @@ def _all_expected_files(result: dict) -> list[str]:
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Data regression harness: runs all four pipeline phases against each "
-            "buy-date folder in TestData and diffs outputs against expected values. "
-            "Generates an Excel report following the TestMatrix template format."
+            "Funding & CashFlow regression harness: runs Final Funding (SG + CIBC) and "
+            "CashFlow phases against each buy-date folder in TestData and diffs outputs "
+            "against expected values.  Assumes _sg/_cibc exhibit files are already in "
+            "files_required/ (tagging step already done)."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=r"""
 Phases run per test case:
-  1. Pre-Funding  (run_pipeline_cli.py)
-  2. Tagging      (tagging.py)
-  3. Funding SG   (final_funding_sg.py)
-  4. Funding CIBC (final_funding_cibc.py)
-  5. CashFlow     (cashflow.compute.run_purchase_package for SG and CIBC)
+  1. Funding SG   (final_funding_sg.py)
+  2. Funding CIBC (final_funding_cibc.py)
+  3. CashFlow     (cashflow.compute.run_purchase_package for SG and CIBC)
 
 Examples:
-  python backend/scripts/regression_test.py
-  python backend/scripts/regression_test.py --test-data C:\Users\omack\Downloads\TestData
-  python backend/scripts/regression_test.py --pdate 2026-02-24 --tday 2026-02-19
-  python backend/scripts/regression_test.py --no-cleanup
-  python backend/scripts/regression_test.py --skip-phase1
-  python backend/scripts/regression_test.py --report C:\temp\results.xlsx
+  python backend/scripts/regression_test_funding.py
+  python backend/scripts/regression_test_funding.py --test-data C:\Users\omack\Downloads\TestData
+  python backend/scripts/regression_test_funding.py --pdate 2026-02-24 --tday 2026-02-19
+  python backend/scripts/regression_test_funding.py --no-cleanup
+  python backend/scripts/regression_test_funding.py --report C:\temp\funding_results.xlsx
 """,
     )
     parser.add_argument(
         "--test-data",
         type=str,
         default=r"C:\Users\omack\Downloads\TestData",
-        help=r"Root directory containing buy-date test case folders.",
+        help="Root directory containing buy-date test case folders.",
     )
     parser.add_argument(
         "--backend-dir",
@@ -1162,36 +1061,42 @@ Examples:
         help="Do not delete temp work directories after each test case.",
     )
     parser.add_argument(
-        "--skip-phase1",
+        "--update-golden",
         action="store_true",
-        help="Skip Phase 1 (pre-funding). Useful when files_required/ already contains "
-             "pre-generated exhibit files.",
+        help=(
+            "After running each test case, overwrite the golden expected files in "
+            "TestData with the actual outputs.  Use this to re-baseline the golden data "
+            "after a code change that intentionally changes outputs."
+        ),
     )
     parser.add_argument(
         "--report",
         type=str,
         default=None,
-        help="Path for the Excel report output. Default: TestMatrix_Results_<timestamp>.xlsx "
+        help="Path for the Excel report output. Default: FundingTestMatrix_<timestamp>.xlsx "
              "written to the test-data directory.",
     )
     args = parser.parse_args()
 
-    test_data_dir = Path(args.test_data)
-    backend_dir = Path(args.backend_dir) if args.backend_dir else _default_backend_dir()
+    test_data_dir  = Path(args.test_data)
+    backend_dir    = Path(args.backend_dir) if args.backend_dir else _default_backend_dir()
+    update_golden  = args.update_golden
 
     if not backend_dir.exists():
         print(f"ERROR: backend directory not found: {backend_dir}", file=sys.stderr)
         sys.exit(1)
 
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now_str   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     print("=" * 60)
-    print(f"REGRESSION TEST REPORT — {now_str}")
+    print(f"FUNDING & CASHFLOW REGRESSION TEST — {now_str}")
     print(f"Test data: {test_data_dir}")
+    if update_golden:
+        print("MODE: --update-golden  (overwriting golden expected files with actual outputs)")
     print("=" * 60)
 
-    test_cases = discover_test_cases(test_data_dir)
+    test_cases   = discover_test_cases(test_data_dir)
     dates_config = _load_dates_config(test_data_dir)
 
     if not test_cases:
@@ -1209,15 +1114,14 @@ Examples:
             cli_pdate=args.pdate,
             cli_tday=args.tday,
             no_cleanup=args.no_cleanup,
-            skip_phase1=args.skip_phase1,
             dates_config=dates_config,
+            update_golden=update_golden,
         )
         results.append(result)
 
-    # Final summary
     passed = sum(1 for r in results if r["status"] == "PASS")
     failed = sum(1 for r in results if r["status"] != "PASS")
-    total = len(results)
+    total  = len(results)
 
     print("\n" + "=" * 60)
     print(f"SUMMARY: {passed} PASSED / {failed} FAILED / {total} TOTAL")
@@ -1227,23 +1131,28 @@ Examples:
         print("\nFailed cases:")
         for r in results:
             if r["status"] != "PASS":
-                err_note = f" — {r['error']}" if r["error"] else ""
+                err_note    = f" — {r['error']}" if r["error"] else ""
                 phases_note = (
                     f" [failed phases: {', '.join(r['phases_failed'])}]"
                     if r["phases_failed"] else ""
                 )
-                print(f"  FAIL: {r['name']}{err_note}{phases_note}")
+                issues_note = (
+                    f" [{len(r['diffs'])} differ, {len(r['missing'])} missing, "
+                    f"{len(r['extra'])} extra]"
+                )
+                print(f"  FAILED: {r['name']}{err_note}{phases_note}{issues_note}")
 
     # Write Excel report
     if args.report:
         report_path = Path(args.report)
     else:
-        report_path = test_data_dir / f"TestMatrix_Results_{timestamp}.xlsx"
+        report_path = test_data_dir / f"FundingTestMatrix_{timestamp}.xlsx"
 
     try:
         write_excel_report(results, report_path)
-    except Exception as exc:
-        print(f"[WARN] Could not write Excel report: {exc}", file=sys.stderr)
+    except ImportError:
+        print("\n[WARN] openpyxl not installed — skipping Excel report. "
+              "Install with: pip install openpyxl")
 
     sys.exit(0 if failed == 0 else 1)
 

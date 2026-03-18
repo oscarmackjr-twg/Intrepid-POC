@@ -1,5 +1,6 @@
 """Main pipeline orchestration."""
 import math
+import os
 import pandas as pd
 from datetime import datetime
 from typing import Dict, Any, List, Optional
@@ -383,8 +384,7 @@ class PipelineExecutor:
             notes = ref_data['notes'].copy()
             # Convert to string and handle NaN before string operations
             if 'loan program' in notes.columns:
-                notes['loan program'] = notes['loan program'].astype(str).replace('nan', '')
-            notes['loan program'] = notes['loan program'].apply(lambda x: str(x) + 'notes' if pd.notna(x) else 'notes')
+                notes['loan program'] = notes['loan program'].astype(str).replace('nan', '') + 'notes'
             # Convert to string and handle NaN before calling .str.upper()
             if 'platform' in notes.columns:
                 notes['platform'] = notes['platform'].astype(str).replace('nan', '')
@@ -399,15 +399,17 @@ class PipelineExecutor:
             existing_file['Submit Date'] = pd.to_datetime(existing_file['Submit Date'])
             existing_file['Purchase_Date'] = pd.to_datetime(existing_file['Purchase_Date'])
             existing_file['Monthly Payment Date'] = pd.to_datetime(existing_file['Monthly Payment Date'])
-            
+            existing_file.reset_index(drop=True, inplace=True)  # Fix #1: align index before concat/merge
+
             # Mark repurchased loans
             repurchased_loans = loans[loans['Repurchased'] == True]['SELLER Loan #'].values
             existing_file.loc[existing_file['SELLER Loan #'].isin(repurchased_loans), 'Repurchase'] = True
-            
+            existing_file = check_purchase_price(existing_file)  # Fix #2: mirror reference line ~170
+
             # Combine final dataframes
             final_df = pd.concat([buy_df, existing_file[existing_file['Purchase_Date'] > '2025-10-01']])
             final_df_all = pd.concat([buy_df, existing_file])
-            
+
             # Run validations
             buy_df = check_purchase_price(buy_df)
             final_df = check_purchase_price(final_df)
@@ -514,6 +516,7 @@ class PipelineExecutor:
                 share_storage=storage_share,
                 special_asset_prime=special_asset_prime_df,
                 special_asset_sfy=special_asset_sfy_df,
+                buy_num=os.environ.get("BUY_NUM") or None,
             )
             self.append_run_log("Exported exception and special asset reports.")
             

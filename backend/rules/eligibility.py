@@ -12,14 +12,20 @@ def check_eligibility_prime(final_df_all: pd.DataFrame) -> Dict[str, Any]:
     {
         'check_a': {'value': float, 'pass': bool},
         'check_b1': {'value': float, 'pass': bool},
-        'check_b3': {'value': float, 'pass': bool},
         ...
     }
     """
     """Run Prime eligibility checks."""
     results = {}
     
-    prime_df = final_df_all[final_df_all['platform'] == 'prime'].copy()
+    prime_df = final_df_all[
+        (final_df_all['platform'] == 'prime') &
+        (final_df_all['Excess_Asset'] == False)
+    ].copy()
+    for _col, _default in [('Repurchase', False), ('Term', 0), ('type', ''),
+                            ('FICO Borrower', 0), ('Lender Price(%)', 0), ('Dealer Fee', 0)]:
+        if _col not in prime_df.columns:
+            prime_df[_col] = _default
     total_balance = prime_df['Orig. Balance'].sum()
     
     if total_balance == 0:
@@ -42,14 +48,6 @@ def check_eligibility_prime(final_df_all: pd.DataFrame) -> Dict[str, Any]:
         (prime_df['FICO Borrower'] < 700)
     ]['Orig. Balance'].sum() / total_balance
     results['check_b1'] = {'value': check_b1, 'pass': check_b1 < 0.03}
-    
-    # Check B3: Count-based check (from notebook)
-    check_b3 = prime_df[
-        (prime_df['Term'] > 144) &
-        (prime_df['type'] == 'standard') &
-        (prime_df['FICO Borrower'] < 700)
-    ]['Orig. Balance'].shape[0] / prime_df['Orig. Balance'].shape[0]
-    results['check_b3'] = {'value': check_b3, 'pass': check_b3 < 0.03}
     
     # Check C: Term > 144, standard, FICO >= 700
     check_c = prime_df[
@@ -121,9 +119,8 @@ def check_eligibility_prime(final_df_all: pd.DataFrame) -> Dict[str, Any]:
     non_repurchase_prime = prime_df[prime_df['Repurchase'] == False]
     if len(non_repurchase_prime) > 0:
         non_repurchase_total = non_repurchase_prime['Orig. Balance'].sum()
-        check_s1 = non_repurchase_prime[
-            non_repurchase_prime.get('new_programs', False) == True
-        ]['Orig. Balance'].sum() / non_repurchase_total if non_repurchase_total > 0 else 0
+        _new_prog_mask = non_repurchase_prime['new_programs'] == True if 'new_programs' in non_repurchase_prime.columns else pd.Series([False] * len(non_repurchase_prime), index=non_repurchase_prime.index)
+        check_s1 = non_repurchase_prime[_new_prog_mask]['Orig. Balance'].sum() / non_repurchase_total if non_repurchase_total > 0 else 0
         results['check_s1'] = {'value': check_s1, 'pass': check_s1 < 0.02}
     else:
         results['check_s1'] = {'value': 0, 'pass': True}
@@ -148,10 +145,20 @@ def check_eligibility_sfy(final_df_all: pd.DataFrame, buy_df: pd.DataFrame = Non
     """
     """Run SFY eligibility checks."""
     results = {}
-    
-    sfy_df = final_df_all[final_df_all['platform'] == 'sfy'].copy()
-    if 'promo_term' not in sfy_df.columns:
-        sfy_df['promo_term'] = 0
+
+    if 'Repurchase' not in final_df_all.columns:
+        final_df_all = final_df_all.copy()
+        final_df_all['Repurchase'] = False
+
+    sfy_df = final_df_all[
+        (final_df_all['platform'] == 'sfy') &
+        (final_df_all['Excess_Asset'] == False)
+    ].copy()
+    for _col, _default in [('promo_term', 0), ('Term', 0), ('APR', 0), ('Repurchase', False),
+                            ('type', ''), ('Lender Price(%)', 0), ('Dealer Fee', 0),
+                            ('FICO Borrower', 0), ('loan program', ''), ('Purchase Price', 0)]:
+        if _col not in sfy_df.columns:
+            sfy_df[_col] = _default
     total_balance = sfy_df['Orig. Balance'].sum()
 
     if total_balance == 0:
@@ -303,8 +310,9 @@ def check_eligibility_sfy(final_df_all: pd.DataFrame, buy_df: pd.DataFrame = Non
             results['check_l5'] = {'value': check_l5, 'pass': True}  # Informational
     
     # Special asset check (new_programs)
+    _new_prog_sfy = final_df_all['new_programs'] == True if 'new_programs' in final_df_all.columns else pd.Series([False] * len(final_df_all), index=final_df_all.index)
     check_s1 = final_df_all[
-        (final_df_all.get('new_programs', False) == True) &
+        _new_prog_sfy &
         (final_df_all['Repurchase'] == False) &
         (final_df_all['platform'] == 'sfy')
     ]['Orig. Balance'].sum() / final_df_all[

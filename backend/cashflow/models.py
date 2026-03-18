@@ -23,7 +23,7 @@ class CashflowFileEntry(BaseModel):
 class CashflowJobRequest(BaseModel):
     mode: CashflowMode
     buy_num: str = "93rd"
-    purchase_date: str = "2026-02-24"
+    purchase_date: Optional[str] = None  # if None, auto-computed as today + 3 US business days
     target: float = 7.9
     cprshock: float = 1.0
     cdrshock: float = 1.0

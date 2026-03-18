@@ -44,6 +44,7 @@ resource "aws_ecs_task_definition" "app" {
     environment = concat(
       [
         { name = "CORS_ORIGINS", value = "[\"http://${aws_lb.main.dns_name}\"]" },
+        { name = "LOCAL_DEV_MODE", value = "true" },
         { name = "ENABLE_SCHEDULER", value = "true" },
         { name = "NODE_ENV", value = "production" },
         { name = "STORAGE_TYPE", value = "s3" },

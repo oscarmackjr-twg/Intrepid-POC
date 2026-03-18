@@ -52,27 +52,31 @@ def export_exception_reports(
     share_storage: StorageBackend,
     special_asset_prime: Optional[pd.DataFrame] = None,
     special_asset_sfy: Optional[pd.DataFrame] = None,
+    buy_num: Optional[str] = None,
 ) -> dict:
     """
     Export notebook-replacement exception reports and special-asset outputs.
 
     Writes:
-    - flagged_loans.xlsx, purchase_price_mismatch.xlsx, comap_not_passed.xlsx, notes_flagged_loans.xlsx
+    - flagged_loans[_<buy_num>].xlsx, purchase_price_mismatch.xlsx, comap_not_passed.xlsx,
+      notes_flagged_loans[_<buy_num>].xlsx
     - to both internal outputs and share (share = first 30 columns).
     - special_asset_prime.xlsx, special_asset_sfy.xlsx to internal outputs only (when non-empty).
+    - buy_num: optional buy-cycle suffix (e.g. "93rd") matching reference notebook naming.
     """
     reports = {}
-    
+    suffix = f"_{buy_num}" if buy_num else ""
+
     # Internal reports (full data) — always written, header-only when empty
     purchase_path = f"{output_prefix}/purchase_price_mismatch.xlsx"
     storage.write_file(purchase_path, export_to_excel_bytes(purchase_mismatch))
     reports["purchase_price_mismatch"] = purchase_path
 
-    flagged_path = f"{output_prefix}/flagged_loans.xlsx"
+    flagged_path = f"{output_prefix}/flagged_loans{suffix}.xlsx"
     storage.write_file(flagged_path, export_to_excel_bytes(flagged_loans))
     reports["flagged_loans"] = flagged_path
 
-    notes_path = f"{output_prefix}/notes_flagged_loans.xlsx"
+    notes_path = f"{output_prefix}/notes_flagged_loans{suffix}.xlsx"
     storage.write_file(notes_path, export_to_excel_bytes(notes_flagged))
     reports["notes_flagged_loans"] = notes_path
 
@@ -85,11 +89,11 @@ def export_exception_reports(
     share_storage.write_file(purchase_share_path, export_to_excel_bytes(purchase_mismatch, max_cols=30))
     reports["purchase_price_mismatch_share"] = purchase_share_path
 
-    flagged_share_path = f"{output_share_prefix}/flagged_loans.xlsx"
+    flagged_share_path = f"{output_share_prefix}/flagged_loans{suffix}.xlsx"
     share_storage.write_file(flagged_share_path, export_to_excel_bytes(flagged_loans, max_cols=30))
     reports["flagged_loans_share"] = flagged_share_path
 
-    notes_share_path = f"{output_share_prefix}/notes_flagged_loans.xlsx"
+    notes_share_path = f"{output_share_prefix}/notes_flagged_loans{suffix}.xlsx"
     share_storage.write_file(notes_share_path, export_to_excel_bytes(notes_flagged, max_cols=30))
     reports["notes_flagged_loans_share"] = notes_share_path
 

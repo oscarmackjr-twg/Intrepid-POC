@@ -2,6 +2,7 @@
 import pytest
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from rules.eligibility import (
     check_eligibility_prime,
     check_eligibility_sfy
@@ -17,6 +18,7 @@ class TestPrimeEligibilityComplete:
         df = pd.DataFrame({
             'platform': ['prime'] * 10,
             'Repurchase': [False] * 10,
+            'Excess_Asset': [False] * 10,
             'Term': [120, 144, 180, 120, 144, 120, 120, 120, 120, 120],
             'type': ['standard', 'standard', 'standard', 'hybrid', 'ninp', 'epni', 'wpdi', 'standard', 'standard', 'standard'],
             'FICO Borrower': [680, 690, 720, 700, 700, 700, 700, 650, 750, 700],
@@ -31,7 +33,7 @@ class TestPrimeEligibilityComplete:
         
         # Verify all expected checks are present
         expected_checks = [
-            'check_a', 'check_b1', 'check_b3', 'check_c', 'check_d', 'check_e',
+            'check_a', 'check_b1', 'check_c', 'check_d', 'check_e',
             'check_f', 'check_g', 'check_h1', 'check_h2', 'check_h3',
             'check_i1', 'check_i2', 'check_l1', 'check_l2', 'check_l3', 'check_l4',
             'check_j_state_dist', 'check_s1'
@@ -47,14 +49,17 @@ class TestPrimeEligibilityComplete:
         df = pd.DataFrame({
             'platform': ['prime'] * 20,
             'Repurchase': [False] * 20,
+            'Excess_Asset': [False] * 20,
             'Term': [120] * 20,
             'type': ['standard'] * 20,
             'FICO Borrower': [680] * 20,
             'Orig. Balance': [10000] * 20,
+            'Lender Price(%)': [99.0] * 20,
+            'Dealer Fee': [0.05] * 20,
         })
-        
+
         results = check_eligibility_prime(df)
-        
+
         # Should fail (100% > 5%)
         assert results['check_a']['value'] == 1.0
         assert results['check_a']['pass'] == False
@@ -64,14 +69,17 @@ class TestPrimeEligibilityComplete:
         df = pd.DataFrame({
             'platform': ['prime'] * 20,
             'Repurchase': [False] * 20,
+            'Excess_Asset': [False] * 20,
             'Term': [180] * 20,
             'type': ['standard'] * 20,
             'FICO Borrower': [680] * 20,
             'Orig. Balance': [10000] * 20,
+            'Lender Price(%)': [99.0] * 20,
+            'Dealer Fee': [0.05] * 20,
         })
-        
+
         results = check_eligibility_prime(df)
-        
+
         # Should fail (100% > 3%)
         assert results['check_b1']['value'] == 1.0
         assert results['check_b1']['pass'] == False
@@ -81,7 +89,13 @@ class TestPrimeEligibilityComplete:
         df = pd.DataFrame({
             'platform': ['prime'] * 100,
             'Repurchase': [False] * 100,
+            'Excess_Asset': [False] * 100,
+            'Term': [120] * 100,
+            'type': ['standard'] * 100,
+            'FICO Borrower': [700] * 100,
             'Orig. Balance': [10000] * 100,
+            'Lender Price(%)': [99.0] * 100,
+            'Dealer Fee': [0.05] * 100,
             'new_programs': [False] * 99 + [True],  # 1% new programs
         })
         
@@ -145,12 +159,13 @@ class TestSfyEligibilityComplete:
         """Test Check A1 threshold: < 85%."""
         df = pd.DataFrame({
             'platform': ['sfy'] * 10,
+            'Excess_Asset': [False] * 10,
             'type': ['hybrid'] * 10,
             'Orig. Balance': [10000] * 10,
         })
-        
+
         results = check_eligibility_sfy(df)
-        
+
         # Should fail (100% > 85%)
         assert results['check_a1']['value'] == 1.0
         assert results['check_a1']['pass'] == False
@@ -159,13 +174,14 @@ class TestSfyEligibilityComplete:
         """Test Check B4 threshold: <= 0%."""
         df = pd.DataFrame({
             'platform': ['sfy'] * 10,
+            'Excess_Asset': [False] * 10,
             'type': ['ninp'] * 10,
             'Term': [72] * 10,  # All <= 84
             'Orig. Balance': [10000] * 10,
         })
-        
+
         results = check_eligibility_sfy(df)
-        
+
         # Should pass (0% <= 0%)
         assert results['check_b4']['value'] == 0.0
         assert results['check_b4']['pass'] == True
@@ -174,10 +190,11 @@ class TestSfyEligibilityComplete:
         """Test Check L5 requires buy_df."""
         df = pd.DataFrame({
             'platform': ['sfy'] * 10,
+            'Excess_Asset': [False] * 10,
             'type': ['standard'] * 10,
             'Orig. Balance': [10000] * 10,
         })
-        
+
         buy_df = pd.DataFrame({
             'platform': ['sfy'] * 5,
             'type': ['standard_bd'] * 5,

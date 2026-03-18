@@ -54,11 +54,18 @@ _MONITOR_STARTED = False
 _ORPHAN_JOB_AGE_SECONDS = 60 * 60
 _DEFAULT_ECS_CURRENT_ASSETS_WORKERS = max(1, int(os.getenv("CASHFLOW_MAX_WORKERS", "4")))
 
+def _default_purchase_date() -> str:
+    """Compute default purchase date as today + 3 US business days."""
+    from utils.date_utils import add_us_business_days
+    from datetime import date
+    return add_us_business_days(date.today(), 3)
+
+
 _MODE_DEFAULTS = {
     "current_assets": CashflowJobDefaults(
         mode="current_assets",
         buy_num="93rd",
-        purchase_date="2026-02-24",
+        purchase_date=_default_purchase_date(),
         target=7.9,
         cprshock=1.0,
         cdrshock=1.0,
@@ -69,7 +76,7 @@ _MODE_DEFAULTS = {
     "sg": CashflowJobDefaults(
         mode="sg",
         buy_num="93rd",
-        purchase_date="2026-02-24",
+        purchase_date=_default_purchase_date(),
         target=7.9,
         cprshock=1.0,
         cdrshock=1.0,
@@ -82,7 +89,7 @@ _MODE_DEFAULTS = {
     "cibc": CashflowJobDefaults(
         mode="cibc",
         buy_num="93rd",
-        purchase_date="2026-02-24",
+        purchase_date=_default_purchase_date(),
         target=7.9,
         cprshock=1.0,
         cdrshock=1.0,
@@ -105,6 +112,8 @@ def _normalize_job_request(req: CashflowJobRequest) -> CashflowJobRequest:
     request_data = req.model_dump()
     if request_data["mode"] == "current_assets" and _running_in_ecs():
         request_data["workers"] = min(int(request_data.get("workers") or 1), _AWS_SAFE_CURRENT_ASSETS_WORKERS)
+    if not request_data.get("purchase_date"):
+        request_data["purchase_date"] = _default_purchase_date()
     return CashflowJobRequest(**request_data)
 
 

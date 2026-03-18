@@ -16,14 +16,17 @@ class TestCheckEligibilityPrime:
         df = pd.DataFrame({
             'platform': ['prime', 'prime', 'prime'],
             'Repurchase': [False, False, False],
+            'Excess_Asset': [False, False, False],
             'Term': [120, 144, 180],
             'type': ['standard', 'standard', 'standard'],
             'FICO Borrower': [680, 690, 720],
             'Orig. Balance': [10000, 20000, 30000],
+            'Lender Price(%)': [99.0, 100.0, 101.0],
+            'Dealer Fee': [0.05, 0.05, 0.05],
         })
-        
+
         result = check_eligibility_prime(df)
-        
+
         assert 'check_a' in result
         assert 'value' in result['check_a']
         assert 'pass' in result['check_a']
@@ -33,25 +36,32 @@ class TestCheckEligibilityPrime:
         df = pd.DataFrame({
             'platform': ['prime', 'prime'],
             'Repurchase': [False, False],
+            'Excess_Asset': [False, False],
             'Term': [180, 180],
             'type': ['standard', 'standard'],
             'FICO Borrower': [680, 690],
             'Orig. Balance': [10000, 20000],
+            'Lender Price(%)': [99.0, 100.0],
+            'Dealer Fee': [0.05, 0.05],
         })
-        
+
         result = check_eligibility_prime(df)
-        
+
         assert 'check_b1' in result
-        assert 'check_b3' in result  # Count-based check
+        assert 'check_b3' not in result  # removed from prime (only in SFY)
     
     def test_check_c_term_144_standard_fico_700_plus(self):
         """Test Check C: Term > 144, standard, FICO >= 700."""
         df = pd.DataFrame({
             'platform': ['prime', 'prime'],
+            'Repurchase': [False, False],
+            'Excess_Asset': [False, False],
             'Term': [180, 180],
             'type': ['standard', 'standard'],
             'FICO Borrower': [720, 750],
             'Orig. Balance': [10000, 20000],
+            'Lender Price(%)': [99.0, 100.0],
+            'Dealer Fee': [0.05, 0.05],
         })
         
         result = check_eligibility_prime(df)
@@ -63,8 +73,14 @@ class TestCheckEligibilityPrime:
         """Test Check D: Hybrid type."""
         df = pd.DataFrame({
             'platform': ['prime', 'prime', 'prime'],
+            'Repurchase': [False, False, False],
+            'Excess_Asset': [False, False, False],
+            'Term': [120, 120, 120],
             'type': ['hybrid', 'standard', 'hybrid'],
+            'FICO Borrower': [700, 700, 700],
             'Orig. Balance': [10000, 20000, 15000],
+            'Lender Price(%)': [99.0, 99.0, 99.0],
+            'Dealer Fee': [0.05, 0.05, 0.05],
         })
         
         result = check_eligibility_prime(df)
@@ -77,8 +93,14 @@ class TestCheckEligibilityPrime:
         """Test Check L: FICO distribution."""
         df = pd.DataFrame({
             'platform': ['prime', 'prime', 'prime'],
+            'Repurchase': [False, False, False],
+            'Excess_Asset': [False, False, False],
+            'Term': [120, 120, 120],
+            'type': ['standard', 'standard', 'standard'],
             'FICO Borrower': [650, 700, 750],
             'Orig. Balance': [10000, 20000, 30000],
+            'Lender Price(%)': [99.0, 99.0, 99.0],
+            'Dealer Fee': [0.05, 0.05, 0.05],
         })
         
         result = check_eligibility_prime(df)
@@ -90,8 +112,9 @@ class TestCheckEligibilityPrime:
     def test_empty_dataframe(self):
         """Test handling empty dataframe."""
         df = pd.DataFrame({
-            'platform': [],
-            'Orig. Balance': [],
+            'platform': pd.Series([], dtype=str),
+            'Excess_Asset': pd.Series([], dtype=bool),
+            'Orig. Balance': pd.Series([], dtype=float),
         })
         
         result = check_eligibility_prime(df)
@@ -106,6 +129,7 @@ class TestCheckEligibilitySfy:
         """Test Check A: Hybrid type."""
         df = pd.DataFrame({
             'platform': ['sfy', 'sfy', 'sfy'],
+            'Excess_Asset': [False, False, False],
             'type': ['hybrid', 'standard', 'hybrid'],
             'APR': [6.5, 7.5, 8.0],
             'Orig. Balance': [10000, 20000, 15000],
@@ -120,6 +144,7 @@ class TestCheckEligibilitySfy:
         """Test Check B: NINP type."""
         df = pd.DataFrame({
             'platform': ['sfy', 'sfy', 'sfy'],
+            'Excess_Asset': [False, False, False],
             'type': ['ninp', 'standard', 'ninp'],
             'promo_term': [6, 12, 18],
             'Term': [72, 120, 84],
@@ -137,6 +162,7 @@ class TestCheckEligibilitySfy:
         """Test Check D: WPDI type."""
         df = pd.DataFrame({
             'platform': ['sfy', 'sfy', 'sfy'],
+            'Excess_Asset': [False, False, False],
             'type': ['wpdi', 'wpdi_bd', 'standard'],
             'promo_term': [6, 12, 18],
             'Orig. Balance': [10000, 20000, 15000],
@@ -153,6 +179,7 @@ class TestCheckEligibilitySfy:
         """Test Check E: Standard term > 120."""
         df = pd.DataFrame({
             'platform': ['sfy', 'sfy', 'sfy'],
+            'Excess_Asset': [False, False, False],
             'type': ['standard', 'standard_bd', 'standard'],
             'Term': [120, 144, 180],
             'Orig. Balance': [10000, 20000, 15000],
@@ -169,6 +196,7 @@ class TestCheckEligibilitySfy:
         """Test Check F: Lender Price."""
         df = pd.DataFrame({
             'platform': ['sfy', 'sfy', 'sfy'],
+            'Excess_Asset': [False, False, False],
             'Lender Price(%)': [99.0, 101.5, 102.5],
             'loan program': ['Unsec Std - 999 - 120', 'Other', 'Unsec Std - 999 - 120'],
             'Dealer Fee': [0.05, 0.05, 0.05],
@@ -186,6 +214,7 @@ class TestCheckEligibilitySfy:
         """Test Check J: FICO distribution."""
         df = pd.DataFrame({
             'platform': ['sfy', 'sfy', 'sfy'],
+            'Excess_Asset': [False, False, False],
             'FICO Borrower': [650, 700, 750],
             'Orig. Balance': [10000, 20000, 30000],
         })
@@ -201,10 +230,11 @@ class TestCheckEligibilitySfy:
         """Test Check L: BD types."""
         df = pd.DataFrame({
             'platform': ['sfy', 'sfy', 'sfy'],
+            'Excess_Asset': [False, False, False],
             'type': ['wpdi_bd', 'standard_bd', 'standard'],
             'Orig. Balance': [10000, 20000, 15000],
         })
-        
+
         buy_df = pd.DataFrame({
             'platform': ['sfy'],
             'type': ['standard_bd'],

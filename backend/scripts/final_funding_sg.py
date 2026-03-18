@@ -55,8 +55,23 @@ irr_target = float(os.environ.get("IRR_TARGET", "7.9"))
 
 # %%
 #manual dates (overridable via environment variables for regression testing)
-pdate = os.environ.get("PDATE", '2026-02-24')
 curr_date = os.environ.get("CURR_DATE", '02-19-2026')
+
+# pdate: use explicit override, or derive as curr_date + 3 US business days
+def _pdate_from_curr_date(curr_date_str: str) -> str:
+    """Return pdate (YYYY-MM-DD) by adding 3 US business days to curr_date (MM-DD-YYYY)."""
+    import holidays as _hl
+    from datetime import timedelta
+    d = datetime.strptime(curr_date_str, "%m-%d-%Y").date()
+    us_hols = _hl.US(years=range(d.year, d.year + 2))
+    count = 0
+    while count < 3:
+        d += timedelta(days=1)
+        if d.weekday() < 5 and d not in us_hols:
+            count += 1
+    return d.strftime("%Y-%m-%d")
+
+pdate = os.environ.get("PDATE") or _pdate_from_curr_date(curr_date)
 last_end = os.environ.get("LAST_END", '2026_001_31')
 fd = os.environ.get("FD", '2026-02-01')
 yestarday = os.environ.get("YESTERDAY", '02-18-2026')
@@ -206,6 +221,9 @@ buy_df = buy_df.merge(df_loans_types, on = ['loan program', 'Platform'], how = '
 if 'Dealer Fee_x' in buy_df.columns:
     buy_df.rename(columns={'Dealer Fee_x': 'Dealer Fee'}, inplace=True)
     buy_df.drop(columns=['Dealer Fee_y'], inplace=True, errors='ignore')
+if 'promo_term_x' in buy_df.columns:
+    buy_df.rename(columns={'promo_term_x': 'promo_term'}, inplace=True)
+    buy_df.drop(columns=['promo_term_y'], inplace=True, errors='ignore')
 buy_df = buy_df.loc[:, ~buy_df.columns.duplicated()]
 if 'tagging' not in buy_df.columns:
     buy_df = buy_df.merge(loans[['SELLER Loan #', 'tagging']], on='SELLER Loan #', how='left')

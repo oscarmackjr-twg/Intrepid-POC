@@ -1,6 +1,6 @@
 """Date calculation utilities for file naming and pipeline execution."""
-from datetime import datetime, timedelta
-from typing import Tuple, Optional
+from datetime import date, datetime, timedelta
+from typing import Tuple, Optional, Union
 import logging
 
 from utils.holiday_calendar import is_business_day, next_business_day, PDATE_COUNTRY
@@ -55,6 +55,39 @@ def calculate_last_month_end(base_date: Optional[datetime] = None) -> str:
     first_day_of_current_month = datetime(today.year, today.month, 1)
     last_day_previous_month = first_day_of_current_month - timedelta(days=1)
     return f"{last_day_previous_month.year}_{last_day_previous_month.month:03}_{last_day_previous_month.day:02}"
+
+
+def add_us_business_days(
+    start: Union[date, datetime, str],
+    n: int,
+    fmt_in: str = "%Y-%m-%d",
+    fmt_out: str = "%Y-%m-%d",
+) -> str:
+    """Add n US business days to start, skipping weekends and US federal holidays.
+
+    Args:
+        start: Start date (date, datetime, or string).
+        n: Number of business days to add (must be >= 0).
+        fmt_in: strptime format when start is a string (default YYYY-MM-DD).
+        fmt_out: strftime format for the returned string (default YYYY-MM-DD).
+
+    Returns:
+        Resulting date as a string in fmt_out format.
+    """
+    if isinstance(start, str):
+        d = datetime.strptime(start, fmt_in).date()
+    elif isinstance(start, datetime):
+        d = start.date()
+    else:
+        d = start
+
+    count = 0
+    while count < n:
+        d += timedelta(days=1)
+        if is_business_day(d, PDATE_COUNTRY):
+            count += 1
+
+    return d.strftime(fmt_out)
 
 
 def calculate_pipeline_dates(pdate: str = None, tday: str = None) -> Tuple[str, str, str]:
