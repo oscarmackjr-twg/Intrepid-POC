@@ -56,10 +56,35 @@ def _prepare_temp_input_from_s3(prefix: str) -> str:
     return sync_s3_input_to_temp(input_storage, prefix)
 
 
+def _compute_date_env_vars() -> dict:
+    """Return date env vars needed by final_funding scripts, derived from today.
+
+    Scripts use these for file naming (e.g. Tape20Loans_{YESTERDAY}.csv).
+    Without them the scripts fall back to hardcoded dates and fail in production.
+    """
+    from datetime import date, timedelta
+    from utils.date_utils import add_us_business_days, calculate_last_month_end
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    last_end_dt = today.replace(day=1) - timedelta(days=1)
+    return {
+        "CURR_DATE": today.strftime("%m-%d-%Y"),
+        "YESTERDAY": yesterday.strftime("%m-%d-%Y"),
+        "PDATE":     add_us_business_days(today, 3),
+        "LAST_END":  f"{last_end_dt.year}_{last_end_dt.month:03}_{last_end_dt.day:02}",
+        "FD":        today.replace(day=1).strftime("%Y-%m-%d"),
+    }
+
+
 def _run_workbook_script(script_path: str, folder: str) -> None:
     """Run the workbook Python script with FOLDER env set."""
     env = os.environ.copy()
     env["FOLDER"] = folder
+    # Compute date env vars from today so scripts do not fall back to hardcoded dates.
+    # setdefault preserves any values already in the environment (e.g. from regression
+    # tests or explicit ECS task overrides).
+    for k, v in _compute_date_env_vars().items():
+        env.setdefault(k, v)
     # Use sys.executable so the subprocess always runs under the same interpreter
     # (and thus the same venv) as the backend — avoids missing-package errors on
     # Windows where the system `python` may differ from the venv python.
