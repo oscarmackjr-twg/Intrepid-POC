@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 12-03-PLAN.md — CI unit-test gate wired, pytest-cov added, tests/README.md updated
-last_updated: "2026-03-22T02:24:51.410Z"
+stopped_at: Completed 08-01-PLAN.md — LOCAL_DEV_MODE confirmed live in ECS rev 2, docker-compose.yml updated
+last_updated: "2026-03-22T04:00:09.287Z"
 progress:
-  total_phases: 12
+  total_phases: 14
   completed_phases: 8
   total_plans: 39
-  completed_plans: 35
+  completed_plans: 36
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Ops can take a loan tape from email to executed wire instructions in one controlled, visible process — replacing ad hoc scripts
-**Current focus:** Phase 12 — unit-testing-build-out
+**Current focus:** Phase 08 — fix-staging-auth
 
 ## Current Position
 
-Phase: 12 (unit-testing-build-out) — EXECUTING
-Plan: 3 of 3
+Phase: 08 (fix-staging-auth) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -146,6 +146,7 @@ Recent decisions affecting current work:
 - [Phase 12]: AsyncIOScheduler.shutdown() is no-op in sync tests; force-reset via scheduler.state = STATE_STOPPED
 - [Phase 12]: TestPipelineExecution marked @pytest.mark.integration to exclude from default run; fixture conflict resolved by using separate tmp_path
 - [Phase 12-unit-testing-build-out]: [12-03] unit-tests CI job runs parallel to security-quality-gate; both must pass before deploy; no --cov-fail-under threshold (reporting only); --cov=. with working-directory: backend
+- [Phase 08]: No terraform apply needed for 08-01 — ECS task def revision 2 with LOCAL_DEV_MODE=true already live; terraform plan confirmed zero pending changes
 
 ### Pending Todos
 
@@ -160,6 +161,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-22T02:24:51.397Z
-Stopped at: Completed 12-03-PLAN.md — CI unit-test gate wired, pytest-cov added, tests/README.md updated
+Last session: 2026-03-22T04:00:09.274Z
+Stopped at: Completed 08-01-PLAN.md — LOCAL_DEV_MODE confirmed live in ECS rev 2, docker-compose.yml updated
 Resume file: None
