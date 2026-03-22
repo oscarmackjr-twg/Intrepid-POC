@@ -112,7 +112,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 5. Staging Deployment | 2/3 | In Progress|  |
 | 6. Final Funding & Cashflow | 3/5 | In Progress|  |
 | 7. Application Hardening | 7/7 | Complete   | 2026-03-11 |
-| 8. Fix Staging Auth & Smoke Test | 1/2 | In Progress|  |
+| 8. Fix Staging Auth & Smoke Test | 2/2 | Complete   | 2026-03-22 |
 | 9. Write Missing Verification Records | 0/3 | Pending | |
 | 10. Revamp User Interface | 3/3 | Complete    | 2026-03-13 |
 | 11. Refing UI for Regression Testing | 5/5 | Complete   | 2026-03-14 |
@@ -159,7 +159,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — Add LOCAL_DEV_MODE=true to ecs.tf + docker-compose.yml; terraform plan + apply (STAGE-01, MISS-01, MISS-02)
-- [ ] 08-02-PLAN.md — Trigger ECS deploy, run 05-03 smoke test, write Phase 5 VERIFICATION.md (STAGE-01, STAGE-02, STAGE-03)
+- [x] 08-02-PLAN.md — Trigger ECS deploy, run 05-03 smoke test, write Phase 5 VERIFICATION.md (STAGE-01, STAGE-02, STAGE-03)
 
 ### Phase 9: Write Missing Verification Records
 
@@ -178,7 +178,7 @@ Plans:
 **Goal:** Redesign the ops dashboard look, feel, and navigation to align with TWG Global brand guidelines — replace horizontal nav with a fixed left sidebar, apply navy brand color throughout, rename app to "Intrepid Loan Platform", add TWG logo, and restructure nav with SG/CIBC group labels. Visual and structural changes only; no new data features.
 **Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05
 **Depends on:** Phase 9
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 10-01-PLAN.md — Brand globals (index.html title, index.css Gotham font + CSS vars, logo asset copy) + Login page rebrand (UI-01, UI-02)
