@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 12-02-PLAN.md — 5 new unit test files, 72 tests all passing
-last_updated: "2026-03-22T02:15:37.078Z"
+stopped_at: Completed 12-01-PLAN.md — all 10 failing tests fixed; full suite 247 passed
+last_updated: "2026-03-22T02:19:32.947Z"
 progress:
   total_phases: 12
   completed_phases: 7
   total_plans: 39
-  completed_plans: 33
+  completed_plans: 34
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 ## Current Position
 
 Phase: 12 (unit-testing-build-out) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Plan: 2 of 3
 | Phase 11-refing-ui-for-regression-testing P01 | 2 | 2 tasks | 2 files |
 | Phase 11-refing-ui-for-regression-testing P04 | 5 | 1 tasks | 1 files |
 | Phase 12-unit-testing-build-out P02 | 4 | 2 tasks | 5 files |
+| Phase 12 P01 | 8 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -141,6 +142,8 @@ Recent decisions affecting current work:
 - [Phase 11-04]: Output dir discovery uses mtime >= started_epoch to identify the run just launched; stdlib-only implementation with filecmp.cmp(shallow=False) for byte-level comparison; date derivation falls back from CLI args to folder name to today
 - [Phase 12-unit-testing-build-out]: [12-02] Inline DataFrames for CoMAP tests — column names imported from module constants prevent silent false-negatives from column key mismatch
 - [Phase 12-unit-testing-build-out]: [12-02] Archive tests use temp_dir fixture from conftest — tests real file-walking logic without mocking
+- [Phase 12]: AsyncIOScheduler.shutdown() is no-op in sync tests; force-reset via scheduler.state = STATE_STOPPED
+- [Phase 12]: TestPipelineExecution marked @pytest.mark.integration to exclude from default run; fixture conflict resolved by using separate tmp_path
 
 ### Pending Todos
 
@@ -155,6 +158,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-22T02:15:37.067Z
-Stopped at: Completed 12-02-PLAN.md — 5 new unit test files, 72 tests all passing
+Last session: 2026-03-22T02:19:32.936Z
+Stopped at: Completed 12-01-PLAN.md — all 10 failing tests fixed; full suite 247 passed
 Resume file: None
