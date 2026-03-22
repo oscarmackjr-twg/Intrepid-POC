@@ -2,130 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in-progress
-stopped_at: Completed 11-05-PLAN.md — Claude dry-run PASS; awaiting Ops QA sign-off
-last_updated: "2026-03-13T23:59:00.586Z"
+status: unknown
+stopped_at: Completed 12-02-PLAN.md — 5 new unit test files, 72 tests all passing
+last_updated: "2026-03-22T02:15:37.078Z"
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 7
-  total_plans: 36
-  completed_plans: 32
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: in-progress
-stopped_at: Completed 10-revamp-user-interface-phase-10/10-03-PLAN.md — Phase 10 TWG brand rebrand visually verified and approved
-last_updated: "2026-03-13T15:48:06.511Z"
-progress:
-  total_phases: 10
-  completed_phases: 6
-  total_plans: 31
-  completed_plans: 27
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: in-progress
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-11T02:37:28.081Z"
-progress:
-  total_phases: 9
-  completed_phases: 5
-  total_plans: 26
-  completed_plans: 24
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: in-progress
-stopped_at: Completed 06-final-funding-cashflow-integration/06-04-PLAN.md — Final Funding async job polling UI complete
-last_updated: "2026-03-09T14:04:58.779Z"
-progress:
-  total_phases: 6
-  completed_phases: 4
-  total_plans: 19
-  completed_plans: 17
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: in-progress
-stopped_at: Completed 05-staging-deployment/05-01-PLAN.md — StagingBanner + Dockerfile/CI build-arg wiring complete
-last_updated: "2026-03-06T21:02:42.136Z"
-progress:
-  total_phases: 5
-  completed_phases: 4
-  total_plans: 14
-  completed_plans: 13
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: in-progress
-stopped_at: Completed 03-aws-infrastructure/03-02-PLAN.md — Phase 3 complete, all INFRA requirements verified
-last_updated: "2026-03-06T16:27:04.501Z"
-progress:
-  total_phases: 5
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: in-progress
-stopped_at: "Completed 03-aws-infrastructure/03-01-PLAN.md"
-last_updated: "2026-03-06T04:45:00.000Z"
-progress:
-  [██████████] 100%
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 7
-  percent: 100
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: in-progress
-stopped_at: Completed 02-docker-local-dev/02-01-PLAN.md
-last_updated: "2026-03-06T02:31:55.651Z"
-progress:
-  [██████████] 100%
-  completed_phases: 1
-  total_plans: 6
-  completed_plans: 5
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: in-progress
-stopped_at: Completed Phase 1 — Local Dev (all 4 plans, all 6 LOCAL requirements verified)
-last_updated: "2026-03-06T01:30:00Z"
-last_activity: 2026-03-06 — Phase 1 complete (human smoke test approved, pipeline runs end-to-end)
-progress:
-  total_phases: 5
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 20
+  total_plans: 39
+  completed_plans: 33
 ---
 
 # Project State
@@ -135,19 +19,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Ops can take a loan tape from email to executed wire instructions in one controlled, visible process — replacing ad hoc scripts
-**Current focus:** Phase 4 — CI/CD
+**Current focus:** Phase 12 — unit-testing-build-out
 
 ## Current Position
 
-Phase: 3 of 5 (AWS Infrastructure) — COMPLETE
-Plan: 2 of 2 complete in current phase
-Status: Phase 3 complete — all four INFRA requirements verified (Secrets Manager readable, ECR push confirmed, RDS psql returning PostgreSQL 16.8)
-
-Progress: [██████████] 100%
+Phase: 12 (unit-testing-build-out) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 4
 - Phase 1 total: 4 plans
 
@@ -183,6 +65,7 @@ Progress: [██████████] 100%
 | Phase 11-refing-ui-for-regression-testing P03 | 1 | 1 tasks | 1 files |
 | Phase 11-refing-ui-for-regression-testing P01 | 2 | 2 tasks | 2 files |
 | Phase 11-refing-ui-for-regression-testing P04 | 5 | 1 tasks | 1 files |
+| Phase 12-unit-testing-build-out P02 | 4 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -192,6 +75,7 @@ Progress: [██████████] 100%
 - Phase 7 added: Run final funding via API
 - Phase 10 added: Revamp User Interface - Phase 10
 - Phase 11 added: Refing UI for Regression Testing
+- Phase 12 added: Unit Testing Build Out
 
 ### Decisions
 
@@ -255,6 +139,8 @@ Recent decisions affecting current work:
 - [Phase 11-refing-ui-for-regression-testing]: [Phase 11-01]: Nav active state uses pathname+search query combination for child links differentiated only by query param
 - [Phase 11-refing-ui-for-regression-testing]: [Phase 11-01]: Admin Cash Flow link uses !type= negation to avoid co-highlighting with Cash Flow SG/CIBC child links
 - [Phase 11-04]: Output dir discovery uses mtime >= started_epoch to identify the run just launched; stdlib-only implementation with filecmp.cmp(shallow=False) for byte-level comparison; date derivation falls back from CLI args to folder name to today
+- [Phase 12-unit-testing-build-out]: [12-02] Inline DataFrames for CoMAP tests — column names imported from module constants prevent silent false-negatives from column key mismatch
+- [Phase 12-unit-testing-build-out]: [12-02] Archive tests use temp_dir fixture from conftest — tests real file-walking logic without mocking
 
 ### Pending Todos
 
@@ -269,6 +155,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-13T23:59:00.579Z
-Stopped at: Completed 11-05-PLAN.md — Claude dry-run PASS; awaiting Ops QA sign-off
+Last session: 2026-03-22T02:15:37.067Z
+Stopped at: Completed 12-02-PLAN.md — 5 new unit test files, 72 tests all passing
 Resume file: None
