@@ -58,6 +58,9 @@ jobs:
           npm ci
           npm audit --audit-level=high
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Terraform validate
         working-directory: deploy/terraform/qa
         run: |
