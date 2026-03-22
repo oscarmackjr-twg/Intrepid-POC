@@ -139,4 +139,4 @@ class TestEnrichBuyDf:
         )
         
         # Should have merged columns from loan types
-        assert 'type' in result.columns or 'platform' in result.columns
+        assert 'Platform' in result.columns
