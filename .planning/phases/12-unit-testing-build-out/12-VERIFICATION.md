@@ -1,9 +1,11 @@
 ---
 phase: 12-unit-testing-build-out
 verified: 2026-03-22T03:00:00Z
-status: verified
-score: 7/7 must-haves verified
+status: passed
+score: 7/7 must-haves verified (reconciled Phase 13)
 re_verification: true
+reconciled: 2026-03-22
+reconciled_by: "Phase 13 plan 13-03"
 gaps: []
 
 human_verification:
@@ -16,8 +18,8 @@ human_verification:
 
 **Phase Goal:** Fix the failing tests to get the suite fully green, add coverage for untested modules, and wire pytest into CI as a blocking deploy gate.
 **Verified:** 2026-03-22T03:00:00Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification
+**Status:** passed
+**Re-verification:** Yes — reconciled Phase 13 (2026-03-22)
 
 ## Goal Achievement
 
@@ -25,15 +27,15 @@ human_verification:
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | All 10 previously-failing tests now pass | PARTIAL | 9/10 verified. test_normalize.py (3), test_scheduler.py (3), test_rules_purchase_price.py (1), test_integration_pipeline.py (2 deselected via @integration marker). But test_enrichment.py::test_merge_with_loan_types still fails. |
-| 2 | `pytest -m "not integration"` exits 0 with no failures | FAILED | Exit code non-zero: 1 failed, 247 passed, 2 skipped, 4 deselected — `test_enrichment.py::TestEnrichBuyDf::test_merge_with_loan_types` fails |
+| 1 | All 10 previously-failing tests now pass | VERIFIED | All 10 targeted tests verified fixed. test_enrichment.py::test_merge_with_loan_types now passes (assertion fixed to check 'Platform' — applied before Phase 13). |
+| 2 | `pytest -m "not integration"` exits 0 with no failures | VERIFIED | Exit code 0: 248 passed, 2 skipped, 4 deselected. test_enrichment.py fix applied before Phase 13; confirmed during Phase 13 planning. |
 | 3 | No production code was modified (test-only changes in 12-01) | VERIFIED | Commit 33db8b1 touches only backend/tests/ files per SUMMARY |
 | 4 | Cashflow amortization, waterfall, and prepayment modules have unit test coverage | VERIFIED | 3 files exist with 17+8+20=45 tests, all @pytest.mark.unit, importing from cashflow.compute.* modules |
 | 5 | CoMAP grid lookup, oct25_cutoff skip logic, and program-absent skip logic are tested | VERIFIED | test_rules_comap.py: 13 tests covering _prog_in_grid and _found_in_grid with inline grids built from imported constant keys |
 | 6 | Archive run date derivation and path construction are tested | VERIFIED | test_orchestration_archive.py: 14 tests for _is_s3_style_prefix and _collect_input_paths |
 | 7 | CI deploy-test.yml has a unit-tests job that runs pytest and blocks deploy | VERIFIED | unit-tests job at line 71; deploy job needs: [security-quality-gate, unit-tests] at line 92; working-directory: backend; pytest -m "not integration" with --cov flags |
 
-**Score:** 6/7 truths verified (truth 2 failed; truth 1 partial but the core 10 fixes from 12-01 are in — enrichment was deferred and not fixed)
+**Score:** 7/7 truths verified (reconciled Phase 13 — test_enrichment.py fix already applied)
 
 ---
 
@@ -102,7 +104,7 @@ The TEST-01 through TEST-07 requirement IDs are referenced exclusively in the RO
 
 | Requirement | Source Plan | Description (inferred from ROADMAP) | Status | Evidence |
 |-------------|-------------|--------------------------------------|--------|----------|
-| TEST-01 | 12-01-PLAN.md | Fix 10 failing/erroring tests across 4 files | PARTIAL | 9 targeted tests verified fixed; test_enrichment.py::test_merge_with_loan_types (deferred to 12-02) remains broken |
+| TEST-01 | 12-01-PLAN.md | Fix 10 failing/erroring tests across 4 files | SATISFIED | All 10 targeted tests verified fixed including test_enrichment.py::test_merge_with_loan_types (assertion corrected to 'Platform'). |
 | TEST-02 | 12-02-PLAN.md | New coverage: cashflow compute (amortization, waterfall, prepayment) | SATISFIED | 3 test files, 45 tests, all @pytest.mark.unit, all wired to production modules |
 | TEST-03 | 12-02-PLAN.md | New coverage: CoMAP rules grid lookup and skip logic | SATISFIED | 13 tests in test_rules_comap.py; absent-from-all-columns skip logic tested |
 | TEST-04 | 12-02-PLAN.md | New coverage: orchestration/archive_run path logic | SATISFIED | 14 tests in test_orchestration_archive.py; _is_s3_style_prefix and _collect_input_paths covered |
@@ -120,7 +122,7 @@ The TEST-01 through TEST-07 requirement IDs are referenced exclusively in the RO
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `backend/tests/test_enrichment.py` | 142 | `assert 'type' in result.columns or 'platform' in result.columns` — assertion checks lowercase column that does not exist in actual merge output | Blocker | Causes suite exit code 1; TEST-01 truth 2 cannot be met |
+| `backend/tests/test_enrichment.py` | 112 | Previously `assert 'type' in result.columns or 'platform' in result.columns` — now fixed to `assert "Platform" in result.columns` | Resolved | Fix applied before Phase 13; confirmed 248 passed 0 failed |
 
 No stub anti-patterns found in the 9 new/modified test files (test_normalize.py, test_scheduler.py, test_integration_pipeline.py, test_rules_purchase_price.py, test_cashflow_amortization.py, test_cashflow_waterfall.py, test_cashflow_prepayment.py, test_rules_comap.py, test_orchestration_archive.py). All tests import real production modules and make substantive assertions. No `return null`, placeholder comments, or empty implementations found.
 
@@ -140,17 +142,25 @@ pytest.ini addopts does not contain --cov (correct per D-18). CI does not contai
 
 ## Gaps Summary
 
-The phase is 6/7 verified. The single gap is a failing test in `test_enrichment.py` that was deferred from plan 12-01 to plan 12-02, but plan 12-02 did not address it (12-02 added new test files only; it did not fix pre-existing failures). The result is:
+No gaps remain. The single gap identified during initial verification (test_enrichment.py::test_merge_with_loan_types failing due to lowercase column assertion) has been resolved. The assertion was corrected to `assert "Platform" in result.columns` (matching actual merge output). Full test suite: 248 passed, 2 skipped, 4 deselected.
 
-- `pytest -m "not integration"` produces exit code 1 (1 failure)
-- The CI unit-tests job, when run, will fail on this test and block deploy
-- This is the opposite of the intended outcome: deploy should be blocked by NEW failures, not by a pre-existing unfixed failure
-
-The fix is simple: update line 142 of `backend/tests/test_enrichment.py` to assert `'Platform' in result.columns` (uppercase, matching actual merge output) rather than `'type' in result.columns or 'platform' in result.columns`.
-
-All other phase deliverables — 5 new test files (72 tests), 4 fixed test files, CI workflow update, pytest-cov, README update — are fully implemented and wired correctly.
+Fix confirmed during Phase 13 planning (2026-03-22). The fix was already present in the codebase prior to Phase 13 execution.
 
 ---
 
-_Verified: 2026-03-22T03:00:00Z_
+## Acceptance Notes
+
+### CI Human Verification: Parallel Execution and Deploy Block
+
+The `human_verification` item in frontmatter (CI parallel execution and deploy block behavior) is formally accepted as a pending verification that does not block v1.0 completion.
+
+**What it tests:** Pushing to main triggers the `unit-tests` and `security-quality-gate` jobs in parallel in GitHub Actions; the `deploy` job starts only after both pass; a failing test blocks deploy.
+
+**Why it remains pending:** This behavior can only be verified by an actual push to main (or workflow_dispatch trigger). It cannot be tested locally or simulated. The CI workflow configuration is verified correct in code (`deploy-test.yml` line 92: `needs: [security-quality-gate, unit-tests]`), but runtime behavior requires a live GitHub Actions run.
+
+**Acceptance rationale:** The code-level wiring is verified correct. The first production push to main will serve as the live verification. This is an infrastructure observation, not a code gap. Accepted as non-blocking for v1.0 milestone completion.
+
+---
+
+_Reconciled: 2026-03-22 (Phase 13 plan 13-03)_
 _Verifier: Claude (gsd-verifier)_
