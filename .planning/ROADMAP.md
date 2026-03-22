@@ -116,7 +116,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 9. Write Missing Verification Records | 0/3 | Pending | |
 | 10. Revamp User Interface | 3/3 | Complete    | 2026-03-13 |
 | 11. Refing UI for Regression Testing | 5/5 | Complete   | 2026-03-14 |
-| 12. Unit Testing Build Out | 1/3 | In Progress|  |
+| 12. Unit Testing Build Out | 3/3 | Complete   | 2026-03-22 |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
@@ -202,9 +202,9 @@ Plans:
 **Goal:** Fix the 8 currently-failing tests to get the suite fully green, extend coverage into cashflow compute (amortization, waterfall, prepayment), rules/comap.py, and orchestration/archive_run.py, wire pytest into CI as a blocking deploy gate with coverage reporting, and update test documentation.
 **Requirements**: TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, TEST-06, TEST-07
 **Depends on:** Phase 11
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 12-01-PLAN.md — Fix all 10 failing/erroring tests across 4 test files (TEST-01)
+- [x] 12-01-PLAN.md — Fix all 10 failing/erroring tests across 4 test files (TEST-01)
 - [x] 12-02-PLAN.md — New coverage: cashflow compute, CoMAP rules, archive run (TEST-02, TEST-03, TEST-04)
-- [ ] 12-03-PLAN.md — CI unit-tests gate, pytest-cov, tests/README.md update (TEST-05, TEST-06, TEST-07)
+- [x] 12-03-PLAN.md — CI unit-tests gate, pytest-cov, tests/README.md update (TEST-05, TEST-06, TEST-07)

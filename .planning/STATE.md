@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 12-01-PLAN.md — all 10 failing tests fixed; full suite 247 passed
-last_updated: "2026-03-22T02:19:32.947Z"
+stopped_at: Completed 12-03-PLAN.md — CI unit-test gate wired, pytest-cov added, tests/README.md updated
+last_updated: "2026-03-22T02:24:51.410Z"
 progress:
   total_phases: 12
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 39
-  completed_plans: 34
+  completed_plans: 35
 ---
 
 # Project State
@@ -67,6 +67,7 @@ Plan: 3 of 3
 | Phase 11-refing-ui-for-regression-testing P04 | 5 | 1 tasks | 1 files |
 | Phase 12-unit-testing-build-out P02 | 4 | 2 tasks | 5 files |
 | Phase 12 P01 | 8 | 2 tasks | 4 files |
+| Phase 12-unit-testing-build-out P03 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -144,6 +145,7 @@ Recent decisions affecting current work:
 - [Phase 12-unit-testing-build-out]: [12-02] Archive tests use temp_dir fixture from conftest — tests real file-walking logic without mocking
 - [Phase 12]: AsyncIOScheduler.shutdown() is no-op in sync tests; force-reset via scheduler.state = STATE_STOPPED
 - [Phase 12]: TestPipelineExecution marked @pytest.mark.integration to exclude from default run; fixture conflict resolved by using separate tmp_path
+- [Phase 12-unit-testing-build-out]: [12-03] unit-tests CI job runs parallel to security-quality-gate; both must pass before deploy; no --cov-fail-under threshold (reporting only); --cov=. with working-directory: backend
 
 ### Pending Todos
 
@@ -158,6 +160,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-22T02:19:32.936Z
-Stopped at: Completed 12-01-PLAN.md — all 10 failing tests fixed; full suite 247 passed
+Last session: 2026-03-22T02:24:51.397Z
+Stopped at: Completed 12-03-PLAN.md — CI unit-test gate wired, pytest-cov added, tests/README.md updated
 Resume file: None
