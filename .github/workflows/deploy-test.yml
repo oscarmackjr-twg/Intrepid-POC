@@ -68,8 +68,28 @@ jobs:
           head: HEAD
           extra_args: --debug --only-verified
 
+  unit-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Run unit tests with coverage
+        working-directory: backend
+        run: pytest -m "not integration" --tb=short -q --cov=. --cov-report=term-missing
+
   deploy:
-    needs: [security-quality-gate]
+    needs: [security-quality-gate, unit-tests]
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # required for OIDC token request
