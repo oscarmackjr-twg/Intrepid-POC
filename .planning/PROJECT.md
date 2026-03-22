@@ -95,4 +95,4 @@ Ops can take a loan tape from email to executed wire instructions in a single, a
 | Decimal arithmetic throughout | Float accumulates error across 1,000 loans | — Pending (verify in existing code) |
 
 ---
-*Last updated: 2026-03-22 — Phase 07 complete (Application Hardening: HttpOnly cookies, audit logging, CI security gates, secret guard, rate limiting, CSP, file leakage fixes, repo hygiene)*
+*Last updated: 2026-03-22 — Phase 09 complete (Write Verification Records: formalised Phase 1 VERIFICATION.md, stamped Phase 6 complete, updated REQUIREMENTS.md traceability — verification debt closed)*
