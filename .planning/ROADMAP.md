@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Docker Local Dev** - Single-command Docker Compose startup with auto-migrations and hot reload (completed 2026-03-06)
 - [x] **Phase 3: AWS Infrastructure** - Terraform qa environment applies cleanly with secrets, ECR, and RDS live (completed 2026-03-06)
 - [x] **Phase 4: CI/CD Pipeline** - GitHub Actions builds, pushes to ECR, and deploys to ECS with migrations (completed 2026-03-06)
-- [ ] **Phase 5: Staging Deployment** - Live staging URL, Ops can log in and upload, environment banner visible
+- [x] **Phase 5: Staging Deployment** - Live staging URL, Ops can log in and upload, environment banner visible (completed 2026-03-22)
 
 ## Phase Details
 
@@ -94,9 +94,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — StagingBanner component (Layout + Login), VITE_APP_ENV build arg in Dockerfile and GitHub Actions (STAGE-03)
-- [ ] 05-02-PLAN.md — Seed script for staging admin user, First Deploy Checklist in CICD.md (STAGE-02)
-- [ ] 05-03-PLAN.md — Trigger deploy, run seed script, human verification of all three STAGE requirements (STAGE-01, STAGE-02, STAGE-03)
+- [x] 05-01-PLAN.md — StagingBanner component (Layout + Login), VITE_APP_ENV build arg in Dockerfile and GitHub Actions (STAGE-03)
+- [x] 05-02-PLAN.md — Seed script for staging admin user, First Deploy Checklist in CICD.md (STAGE-02)
+- [x] 05-03-PLAN.md — Trigger deploy, run seed script, human verification of all three STAGE requirements (STAGE-01, STAGE-02, STAGE-03)
 
 ## Progress
 
@@ -109,7 +109,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 2. Docker Local Dev | 2/2 | Complete   | 2026-03-06 |
 | 3. AWS Infrastructure | 2/2 | Complete | 2026-03-06 |
 | 4. CI/CD Pipeline | 3/3 | Complete   | 2026-03-06 |
-| 5. Staging Deployment | 2/3 | In Progress|  |
+| 5. Staging Deployment | 3/3 | Complete   | 2026-03-22 |
 | 6. Final Funding & Cashflow | 3/5 | In Progress|  |
 | 7. Application Hardening | 7/7 | Complete   | 2026-03-11 |
 | 8. Fix Staging Auth & Smoke Test | 2/2 | Complete   | 2026-03-22 |
@@ -125,7 +125,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 **Goal:** Replace stub Final Funding SG and CIBC scripts with real workbook implementations, add async job tracking so Ops can see RUNNING/COMPLETED/FAILED status in the UI, and bridge cashflow outputs automatically into Final Funding inputs.
 **Requirements**: FF-01, FF-02, FF-03, FF-04, FF-05, FF-06, FF-07, FF-08, FF-09
 **Depends on:** Phase 5
-**Plans:** 3/5 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 06-01-PLAN.md — Test scaffolds (Wave 0): test_final_funding_jobs.py and test_final_funding_runner.py (FF-03..FF-09)
