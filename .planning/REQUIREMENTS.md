@@ -97,9 +97,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOCKER-03 | Phase 2 | Complete |
 | DOCKER-04 | Phase 2 | Complete |
 | INFRA-01 | Phase 3 | Complete |
-| INFRA-02 | Phase 3 | Complete |
-| INFRA-03 | Phase 3 | Complete |
-| INFRA-04 | Phase 3 | Complete |
+| INFRA-02 | Phase 13 (gap closure) | Pending |
+| INFRA-03 | Phase 13 (gap closure) | Pending |
+| INFRA-04 | Phase 13 (gap closure) | Pending |
 | CICD-01 | Phase 4 | Complete |
 | CICD-02 | Phase 4 | Complete |
 | CICD-03 | Phase 4 | Complete |
@@ -111,7 +111,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.0 requirements: 20 total
 - Mapped to phases: 20
 - Unmapped: 0 ✓
-- Gap closure phases: Phase 8 (STAGE-01–03), Phase 9 (LOCAL-01–06)
+- Gap closure phases: Phase 8 (STAGE-01–03), Phase 9 (LOCAL-01–06), Phase 13 (INFRA-02/03/04 frontmatter)
 
 ---
 *Requirements defined: 2026-03-05*

@@ -117,6 +117,8 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 10. Revamp User Interface | 3/3 | Complete    | 2026-03-13 |
 | 11. Refing UI for Regression Testing | 5/5 | Complete   | 2026-03-14 |
 | 12. Unit Testing Build Out | 3/3 | Complete   | 2026-03-22 |
+| 13. Final Documentation Cleanup | 0/3 | Pending | |
+| 14. Alembic Migration & Seed Automation | 0/2 | Pending | |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
@@ -208,3 +210,26 @@ Plans:
 - [x] 12-01-PLAN.md — Fix all 10 failing/erroring tests across 4 test files (TEST-01)
 - [x] 12-02-PLAN.md — New coverage: cashflow compute, CoMAP rules, archive run (TEST-02, TEST-03, TEST-04)
 - [x] 12-03-PLAN.md — CI unit-tests gate, pytest-cov, tests/README.md update (TEST-05, TEST-06, TEST-07)
+
+### Phase 13: Final Documentation Cleanup
+
+**Goal:** Write the VERIFICATION.md files still missing after Phase 9 — specifically Phase 11 (all 5 SUMMARYs complete, verification never written) — fix the 03-02-SUMMARY.md frontmatter gaps for INFRA-02/03/04, and formally document the Phase 12 CI human verification step as an accepted outstanding item.
+**Requirements:** UI-06, UI-07, REG-01, REG-02 (Phase 11 coverage), INFRA-02, INFRA-03, INFRA-04 (frontmatter)
+**Gap Closure:** Closes Phase 11 VERIFICATION.md gap; fixes INFRA-02/03/04 frontmatter; documents Phase 12 CI human step
+**Depends on:** Phase 12
+
+Plans:
+- [ ] 13-01-PLAN.md — Write Phase 11 VERIFICATION.md (evidence: all 5 plan SUMMARYs complete; UI/regression work confirmed by Phase 11 execution)
+- [ ] 13-02-PLAN.md — Fix 03-02-SUMMARY.md frontmatter: add INFRA-02, INFRA-03, INFRA-04 to requirements_completed
+- [ ] 13-03-PLAN.md — Document Phase 12 CI human verification as accepted outstanding item in VERIFICATION.md; update REQUIREMENTS.md traceability for Phase 13 closures
+
+### Phase 14: Alembic Migration & Seed Automation
+
+**Goal:** Add a proper Alembic migration for the `final_funding_job` table (currently created via raw psycopg at module import) and automate or formally harden the staging admin seed step in the CI pipeline.
+**Requirements:** (no formal v1.0 REQ-IDs — addresses MISS-03 and MISS-04 integration gaps)
+**Gap Closure:** Closes MISS-04 (final_funding_job outside Alembic migration chain); closes MISS-03 (seed_staging_user.py not wired into deploy-test.yml)
+**Depends on:** Phase 13
+
+Plans:
+- [ ] 14-01-PLAN.md — Add Alembic migration for final_funding_job table; remove raw CREATE TABLE from program_run_jobs.py (MISS-04)
+- [ ] 14-02-PLAN.md — Add conditional seed step to deploy-test.yml (runs only when admin user does not exist) or document as formally accepted manual step with runbook (MISS-03)
