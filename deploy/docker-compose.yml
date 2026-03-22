@@ -20,6 +20,7 @@ services:
       DEV_INPUT: /data/sample/files_required
       DEV_OUTPUT: /tmp/dev_output
       DEV_OUTPUT_SHARED: /tmp/dev_output_share
+      LOCAL_DEV_MODE: "true"
     command: >
       sh -c "alembic upgrade head && exec uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
