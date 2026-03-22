@@ -5,6 +5,7 @@ names imported from the module constants. Mismatched column names would cause `a
 to be empty and all lookups to silently return False, so we always import and use the
 constant dict keys directly.
 """
+
 import pytest
 import pandas as pd
 
@@ -12,7 +13,6 @@ from rules.comap import (
     _prog_in_grid,
     _found_in_grid,
     SFY_COMAP_COLS_MIN_FICO,
-    SFY_COMAP_COLS_MIN_FICO2,
     PRIME_COMAP_COLS_MIN_FICO,
     PRIME_COMAP_COLS_MIN_FICO2,
     NOTES_COMAP_COLS_MIN_FICO,
@@ -22,6 +22,7 @@ from rules.comap import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_grid(fico_col_mins: dict, rows: list[dict]) -> pd.DataFrame:
     """Build a minimal grid DataFrame with columns matching fico_col_mins keys."""
@@ -33,6 +34,7 @@ def _make_grid(fico_col_mins: dict, rows: list[dict]) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # _prog_in_grid tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestProgInGrid:
@@ -106,6 +108,7 @@ class TestProgInGrid:
 # ---------------------------------------------------------------------------
 # _found_in_grid tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestFoundInGrid:

@@ -13,8 +13,8 @@ Plan 02. They are skipped in CI by default.
 FF-07 and FF-08 test _bridge_cashflow_outputs_to_inputs which is added in Plan 03.
 They skip when that function is absent.
 """
+
 import pytest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from orchestration.final_funding_runner import (
@@ -25,6 +25,7 @@ from orchestration.final_funding_runner import (
 # Resilient import: _bridge_cashflow_outputs_to_inputs is added in Plan 03.
 try:
     from orchestration.final_funding_runner import _bridge_cashflow_outputs_to_inputs
+
     _BRIDGE_AVAILABLE = True
 except ImportError:
     _BRIDGE_AVAILABLE = False
@@ -33,6 +34,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # FF-01: SG script executes end-to-end
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.integration
 def test_sg_script_executes(temp_ff_input_dir, monkeypatch):
@@ -54,19 +56,16 @@ def test_sg_script_executes(temp_ff_input_dir, monkeypatch):
         ),
     )
 
-    with patch(
-        "orchestration.final_funding_runner._upload_local_output_to_storage"
-    ):
+    with patch("orchestration.final_funding_runner._upload_local_output_to_storage"):
         result = execute_final_funding_sg(folder=str(temp_ff_input_dir))
 
-    assert result == "final_funding_sg", (
-        f"Expected 'final_funding_sg', got {result!r}"
-    )
+    assert result == "final_funding_sg", f"Expected 'final_funding_sg', got {result!r}"
 
 
 # ---------------------------------------------------------------------------
 # FF-02: CIBC script executes end-to-end
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.integration
 def test_cibc_script_executes(temp_ff_input_dir, monkeypatch):
@@ -85,24 +84,18 @@ def test_cibc_script_executes(temp_ff_input_dir, monkeypatch):
         ),
     )
 
-    with patch(
-        "orchestration.final_funding_runner._upload_local_output_to_storage"
-    ):
+    with patch("orchestration.final_funding_runner._upload_local_output_to_storage"):
         result = execute_final_funding_cibc(folder=str(temp_ff_input_dir))
 
-    assert result == "final_funding_cibc", (
-        f"Expected 'final_funding_cibc', got {result!r}"
-    )
+    assert result == "final_funding_cibc", f"Expected 'final_funding_cibc', got {result!r}"
 
 
 # ---------------------------------------------------------------------------
 # FF-07: cashflow bridge copies current_assets.csv to files_required/
 # ---------------------------------------------------------------------------
 
-@pytest.mark.skipif(
-    not _BRIDGE_AVAILABLE,
-    reason="_bridge_cashflow_outputs_to_inputs not yet implemented (Plan 03)"
-)
+
+@pytest.mark.skipif(not _BRIDGE_AVAILABLE, reason="_bridge_cashflow_outputs_to_inputs not yet implemented (Plan 03)")
 def test_cashflow_bridge_copies_file(temp_dir):
     """_bridge_cashflow_outputs_to_inputs copies current_assets.csv from outputs to files_required/.
 
@@ -128,9 +121,7 @@ def test_cashflow_bridge_copies_file(temp_dir):
         _bridge_cashflow_outputs_to_inputs(str(temp_dir), "local")
 
     target = temp_dir / "files_required" / "current_assets.csv"
-    assert target.exists(), (
-        f"Expected current_assets.csv to be copied to {target} but it was not found"
-    )
+    assert target.exists(), f"Expected current_assets.csv to be copied to {target} but it was not found"
     assert target.read_bytes() == b"col1,col2\n1,2\n", "File content does not match"
 
 
@@ -138,10 +129,8 @@ def test_cashflow_bridge_copies_file(temp_dir):
 # FF-08: cashflow bridge is a no-op when current_assets.csv is absent
 # ---------------------------------------------------------------------------
 
-@pytest.mark.skipif(
-    not _BRIDGE_AVAILABLE,
-    reason="_bridge_cashflow_outputs_to_inputs not yet implemented (Plan 03)"
-)
+
+@pytest.mark.skipif(not _BRIDGE_AVAILABLE, reason="_bridge_cashflow_outputs_to_inputs not yet implemented (Plan 03)")
 def test_cashflow_bridge_absent_is_noop(temp_dir):
     """_bridge_cashflow_outputs_to_inputs does nothing when outputs storage has no matching files.
 

@@ -1,4 +1,5 @@
 """Sync S3 input prefix to a local temp directory for pipeline execution."""
+
 import logging
 import shutil
 import tempfile
@@ -39,7 +40,7 @@ def sync_s3_input_to_temp(input_storage: StorageBackend, s3_prefix: str) -> str:
         for key in file_keys:
             # key is e.g. "legacy/files_required/MASTER_SHEET.xlsx"; we want temp_dir/files_required/...
             if prefix and key.startswith(prefix + "/"):
-                rel = key[len(prefix) + 1:]
+                rel = key[len(prefix) + 1 :]
             elif prefix and key == prefix:
                 rel = Path(key).name
             else:

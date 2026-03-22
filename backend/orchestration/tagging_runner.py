@@ -4,6 +4,7 @@ Uses the bundled backend/scripts/tagging.py (mirrors loan_engine tagging.py logi
 After running, the four split exhibit files (_sg.xlsx, _cibc.xlsx) are copied back
 into the real INPUT_DIR/files_required/ so that Final Funding can read them directly.
 """
+
 import os
 import shutil
 import subprocess
@@ -70,6 +71,7 @@ def execute_tagging(pdate: str = "", irr_target: float = 7.9) -> str:
 
     if storage_type == "s3":
         from orchestration.s3_input_sync import sync_s3_input_to_temp, remove_temp_input_dir
+
         input_storage = get_storage_backend(area="inputs")
         temp_dir = sync_s3_input_to_temp(input_storage, "")
         (Path(temp_dir) / "output").mkdir(exist_ok=True)

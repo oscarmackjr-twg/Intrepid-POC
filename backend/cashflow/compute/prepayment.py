@@ -2,6 +2,7 @@
 
 Projects voluntary prepayment rates for mortgage and loan portfolios.
 """
+
 from __future__ import annotations
 
 from typing import Dict, Any, List
@@ -22,10 +23,7 @@ def psa_speed(month: int, psa_multiplier: float = 100.0) -> float:
     return base_cpr * (psa_multiplier / 100.0)
 
 
-def apply_psa_prepayment(
-    schedule: List[Dict[str, Any]],
-    psa_speed: float = 100.0
-) -> List[Dict[str, Any]]:
+def apply_psa_prepayment(schedule: List[Dict[str, Any]], psa_speed: float = 100.0) -> List[Dict[str, Any]]:
     """Apply PSA prepayment model to a cashflow schedule.
 
     PSA (Public Securities Association) standard model:
@@ -44,12 +42,12 @@ def apply_psa_prepayment(
 
     for cf in schedule:
         cf = cf.copy()  # Don't mutate input
-        month = cf.get('month', 0)
-        remaining_principal = cf.get('remaining_principal', 0.0)
+        month = cf.get("month", 0)
+        remaining_principal = cf.get("remaining_principal", 0.0)
 
         # Handle edge cases
         if remaining_principal <= 0.0:
-            cf['prepayment'] = 0.0
+            cf["prepayment"] = 0.0
             result.append(cf)
             continue
 
@@ -66,7 +64,7 @@ def apply_psa_prepayment(
         # Calculate prepayment amount (on beginning balance, BEFORE scheduled principal)
         # Note: Scheduled principal payment will also reduce the balance
         prepay_amount = remaining_principal * smm
-        cf['prepayment'] = prepay_amount
+        cf["prepayment"] = prepay_amount
 
         # DO NOT update remaining_principal here - it represents BEGINNING balance
         # The pricer will handle the full balance reduction (scheduled + prepayment + defaults)
@@ -76,10 +74,7 @@ def apply_psa_prepayment(
     return result
 
 
-def apply_cpr_prepayment(
-    schedule: List[Dict[str, Any]],
-    cpr: float
-) -> List[Dict[str, Any]]:
+def apply_cpr_prepayment(schedule: List[Dict[str, Any]], cpr: float) -> List[Dict[str, Any]]:
     """Apply constant CPR (Conditional Prepayment Rate) to cashflow schedule.
 
     Constant CPR model applies a uniform prepayment rate to all periods,
@@ -102,17 +97,17 @@ def apply_cpr_prepayment(
 
     for cf in schedule:
         cf = cf.copy()  # Don't mutate input
-        remaining_principal = cf.get('remaining_principal', 0.0)
+        remaining_principal = cf.get("remaining_principal", 0.0)
 
         # Handle edge case
         if remaining_principal <= 0.0:
-            cf['prepayment'] = 0.0
+            cf["prepayment"] = 0.0
             result.append(cf)
             continue
 
         # Apply constant prepayment rate
         prepay_amount = remaining_principal * smm
-        cf['prepayment'] = prepay_amount
+        cf["prepayment"] = prepay_amount
 
         # DO NOT update remaining_principal here - it represents BEGINNING balance
 

@@ -1,4 +1,5 @@
 """Cashflow file manager and execution endpoints."""
+
 from __future__ import annotations
 
 import os
@@ -46,18 +47,27 @@ _CASHFLOW_ECS_CLUSTER = os.getenv("CASHFLOW_ECS_CLUSTER", "").strip()
 _CASHFLOW_ECS_TASK_DEFINITION = os.getenv("CASHFLOW_ECS_TASK_DEFINITION", "").strip()
 _CASHFLOW_ECS_CONTAINER_NAME = os.getenv("CASHFLOW_ECS_CONTAINER_NAME", "cashflow-worker").strip() or "cashflow-worker"
 _CASHFLOW_ECS_SUBNETS = [part.strip() for part in os.getenv("CASHFLOW_ECS_SUBNETS", "").split(",") if part.strip()]
-_CASHFLOW_ECS_SECURITY_GROUPS = [part.strip() for part in os.getenv("CASHFLOW_ECS_SECURITY_GROUPS", "").split(",") if part.strip()]
-_CASHFLOW_ECS_ASSIGN_PUBLIC_IP = os.getenv("CASHFLOW_ECS_ASSIGN_PUBLIC_IP", "false").strip().lower() in {"1", "true", "yes", "enabled"}
+_CASHFLOW_ECS_SECURITY_GROUPS = [
+    part.strip() for part in os.getenv("CASHFLOW_ECS_SECURITY_GROUPS", "").split(",") if part.strip()
+]
+_CASHFLOW_ECS_ASSIGN_PUBLIC_IP = os.getenv("CASHFLOW_ECS_ASSIGN_PUBLIC_IP", "false").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "enabled",
+}
 _LOCAL_JOB_PROCS: dict[str, subprocess.Popen[str]] = {}
 _LOCAL_JOB_LOCK = threading.Lock()
 _MONITOR_STARTED = False
 _ORPHAN_JOB_AGE_SECONDS = 60 * 60
 _DEFAULT_ECS_CURRENT_ASSETS_WORKERS = max(1, int(os.getenv("CASHFLOW_MAX_WORKERS", "4")))
 
+
 def _default_purchase_date() -> str:
     """Compute default purchase date as today + 3 US business days."""
     from utils.date_utils import add_us_business_days
     from datetime import date
+
     return add_us_business_days(date.today(), 3)
 
 
@@ -142,7 +152,9 @@ def _ensure_cashflow_job_table() -> None:
             )
             """
         )
-        conn.execute("ALTER TABLE cashflow_job ADD COLUMN IF NOT EXISTS cancel_requested BOOLEAN NOT NULL DEFAULT FALSE")
+        conn.execute(
+            "ALTER TABLE cashflow_job ADD COLUMN IF NOT EXISTS cancel_requested BOOLEAN NOT NULL DEFAULT FALSE"
+        )
         conn.execute("ALTER TABLE cashflow_job ADD COLUMN IF NOT EXISTS owner_instance TEXT NULL")
         conn.execute("ALTER TABLE cashflow_job ADD COLUMN IF NOT EXISTS worker_pid INTEGER NULL")
         conn.execute("ALTER TABLE cashflow_job ADD COLUMN IF NOT EXISTS worker_task_arn TEXT NULL")
@@ -183,7 +195,7 @@ def _object_key(folder: CashflowFolder, name: str) -> str:
 
 def _key_to_entry(folder: CashflowFolder, key: str, size: int, last_modified: datetime | None) -> CashflowFileEntry:
     prefix = f"{_folder_prefix(folder)}/"
-    name = key[len(prefix):] if key.startswith(prefix) else PurePosixPath(key).name
+    name = key[len(prefix) :] if key.startswith(prefix) else PurePosixPath(key).name
     return CashflowFileEntry(
         key=key,
         name=name,
@@ -216,7 +228,9 @@ def _list_folder_files(folder: CashflowFolder) -> list[CashflowFileEntry]:
         if not _is_s3_error(exc):
             raise
         raise HTTPException(status_code=502, detail=f"S3 list failed: {exc}") from exc
-    files.sort(key=lambda item: (item.last_modified or datetime.min.replace(tzinfo=timezone.utc), item.name), reverse=True)
+    files.sort(
+        key=lambda item: (item.last_modified or datetime.min.replace(tzinfo=timezone.utc), item.name), reverse=True
+    )
     return files
 
 
@@ -676,7 +690,9 @@ def _run_cashflow_job(job_id: str, req: CashflowJobRequest) -> None:
 
             if req.mode == "current_assets":
                 _append_job_log(job_id, f"Downloading {req.current_assets_file} from inputs", 3)
-                input_path = _download_to_path(client, "inputs", req.current_assets_file, input_dir / req.current_assets_file)
+                input_path = _download_to_path(
+                    client, "inputs", req.current_assets_file, input_dir / req.current_assets_file
+                )
                 output_name = req.current_assets_output.strip() or f"cashflows_{datetime.now(timezone.utc):%Y%m%d}.xlsx"
                 output_path = output_dir / PurePosixPath(output_name).name
                 run_pipeline(
@@ -699,7 +715,9 @@ def _run_cashflow_job(job_id: str, req: CashflowJobRequest) -> None:
                 outputs = run_purchase_package(
                     prime_file=str(_download_to_path(client, "inputs", prime_name, input_dir / prime_name)),
                     sfy_file=str(_download_to_path(client, "inputs", sfy_name, input_dir / sfy_name)),
-                    master_sheet=str(_download_to_path(client, "inputs", req.master_sheet, input_dir / req.master_sheet)),
+                    master_sheet=str(
+                        _download_to_path(client, "inputs", req.master_sheet, input_dir / req.master_sheet)
+                    ),
                     notes_sheet=str(_download_to_path(client, "inputs", req.notes_sheet, input_dir / req.notes_sheet)),
                     purchase_date=req.purchase_date,
                     output_dir=str(output_dir),

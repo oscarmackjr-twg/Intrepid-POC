@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 120
+exclude = [
+    "scripts/regression_test.py",
+    "scripts/regression_test_funding.py",
+    "scripts/final_funding_sg.py",
+    "scripts/final_funding_cibc.py",
+]
+
+[tool.ruff.lint]
+ignore = [
+    "E712",  # comparison to True/False literal — unsafe to auto-change in pandas/numpy code
+    "E402",  # module-level import not at top of file — intentional for conditional imports
+]

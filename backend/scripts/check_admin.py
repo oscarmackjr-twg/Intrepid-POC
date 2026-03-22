@@ -1,4 +1,5 @@
 """Check if admin user exists in the database."""
+
 import sys
 from pathlib import Path
 
@@ -7,21 +8,21 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy.orm import Session
 from db.connection import SessionLocal
-from db.models import User, UserRole
+from db.models import User
 from config.settings import settings
 
 
 def check_admin_user():
     """Check if admin user exists."""
-    print(f"Connecting to database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL}")
+    print(
+        f"Connecting to database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL}"
+    )
     db: Session = SessionLocal()
-    
+
     try:
         # Check for admin user by username or email
-        admin = db.query(User).filter(
-            (User.username == "admin") | (User.email == "admin@example.com")
-        ).first()
-        
+        admin = db.query(User).filter((User.username == "admin") | (User.email == "admin@example.com")).first()
+
         if admin:
             print("\n✅ Admin user EXISTS:")
             print(f"   Username: {admin.username}")
@@ -31,7 +32,7 @@ def check_admin_user():
             print(f"   ID: {admin.id}")
             print("\n   You can log in with:")
             print(f"   Username: {admin.username}")
-            print(f"   Password: (check with seed_admin.py or reset it)")
+            print("   Password: (check with seed_admin.py or reset it)")
             return True
         else:
             print("\n❌ Admin user NOT FOUND")
@@ -42,7 +43,7 @@ def check_admin_user():
             print("   Password: admin123")
             print("   Email: admin@example.com")
             return False
-            
+
     except Exception as e:
         print(f"\n❌ Error checking admin user: {e}")
         print("\n   Possible issues:")

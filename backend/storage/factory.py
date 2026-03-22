@@ -1,4 +1,5 @@
 """Storage backend factory."""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -69,7 +70,9 @@ def get_storage_backend(
                 if s3_input:
                     base_path = _join_prefix(settings.S3_BASE_PREFIX or "", s3_input)
                 else:
-                    base_path = _join_prefix(settings.S3_BASE_PREFIX or "", getattr(settings, "S3_INPUTS_PREFIX", "input"))
+                    base_path = _join_prefix(
+                        settings.S3_BASE_PREFIX or "", getattr(settings, "S3_INPUTS_PREFIX", "input")
+                    )
             elif area == "outputs":
                 if s3_output:
                     base_path = _join_prefix(settings.S3_BASE_PREFIX or "", s3_output)

@@ -4,6 +4,7 @@ RED phase: these tests verify behaviors that do not yet exist.
 - Correlation IDs in error responses
 - No raw exception text leaked to callers
 """
+
 import re
 import pytest
 from unittest.mock import patch, MagicMock
@@ -62,6 +63,7 @@ def admin_user(db_session):
 @pytest.fixture
 def client(db_session):
     """Test client with DB override."""
+
     def _get_db():
         try:
             yield db_session
@@ -95,12 +97,8 @@ class TestFileApiErrorSanitization:
         assert response.status_code == 500
         detail = response.json().get("detail", "")
         # Must NOT contain the raw exception string
-        assert "secret internal path" not in detail, (
-            f"Raw exception text leaked in error response: {detail!r}"
-        )
-        assert "/etc/passwd" not in detail, (
-            f"Internal path leaked in error response: {detail!r}"
-        )
+        assert "secret internal path" not in detail, f"Raw exception text leaked in error response: {detail!r}"
+        assert "/etc/passwd" not in detail, f"Internal path leaked in error response: {detail!r}"
 
     def test_error_response_contains_correlation_id(self, client, auth_headers):
         """GET /api/files/list error detail must contain a UUID correlation reference."""
@@ -114,14 +112,10 @@ class TestFileApiErrorSanitization:
         assert response.status_code == 500
         detail = response.json().get("detail", "")
         # Must contain "ref:" followed by a UUID-like string
-        assert "ref:" in detail, (
-            f"Expected 'ref:' correlation marker in error detail, got: {detail!r}"
-        )
+        assert "ref:" in detail, f"Expected 'ref:' correlation marker in error detail, got: {detail!r}"
         # UUID pattern: 8-4-4-4-12 hex chars
         uuid_pattern = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-        assert re.search(uuid_pattern, detail), (
-            f"Expected UUID pattern in error detail, got: {detail!r}"
-        )
+        assert re.search(uuid_pattern, detail), f"Expected UUID pattern in error detail, got: {detail!r}"
 
     def test_upload_error_does_not_leak_exception_text(self, client, auth_headers, tmp_path):
         """POST /api/files/upload when storage raises must not leak raw exception."""
@@ -142,9 +136,7 @@ class TestFileApiErrorSanitization:
 
         assert response.status_code == 500
         detail = response.json().get("detail", "")
-        assert "/mnt/secret" not in detail, (
-            f"Internal path leaked in upload error: {detail!r}"
-        )
+        assert "/mnt/secret" not in detail, f"Internal path leaked in upload error: {detail!r}"
 
     def test_get_url_error_does_not_leak_exception_text(self, client, auth_headers):
         """GET /api/files/url/{path} error must not expose raw exception text."""
@@ -158,6 +150,4 @@ class TestFileApiErrorSanitization:
 
         assert response.status_code == 500
         detail = response.json().get("detail", "")
-        assert "AKIA" not in detail, (
-            f"Credential string leaked in URL error: {detail!r}"
-        )
+        assert "AKIA" not in detail, f"Credential string leaked in URL error: {detail!r}"

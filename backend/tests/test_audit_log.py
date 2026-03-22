@@ -4,6 +4,7 @@ RED phase: these tests verify behaviors that do not yet exist.
 - AuditLog table schema exists in SQLite-compatible form
 - log_user_action writes a row to DB when db session provided
 """
+
 import pytest
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
@@ -62,22 +63,24 @@ class TestAuditLogTableSchema:
         """audit_log table must exist after Base.metadata.create_all."""
         inspector = inspect(audit_engine)
         tables = inspector.get_table_names()
-        assert "audit_log" in tables, (
-            f"Expected 'audit_log' table to exist after create_all, but tables are: {tables}"
-        )
+        assert "audit_log" in tables, f"Expected 'audit_log' table to exist after create_all, but tables are: {tables}"
 
     def test_audit_log_table_schema(self, audit_engine):
         """audit_log table must have all required columns."""
         inspector = inspect(audit_engine)
         columns = {col["name"] for col in inspector.get_columns("audit_log")}
         required_columns = {
-            "id", "event_type", "user_id", "timestamp",
-            "source_ip", "resource", "outcome", "detail_json",
+            "id",
+            "event_type",
+            "user_id",
+            "timestamp",
+            "source_ip",
+            "resource",
+            "outcome",
+            "detail_json",
         }
         missing = required_columns - columns
-        assert not missing, (
-            f"audit_log table is missing columns: {missing}. Found: {columns}"
-        )
+        assert not missing, f"audit_log table is missing columns: {missing}. Found: {columns}"
 
     def test_audit_log_model_importable(self):
         """AuditLog model must be importable from db.models."""
@@ -102,9 +105,7 @@ class TestAuditLogDbWrite:
         )
 
         rows = audit_session.query(AuditLog).all()
-        assert len(rows) == 1, (
-            f"Expected 1 row in audit_log after log_user_action, got {len(rows)}"
-        )
+        assert len(rows) == 1, f"Expected 1 row in audit_log after log_user_action, got {len(rows)}"
 
     def test_log_user_action_stores_correct_values(self, audit_session, audit_user):
         """log_user_action must store action, user_id, outcome in the inserted row."""

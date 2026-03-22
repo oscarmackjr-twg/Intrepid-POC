@@ -5,6 +5,7 @@ We prepare a temp directory with the same structure as the pipeline (files_requi
 run the script, then copy FOLDER/output and FOLDER/output_share into storage outputs area
 under final_funding_sg/ or final_funding_cibc/ so results appear in the Program Runs file manager.
 """
+
 import os
 import shutil
 import subprocess
@@ -52,6 +53,7 @@ def _prepare_temp_input_from_local(input_base: str) -> str:
 def _prepare_temp_input_from_s3(prefix: str) -> str:
     """Sync S3 inputs prefix to temp dir. Returns path to temp dir (with files_required under it if prefix is like 'input')."""
     from orchestration.s3_input_sync import sync_s3_input_to_temp
+
     input_storage = get_storage_backend(area="inputs")
     return sync_s3_input_to_temp(input_storage, prefix)
 
@@ -63,16 +65,17 @@ def _compute_date_env_vars() -> dict:
     Without them the scripts fall back to hardcoded dates and fail in production.
     """
     from datetime import date, timedelta
-    from utils.date_utils import add_us_business_days, calculate_last_month_end
+    from utils.date_utils import add_us_business_days
+
     today = date.today()
     yesterday = today - timedelta(days=1)
     last_end_dt = today.replace(day=1) - timedelta(days=1)
     return {
         "CURR_DATE": today.strftime("%m-%d-%Y"),
         "YESTERDAY": yesterday.strftime("%m-%d-%Y"),
-        "PDATE":     add_us_business_days(today, 3),
-        "LAST_END":  f"{last_end_dt.year}_{last_end_dt.month:03}_{last_end_dt.day:02}",
-        "FD":        today.replace(day=1).strftime("%Y-%m-%d"),
+        "PDATE": add_us_business_days(today, 3),
+        "LAST_END": f"{last_end_dt.year}_{last_end_dt.month:03}_{last_end_dt.day:02}",
+        "FD": today.replace(day=1).strftime("%Y-%m-%d"),
     }
 
 
@@ -140,10 +143,7 @@ def _bridge_cashflow_outputs_to_inputs(temp_dir: str, storage_type: str) -> None
     except Exception as e:
         logger.warning("Cashflow bridge: could not list outputs area (%s) — skipping", e)
         return
-    candidates = [
-        f for f in all_outputs
-        if f.path.endswith("current_assets.csv")
-    ]
+    candidates = [f for f in all_outputs if f.path.endswith("current_assets.csv")]
     if not candidates:
         logger.debug("Cashflow bridge: no current_assets.csv in outputs area — skipping")
         return
@@ -189,7 +189,9 @@ def execute_final_funding_cibc(folder: Optional[str] = None) -> str:
     Same convention as main runs: input from files_required, output to output and output_share.
     Returns output prefix for file manager.
     """
-    script_path = _resolve_script_path("FINAL_FUNDING_CIBC_SCRIPT_PATH", "FINAL_FUNDING_CIBC_SCRIPT_PATH", _BUNDLED_CIBC)
+    script_path = _resolve_script_path(
+        "FINAL_FUNDING_CIBC_SCRIPT_PATH", "FINAL_FUNDING_CIBC_SCRIPT_PATH", _BUNDLED_CIBC
+    )
     return _execute_final_funding(script_path, FINAL_FUNDING_CIBC_PREFIX, folder)
 
 
@@ -199,12 +201,15 @@ def _execute_final_funding(script_path: str, output_prefix: str, folder: Optiona
     try:
         if storage_type == "s3":
             from orchestration.s3_input_sync import remove_temp_input_dir
+
             # For S3, sync from the configured inputs area root (S3_INPUT/S3_INPUTS_PREFIX).
             # The folder argument, when provided, is a sub-prefix under that inputs area
             # (e.g. "legacy"), not including the inputs base itself. If the UI sends the
             # literal S3_INPUT (e.g. "input"), treat that as the root of the inputs area
             # to avoid doubling the prefix (input/input/...).
-            base_input_prefix = (getattr(settings, "S3_INPUT", None) or getattr(settings, "S3_INPUTS_PREFIX", "input") or "").strip("/")
+            base_input_prefix = (
+                getattr(settings, "S3_INPUT", None) or getattr(settings, "S3_INPUTS_PREFIX", "input") or ""
+            ).strip("/")
             requested = (folder or "").strip("/")
             if not requested or requested == base_input_prefix:
                 s3_prefix = ""
@@ -226,7 +231,12 @@ def _execute_final_funding(script_path: str, output_prefix: str, folder: Optiona
                 input_base = str(Path(settings.INPUT_DIR) / folder)
             else:
                 input_base = folder or str(Path(settings.INPUT_DIR).resolve())
-            logger.info("Final funding local input_base=%s (resolved from INPUT_DIR=%s, folder=%s)", input_base, settings.INPUT_DIR, folder)
+            logger.info(
+                "Final funding local input_base=%s (resolved from INPUT_DIR=%s, folder=%s)",
+                input_base,
+                settings.INPUT_DIR,
+                folder,
+            )
             temp_dir = _prepare_temp_input_from_local(input_base)
             try:
                 _bridge_cashflow_outputs_to_inputs(temp_dir, "local")

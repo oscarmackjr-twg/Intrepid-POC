@@ -1,7 +1,8 @@
 """FastAPI application main entry point."""
+
 from pathlib import Path
 
-from fastapi import FastAPI, Request as FastAPIRequest
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -26,21 +27,21 @@ from scheduler.job_scheduler import scheduler, schedule_daily_runs
 # Configure logging
 log_config_path = Path(__file__).parent.parent / "config" / "logging.yaml"
 if log_config_path.exists():
-    with open(log_config_path, 'r') as f:
+    with open(log_config_path, "r") as f:
         log_config = yaml.safe_load(f)
 
         # Ensure logs directory exists if file handler is configured
-        if 'handlers' in log_config:
-            for handler_name, handler_config in log_config['handlers'].items():
-                if 'filename' in handler_config:
-                    log_file_path = Path(handler_config['filename'])
+        if "handlers" in log_config:
+            for handler_name, handler_config in log_config["handlers"].items():
+                if "filename" in handler_config:
+                    log_file_path = Path(handler_config["filename"])
                     # Convert relative path to absolute
                     if not log_file_path.is_absolute():
                         log_file_path = Path(__file__).parent.parent / log_file_path
                     # Create directory if it doesn't exist
                     log_file_path.parent.mkdir(parents=True, exist_ok=True)
                     # Update path to absolute
-                    log_config['handlers'][handler_name]['filename'] = str(log_file_path)
+                    log_config["handlers"][handler_name]["filename"] = str(log_file_path)
 
         logging.config.dictConfig(log_config)
 else:
@@ -88,7 +89,7 @@ app = FastAPI(
     title="Loan Engine API",
     description="API for processing loans for structured finance products",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Wire slowapi rate limiter
@@ -128,12 +129,9 @@ async def root():
     index_html = Path(__file__).resolve().parent.parent / "static" / "index.html"
     if index_html.exists():
         from fastapi.responses import FileResponse
+
         return FileResponse(str(index_html))
-    return {
-        "message": "Loan Engine API",
-        "version": "1.0.0",
-        "docs": "/docs"
-    }
+    return {"message": "Loan Engine API", "version": "1.0.0", "docs": "/docs"}
 
 
 @app.get("/health")
@@ -147,6 +145,7 @@ async def health_ready():
     """Readiness check: API + database connectivity. Use for demo verification."""
     from sqlalchemy import text
     from db.connection import SessionLocal
+
     try:
         db = SessionLocal()
         db.execute(text("SELECT 1"))
@@ -168,15 +167,12 @@ if _static_dir.is_dir():
         async def spa_fallback(request: Request, full_path: str):
             if full_path.startswith(("api/", "auth/", "docs", "openapi.json", "health", "assets/")):
                 from fastapi import HTTPException
+
                 raise HTTPException(status_code=404, detail="Not found")
             return FileResponse(str(_index_html))
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "api.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )
+
+    uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)

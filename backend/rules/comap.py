@@ -1,54 +1,24 @@
 """CoMAP validation rules."""
+
 import pandas as pd
-from typing import List, Dict, Any, Tuple
+from typing import List, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 # FICO band mappings
-PRIME_COMAP_COLS_MIN_FICO = {
-    '660-699': 660,
-    '700-739': 700,
-    '740-749': 740,
-    '750-769': 750,
-    '770+': 770
-}
+PRIME_COMAP_COLS_MIN_FICO = {"660-699": 660, "700-739": 700, "740-749": 740, "750-769": 750, "770+": 770}
 
-PRIME_COMAP_COLS_MIN_FICO2 = {
-    '660-699': 660,
-    '700-739': 700,
-    '740-749': 740,
-    '750+': 750
-}
+PRIME_COMAP_COLS_MIN_FICO2 = {"660-699": 660, "700-739": 700, "740-749": 740, "750+": 750}
 
-SFY_COMAP_COLS_MIN_FICO = {
-    '660-719': 660,
-    '720-779': 720,
-    '780-799': 780,
-    '800+': 800
-}
+SFY_COMAP_COLS_MIN_FICO = {"660-719": 660, "720-779": 720, "780-799": 780, "800+": 800}
 
-SFY_COMAP_COLS_MIN_FICO2 = {
-    '660-699': 660,
-    '700-739': 700,
-    '740-749': 740,
-    '750-769': 750,
-    '770+': 770
-}
+SFY_COMAP_COLS_MIN_FICO2 = {"660-699": 660, "700-739": 700, "740-749": 740, "750-769": 750, "770+": 770}
 
-SFY_COMAP_COLS_MIN_FICO3 = {
-    '660-719': 660,
-    '720-779': 720,
-    '780+': 780
-}
+SFY_COMAP_COLS_MIN_FICO3 = {"660-719": 660, "720-779": 720, "780+": 780}
 
-NOTES_COMAP_COLS_MIN_FICO = {
-    '680-749': 680,
-    '750-769': 750,
-    '770-789': 770,
-    '790+': 790
-}
+NOTES_COMAP_COLS_MIN_FICO = {"680-749": 680, "750-769": 750, "770-789": 770, "790+": 790}
 
 
 def _prog_in_grid(prog: str, grid: pd.DataFrame, fico_col_mins: dict) -> bool:
@@ -87,7 +57,7 @@ def _found_in_grid(prog: str, fico: float, grid: pd.DataFrame, fico_col_mins: di
         for col in avail:
             if fico >= fico_col_mins[col]:
                 mapped = matching_rows[col].dropna().astype(str).str.strip()
-                if mapped.ne('').any():
+                if mapped.ne("").any():
                     return True
 
     return False
@@ -108,24 +78,24 @@ def check_comap_prime(
     """
     loan_not_in_comap = []
     # Reference notebook uses '1900-10-24' so ALL loans go through the oct25 path.
-    oct25_cutoff = pd.to_datetime('1900-10-24')
-    prime_new_cutoff = pd.to_datetime('2020-06-11')
+    oct25_cutoff = pd.to_datetime("1900-10-24")
+    prime_new_cutoff = pd.to_datetime("2020-06-11")
 
     check_df = buy_df[
-        (buy_df['Application Type'] != 'HD NOTE') &
-        (buy_df['purchase_price_check'] == True) &
-        (buy_df['platform'] == 'prime')
+        (buy_df["Application Type"] != "HD NOTE")
+        & (buy_df["purchase_price_check"] == True)
+        & (buy_df["platform"] == "prime")
     ].copy()
-    if 'Submit Date' in check_df.columns:
-        check_df['Submit Date'] = pd.to_datetime(check_df['Submit Date'])
+    if "Submit Date" in check_df.columns:
+        check_df["Submit Date"] = pd.to_datetime(check_df["Submit Date"])
     else:
-        check_df['Submit Date'] = pd.NaT
+        check_df["Submit Date"] = pd.NaT
 
     for _, row in check_df.iterrows():
-        fico = row['FICO Borrower']
-        prog = row['loan program']
-        prog = str(prog) if pd.notna(prog) else ''
-        submit_dt = row['Submit Date']
+        fico = row["FICO Borrower"]
+        prog = row["loan program"]
+        prog = str(prog) if pd.notna(prog) else ""
+        submit_dt = row["Submit Date"]
         found = False
 
         if pd.notna(submit_dt) and submit_dt > oct25_cutoff:
@@ -135,9 +105,8 @@ def check_comap_prime(
                 or _prog_in_grid(prog, prime_comap_oct25_2, PRIME_COMAP_COLS_MIN_FICO)
             ):
                 continue
-            found = (
-                _found_in_grid(prog, fico, prime_comap_oct25, PRIME_COMAP_COLS_MIN_FICO2)
-                or _found_in_grid(prog, fico, prime_comap_oct25_2, PRIME_COMAP_COLS_MIN_FICO)
+            found = _found_in_grid(prog, fico, prime_comap_oct25, PRIME_COMAP_COLS_MIN_FICO2) or _found_in_grid(
+                prog, fico, prime_comap_oct25_2, PRIME_COMAP_COLS_MIN_FICO
             )
         elif pd.notna(submit_dt) and submit_dt > prime_new_cutoff:
             if not _prog_in_grid(prog, prime_comap_new, PRIME_COMAP_COLS_MIN_FICO):
@@ -149,7 +118,7 @@ def check_comap_prime(
             found = _found_in_grid(prog, fico, prime_comap, PRIME_COMAP_COLS_MIN_FICO)
 
         if not found:
-            loan_not_in_comap.append((row['SELLER Loan #'], prog, 'PRIME'))
+            loan_not_in_comap.append((row["SELLER Loan #"], prog, "PRIME"))
 
     return loan_not_in_comap
 
@@ -170,23 +139,23 @@ def check_comap_sfy(
     """
     loan_not_in_comap = []
     # Reference notebook uses '1900-10-24' so ALL loans go through the oct25 path.
-    oct25_cutoff = pd.to_datetime('1900-10-24')
+    oct25_cutoff = pd.to_datetime("1900-10-24")
 
     check_df = buy_df[
-        (buy_df['Application Type'] != 'HD NOTE') &
-        (buy_df['purchase_price_check'] == True) &
-        (buy_df['platform'] == 'sfy')
+        (buy_df["Application Type"] != "HD NOTE")
+        & (buy_df["purchase_price_check"] == True)
+        & (buy_df["platform"] == "sfy")
     ].copy()
-    if 'Submit Date' in check_df.columns:
-        check_df['Submit Date'] = pd.to_datetime(check_df['Submit Date'])
+    if "Submit Date" in check_df.columns:
+        check_df["Submit Date"] = pd.to_datetime(check_df["Submit Date"])
     else:
-        check_df['Submit Date'] = pd.NaT
+        check_df["Submit Date"] = pd.NaT
 
     for _, row in check_df.iterrows():
-        fico = row['FICO Borrower']
-        prog = row['loan program']
-        prog = str(prog) if pd.notna(prog) else ''
-        submit_dt = row['Submit Date']
+        fico = row["FICO Borrower"]
+        prog = row["loan program"]
+        prog = str(prog) if pd.notna(prog) else ""
+        submit_dt = row["Submit Date"]
         found = False
 
         if pd.notna(submit_dt) and submit_dt > oct25_cutoff:
@@ -196,9 +165,8 @@ def check_comap_sfy(
                 or _prog_in_grid(prog, sfy_comap_oct25_2, SFY_COMAP_COLS_MIN_FICO2)
             ):
                 continue
-            found = (
-                _found_in_grid(prog, fico, sfy_comap_oct25, SFY_COMAP_COLS_MIN_FICO3)
-                or _found_in_grid(prog, fico, sfy_comap_oct25_2, SFY_COMAP_COLS_MIN_FICO2)
+            found = _found_in_grid(prog, fico, sfy_comap_oct25, SFY_COMAP_COLS_MIN_FICO3) or _found_in_grid(
+                prog, fico, sfy_comap_oct25_2, SFY_COMAP_COLS_MIN_FICO2
             )
         else:
             if not (
@@ -206,39 +174,32 @@ def check_comap_sfy(
                 or _prog_in_grid(prog, sfy_comap2, SFY_COMAP_COLS_MIN_FICO2)
             ):
                 continue
-            found = (
-                _found_in_grid(prog, fico, sfy_comap, SFY_COMAP_COLS_MIN_FICO)
-                or _found_in_grid(prog, fico, sfy_comap2, SFY_COMAP_COLS_MIN_FICO2)
+            found = _found_in_grid(prog, fico, sfy_comap, SFY_COMAP_COLS_MIN_FICO) or _found_in_grid(
+                prog, fico, sfy_comap2, SFY_COMAP_COLS_MIN_FICO2
             )
 
         if not found:
-            loan_not_in_comap.append((row['SELLER Loan #'], prog, 'SFY'))
+            loan_not_in_comap.append((row["SELLER Loan #"], prog, "SFY"))
 
     return loan_not_in_comap
 
 
-def check_comap_notes(
-    buy_df: pd.DataFrame,
-    notes_comap: pd.DataFrame
-) -> List[Tuple[str, str, str]]:
+def check_comap_notes(buy_df: pd.DataFrame, notes_comap: pd.DataFrame) -> List[Tuple[str, str, str]]:
     """Check Notes loans against CoMAP."""
     loan_not_in_comap = []
 
-    check_df = buy_df[
-        (buy_df['Application Type'] == 'HD NOTE') &
-        (buy_df['purchase_price_check'] == True)
-    ].copy()
+    check_df = buy_df[(buy_df["Application Type"] == "HD NOTE") & (buy_df["purchase_price_check"] == True)].copy()
 
     for _, row in check_df.iterrows():
-        fico = row['FICO Borrower']
-        prog = row['loan program']
-        prog = str(prog) if pd.notna(prog) else ''
+        fico = row["FICO Borrower"]
+        prog = row["loan program"]
+        prog = str(prog) if pd.notna(prog) else ""
 
         # Skip if program not in notes grid at all (mirrors reference `continue`)
         if not _prog_in_grid(prog, notes_comap, NOTES_COMAP_COLS_MIN_FICO):
             continue
 
         if not _found_in_grid(prog, fico, notes_comap, NOTES_COMAP_COLS_MIN_FICO):
-            loan_not_in_comap.append((row['SELLER Loan #'], prog, 'NOTES'))
+            loan_not_in_comap.append((row["SELLER Loan #"], prog, "NOTES"))
 
     return loan_not_in_comap

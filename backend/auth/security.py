@@ -1,7 +1,8 @@
 """Security utilities for authentication and authorization."""
+
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import JWTError, jwt
+from jose import jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status, Request, Cookie
 from sqlalchemy.orm import Session
@@ -56,6 +57,7 @@ async def get_current_user(
     2. Authorization header ("Bearer <jwt>") — API client / CI script fallback
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     credentials_exception = HTTPException(
@@ -68,9 +70,9 @@ async def get_current_user(
     token: Optional[str] = None
     auth_header = request.headers.get("Authorization")
     if cookie_token and cookie_token.startswith("Bearer "):
-        token = cookie_token[len("Bearer "):]
+        token = cookie_token[len("Bearer ") :]
     elif auth_header and auth_header.startswith("Bearer "):
-        token = auth_header[len("Bearer "):]
+        token = auth_header[len("Bearer ") :]
 
     if not token:
         raise HTTPException(
@@ -118,36 +120,35 @@ async def get_current_user(
 
 def require_role(allowed_roles: list[UserRole]):
     """Dependency to require specific roles."""
+
     def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not enough permissions"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
         return current_user
+
     return role_checker
 
 
 def require_sales_team_access():
     """Dependency to ensure user can only access their sales team's data."""
+
     def sales_team_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role == UserRole.SALES_TEAM and current_user.sales_team_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="User must be assigned to a sales team"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User must be assigned to a sales team")
         return current_user
+
     return sales_team_checker
 
 
 def require_sales_team_assignment():
     """Dependency to ensure SALES_TEAM users have sales_team_id."""
+
     def assignment_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role == UserRole.SALES_TEAM:
             if current_user.sales_team_id is None:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Sales team user must be assigned to a sales team"
+                    status_code=status.HTTP_400_BAD_REQUEST, detail="Sales team user must be assigned to a sales team"
                 )
         return current_user
+
     return assignment_checker

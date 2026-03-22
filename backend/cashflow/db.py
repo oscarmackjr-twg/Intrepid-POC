@@ -22,4 +22,3 @@ def db_conn():
         except Exception:
             conn.rollback()
             raise
-

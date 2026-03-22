@@ -828,7 +828,7 @@ def write_excel_report(results: list, report_path: Path) -> None:
     for row_offset, phase in enumerate(all_phases, start=len(rows_data) + 5):
         _cell(sum_ws, row_offset, 1, phase, fill=FILL_GRAY, align=ALIGN_LEFT, border=BORDER)
         for col_idx, r in enumerate(results, start=2):
-            ok_names = [p.split(":")[0] + ":" + p.split(":")[1] if ":" in p else p for p in r["phases_ok"]]
+            [p.split(":")[0] + ":" + p.split(":")[1] if ":" in p else p for p in r["phases_ok"]]
             fail_names = [p.split(" — ")[0] for p in r["phases_failed"]]
             if phase in r["phases_ok"]:
                 _cell(sum_ws, row_offset, col_idx, "OK", fill=FILL_GREEN, align=ALIGN_CTR, border=BORDER)

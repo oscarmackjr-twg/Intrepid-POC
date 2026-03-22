@@ -23,6 +23,7 @@ What it produces
     Sheet "SFY Data"           — loan-level summary, SFY platform
     Sheet "IRR Support"        — cumulative annual IRR-support adjustments
 """
+
 from __future__ import annotations
 
 import argparse
@@ -99,6 +100,7 @@ _LOAN_SUMMARY_COLS = [
 # Input preparation helpers
 # ---------------------------------------------------------------------------
 
+
 def _resolve_loan_term(row: pd.Series) -> int:
     """Compute effective loan_term from loan type and raw Term column."""
     t = str(row["type"])
@@ -150,6 +152,7 @@ def _count_csv_rows(path: Path) -> int:
 # Per-loan processing
 # ---------------------------------------------------------------------------
 
+
 def _process_loan(row: pd.Series, cprshock: float, cdrshock: float):
     """Run both SFC and OUR case for a single loan row.
 
@@ -181,12 +184,18 @@ def _process_loan(row: pd.Series, cprshock: float, cdrshock: float):
 
     # SFC (seller) case
     sfc_df, sfc_irr, sfc_wal = price_loan_sfc_case(
-        row, contractual, cpr_shock=cprshock, cdr_shock=cdrshock,
+        row,
+        contractual,
+        cpr_shock=cprshock,
+        cdr_shock=cdrshock,
     )
 
     # OUR (stressed) case
     our_df, our_irr, our_wal = price_loan_our_case(
-        row, contractual, cpr_shock=cprshock, cdr_shock=cdrshock,
+        row,
+        contractual,
+        cpr_shock=cprshock,
+        cdr_shock=cdrshock,
     )
 
     # Market-value UPB
@@ -209,13 +218,9 @@ def _process_loan(row: pd.Series, cprshock: float, cdrshock: float):
         "SFC_IRR": sfc_irr,
         "SFC_WAL": sfc_wal,
         "SFC_gross_dlq": sfc_df["write_off"].sum() / loan_amt,
-        "SFC_gross_dlq_net_recovery": (
-            (sfc_df["write_off"].sum() - sfc_df["recovery"].sum()) / loan_amt
-        ),
+        "SFC_gross_dlq_net_recovery": ((sfc_df["write_off"].sum() - sfc_df["recovery"].sum()) / loan_amt),
         "OUR_gross_dlq": our_df["write_off"].sum() / loan_amt,
-        "OUR_gross_dlq_net_recovery": (
-            (our_df["write_off"].sum() - our_df["recovery"].sum()) / loan_amt
-        ),
+        "OUR_gross_dlq_net_recovery": ((our_df["write_off"].sum() - our_df["recovery"].sum()) / loan_amt),
     }
 
     return sfc_df, our_df, summary
@@ -238,9 +243,18 @@ def _process_loan_task(payload):
 # ---------------------------------------------------------------------------
 
 _CASHFLOW_COLS = [
-    "modeled_interest", "modeled_principal", "pre_payment", "write_off",
-    "late_fee", "recovery", "servicing_cost", "total_principal_collected",
-    "cash_adjustment", "wal_adjustment", "opening_upb", "opening_mv_upb",
+    "modeled_interest",
+    "modeled_principal",
+    "pre_payment",
+    "write_off",
+    "late_fee",
+    "recovery",
+    "servicing_cost",
+    "total_principal_collected",
+    "cash_adjustment",
+    "wal_adjustment",
+    "opening_upb",
+    "opening_mv_upb",
 ]
 
 _EMPTY_SEGMENT_COLS = ["dates"] + [f"__PENDING__{c}" for c in _CASHFLOW_COLS + ["int_minus_ca", "total_inflow"]]
@@ -288,9 +302,9 @@ def _accumulate_rollup(accumulator: defaultdict, monthly_df: pd.DataFrame) -> No
 def _segment_frame_from_accumulator(accumulator: defaultdict, prefix: str) -> pd.DataFrame:
     """Convert a dict-backed accumulator into the workbook segment shape."""
     if not accumulator:
-        return pd.DataFrame(columns=["dates"] + [
-            f"{prefix}_{c}" for c in _CASHFLOW_COLS + ["int_minus_ca", "total_inflow"]
-        ])
+        return pd.DataFrame(
+            columns=["dates"] + [f"{prefix}_{c}" for c in _CASHFLOW_COLS + ["int_minus_ca", "total_inflow"]]
+        )
 
     dates = sorted(accumulator)
     data = np.vstack([accumulator[d] for d in dates])
@@ -298,18 +312,21 @@ def _segment_frame_from_accumulator(accumulator: defaultdict, prefix: str) -> pd
     agg.insert(0, "dates", dates)
     agg["int_minus_ca"] = agg["modeled_interest"] - agg["cash_adjustment"]
     agg["total_inflow"] = (
-        agg["modeled_interest"] + agg["modeled_principal"]
-        + agg["pre_payment"] + agg["recovery"]
-        - agg["cash_adjustment"] - agg["servicing_cost"]
+        agg["modeled_interest"]
+        + agg["modeled_principal"]
+        + agg["pre_payment"]
+        + agg["recovery"]
+        - agg["cash_adjustment"]
+        - agg["servicing_cost"]
     )
-    agg.rename(columns={c: f"{prefix}_{c}" for c in _CASHFLOW_COLS + ["int_minus_ca", "total_inflow"]},
-               inplace=True)
+    agg.rename(columns={c: f"{prefix}_{c}" for c in _CASHFLOW_COLS + ["int_minus_ca", "total_inflow"]}, inplace=True)
     return agg
 
 
 # ---------------------------------------------------------------------------
 # 18-month UPB forward stacks
 # ---------------------------------------------------------------------------
+
 
 def _build_upb_stack(
     df_bd: pd.DataFrame,
@@ -337,11 +354,7 @@ def _build_upb_stack(
     if merged.empty:
         return pd.DataFrame(columns=["dates", label_bd, label_non_bd])
 
-    merged = (
-        merged.set_index("dates")
-        .asfreq("MS", fill_value=0.0)
-        .reset_index()
-    )
+    merged = merged.set_index("dates").asfreq("MS", fill_value=0.0).reset_index()
 
     bd_vals = merged[upb_col_bd].to_numpy(dtype=float, copy=False)
     non_bd_vals = merged[upb_col_non_bd].to_numpy(dtype=float, copy=False)
@@ -349,16 +362,19 @@ def _build_upb_stack(
     bd_stack = np.convolve(bd_vals[::-1], window, mode="full")[: len(bd_vals)][::-1]
     non_bd_stack = np.convolve(non_bd_vals[::-1], window, mode="full")[: len(non_bd_vals)][::-1]
 
-    return pd.DataFrame({
-        "dates": merged["dates"].to_numpy(),
-        label_bd: bd_stack,
-        label_non_bd: non_bd_stack,
-    })
+    return pd.DataFrame(
+        {
+            "dates": merged["dates"].to_numpy(),
+            label_bd: bd_stack,
+            label_non_bd: non_bd_stack,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
 # IRR support solver (annual)
 # ---------------------------------------------------------------------------
+
 
 def _solve_irr_support(
     irr_monthly_agg: pd.DataFrame,
@@ -376,8 +392,7 @@ def _solve_irr_support(
     agg = irr_monthly_agg.sort_values("dates").rename(columns={"dates": "loan_dates"}).reset_index(drop=True)
     if agg.empty:
         return pd.DataFrame(
-            {"year": range(1, 11), "reserve_cost_cumsum": [0.0] * 10,
-             "Reverse_Servicing_cost_addition": [0.0] * 10}
+            {"year": range(1, 11), "reserve_cost_cumsum": [0.0] * 10, "Reverse_Servicing_cost_addition": [0.0] * 10}
         )
     reserve_cumsum = 0.0
     rows = []
@@ -387,9 +402,12 @@ def _solve_irr_support(
         window = agg[agg["loan_dates"] <= cutoff].copy()
 
         net_cf = (
-            window["modeled_interest"] + window["modeled_principal"]
-            + window["pre_payment"] + window["recovery"]
-            - window["cash_adjustment"] - window["servicing_cost"]
+            window["modeled_interest"]
+            + window["modeled_principal"]
+            + window["pre_payment"]
+            + window["recovery"]
+            - window["cash_adjustment"]
+            - window["servicing_cost"]
         ).values
         dates = window["loan_dates"].values
 
@@ -400,16 +418,19 @@ def _solve_irr_support(
 
         try:
             from scipy.optimize import brentq
+
             add = brentq(_npv_at_target, -total_purchase, total_purchase, xtol=1e-6)
         except Exception:
             add = 0.0
 
         reserve_cumsum += add
-        rows.append({
-            "year": yr,
-            "reserve_cost_cumsum": reserve_cumsum,
-            "Reverse_Servicing_cost_addition": add,
-        })
+        rows.append(
+            {
+                "year": yr,
+                "reserve_cost_cumsum": reserve_cumsum,
+                "Reverse_Servicing_cost_addition": add,
+            }
+        )
 
     return pd.DataFrame(rows)
 
@@ -417,6 +438,7 @@ def _solve_irr_support(
 # ---------------------------------------------------------------------------
 # Main pipeline
 # ---------------------------------------------------------------------------
+
 
 def run_pipeline(
     input_path: str,
@@ -527,7 +549,7 @@ def run_pipeline(
                         raise InterruptedError("Cashflow job cancelled.")
                     processed += 1
                     if processed % 500 == 0 or processed == n:
-                        print(f"  {processed}/{n} ({processed/n*100:.0f}%) …")
+                        print(f"  {processed}/{n} ({processed / n * 100:.0f}%) …")
                     if progress_callback and (processed == n or processed % max(250, n // 100 or 1) == 0):
                         progress = min(85, 5 + int((processed / max(n, 1)) * 70))
                         progress_callback(progress, f"Processed {processed:,} of {n:,} loans")
@@ -568,7 +590,8 @@ def run_pipeline(
         # 18-month UPB stacks
         stack_upb = _build_upb_stack(bd_agg, non_bd_agg)
         stack_mv = _build_upb_stack(
-            bd_agg, non_bd_agg,
+            bd_agg,
+            non_bd_agg,
             upb_col_bd="BD_opening_mv_upb",
             upb_col_non_bd="Non_BD_opening_mv_upb",
             label_bd="Pool BD MV UPB",
@@ -599,8 +622,7 @@ def run_pipeline(
         except Exception as exc:
             print(f"  WARNING: IRR support solver failed — {exc}")
             irr_support_df = pd.DataFrame(
-                {"year": range(1, 11), "reserve_cost_cumsum": [0.0] * 10,
-                 "Reverse_Servicing_cost_addition": [0.0] * 10}
+                {"year": range(1, 11), "reserve_cost_cumsum": [0.0] * 10, "Reverse_Servicing_cost_addition": [0.0] * 10}
             )
 
         print(f"Writing {output_path} …")
@@ -630,10 +652,9 @@ def run_pipeline(
 # CLI entry point
 # ---------------------------------------------------------------------------
 
+
 def _parse_args(argv=None):
-    p = argparse.ArgumentParser(
-        description="Run behavioral cashflow model on current_assets.csv"
-    )
+    p = argparse.ArgumentParser(description="Run behavioral cashflow model on current_assets.csv")
     p.add_argument("--input", required=True, help="Path to current_assets.csv")
     p.add_argument("--output", default=None, help="Output .xlsx path (optional)")
     p.add_argument("--cprshock", type=float, default=1.0, help="CPR multiplier shock")

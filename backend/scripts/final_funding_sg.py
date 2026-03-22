@@ -3,11 +3,8 @@
 import os
 import pandas as pd
 import numpy as np
-import numpy_financial as npf
 import warnings
-from scipy.optimize import newton
 from datetime import datetime
-from pandas.tseries.offsets import DateOffset
 from pathlib import Path
 
 

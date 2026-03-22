@@ -22,6 +22,7 @@ Usage:
     # Mark all runs that have been 'running' longer than N minutes
     python backend/scripts/fix_stuck_runs.py --mark failed --older-than-minutes 60
 """
+
 import argparse
 import sys
 from pathlib import Path
@@ -33,7 +34,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sqlalchemy.orm import Session
 from db.connection import SessionLocal
 from db.models import PipelineRun, RunStatus
-from config.settings import settings
 
 
 def list_stuck_runs(db: Session, older_than_minutes: Optional[int] = None):
@@ -71,7 +71,9 @@ def run_list(db: Session, older_than_minutes: Optional[int] = None) -> None:
         print(f"  run_id: {r.run_id}")
         print(f"    started_at: {r.started_at}  (running for {duration})")
         if last_phase:
-            print(f"    last_phase: {last_phase}  <- execution stopped here (see TROUBLESHOOTING_STUCK_RUNS.md for data vs code)")
+            print(
+                f"    last_phase: {last_phase}  <- execution stopped here (see TROUBLESHOOTING_STUCK_RUNS.md for data vs code)"
+            )
         if r.input_file_path:
             print(f"    input_file_path: {r.input_file_path}")
         print()
@@ -94,7 +96,10 @@ def run_mark(
     if run_id:
         runs = db.query(PipelineRun).filter(PipelineRun.run_id == run_id, PipelineRun.status == RunStatus.RUNNING).all()
         if not runs:
-            print(f"No run in 'running' state with run_id={run_id}. It may already be completed/failed/cancelled or the run_id is wrong.", file=sys.stderr)
+            print(
+                f"No run in 'running' state with run_id={run_id}. It may already be completed/failed/cancelled or the run_id is wrong.",
+                file=sys.stderr,
+            )
             sys.exit(1)
     else:
         runs = list_stuck_runs(db, older_than_minutes)
@@ -130,8 +135,15 @@ def main():
     parser.add_argument("--list", action="store_true", help="List runs in 'running' state.")
     parser.add_argument("--run-id", type=str, help="Run ID (UUID string) to operate on.")
     parser.add_argument("--mark", type=str, choices=["failed", "cancelled"], help="Mark run(s) as failed or cancelled.")
-    parser.add_argument("--reason", type=str, help="Reason (e.g. 'Server restarted'). Stored in errors when marking as failed.")
-    parser.add_argument("--older-than-minutes", type=int, metavar="N", help="Only consider runs that have been running longer than N minutes (use with --mark without --run-id).")
+    parser.add_argument(
+        "--reason", type=str, help="Reason (e.g. 'Server restarted'). Stored in errors when marking as failed."
+    )
+    parser.add_argument(
+        "--older-than-minutes",
+        type=int,
+        metavar="N",
+        help="Only consider runs that have been running longer than N minutes (use with --mark without --run-id).",
+    )
     parser.add_argument("--yes", "-y", action="store_true", help="Skip confirmation when marking multiple runs.")
     args = parser.parse_args()
 

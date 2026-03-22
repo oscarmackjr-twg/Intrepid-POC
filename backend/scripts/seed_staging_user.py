@@ -9,6 +9,7 @@ Run via ECS one-off task:
 
 Safe to run multiple times — updates password if user already exists.
 """
+
 import sys
 from pathlib import Path
 

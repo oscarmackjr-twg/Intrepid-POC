@@ -1,4 +1,5 @@
 """Unit tests for cashflow.compute.prepayment module."""
+
 import pytest
 
 from cashflow.compute.prepayment import cpr_to_smm, psa_speed, apply_psa_prepayment, apply_cpr_prepayment
@@ -21,6 +22,7 @@ class TestCprToSmm:
         """6% CPR (PSA benchmark plateau) converts to expected SMM."""
         # SMM = 1 - (1 - 0.06)^(1/12) = 1 - 0.94^(1/12)
         import math
+
         expected = 1.0 - math.pow(0.94, 1.0 / 12.0)
         assert cpr_to_smm(0.06) == pytest.approx(expected, rel=1e-9)
 

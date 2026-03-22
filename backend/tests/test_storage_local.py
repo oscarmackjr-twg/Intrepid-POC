@@ -3,8 +3,8 @@
 RED phase: these tests verify behaviors that do not yet exist.
 - get_file_url must return an API path, never a file:// URI
 """
+
 import pytest
-from pathlib import Path
 
 from storage.local import LocalStorageBackend
 
@@ -33,9 +33,7 @@ class TestLocalStorageGetFileUrl:
 
         url = backend.get_file_url("output.csv")
 
-        assert url.startswith("/api/files/download/"), (
-            f"Expected URL starting with /api/files/download/, got: {url!r}"
-        )
+        assert url.startswith("/api/files/download/"), f"Expected URL starting with /api/files/download/, got: {url!r}"
 
     def test_get_file_url_contains_filename(self, tmp_path):
         """get_file_url result must contain the requested filename."""
@@ -45,9 +43,7 @@ class TestLocalStorageGetFileUrl:
 
         url = backend.get_file_url("my_report.xlsx")
 
-        assert "my_report.xlsx" in url, (
-            f"Expected filename in URL, got: {url!r}"
-        )
+        assert "my_report.xlsx" in url, f"Expected filename in URL, got: {url!r}"
 
     def test_get_file_url_raises_for_missing_file(self, tmp_path):
         """get_file_url must raise FileNotFoundError when file does not exist."""

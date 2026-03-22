@@ -1,20 +1,14 @@
 """Authentication routes."""
+
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from pydantic import BaseModel, EmailStr, field_validator
 from db.connection import get_db
-from db.models import User, UserRole, SalesTeam
-from auth.security import (
-    verify_password, get_password_hash, create_access_token,
-    get_current_user, require_role
-)
-from auth.validators import (
-    validate_sales_team_assignment,
-    validate_user_update,
-    get_user_sales_team_id
-)
+from db.models import User, UserRole
+from auth.security import verify_password, get_password_hash, create_access_token, get_current_user, require_role
+from auth.validators import validate_sales_team_assignment, validate_user_update
 from auth.audit import log_user_action
 from auth.limiter import limiter
 from config.settings import settings
@@ -24,11 +18,13 @@ router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 class LoginResponse(BaseModel):
     """Login response model — token is set as HttpOnly cookie, not in body."""
+
     user: dict
 
 
 class UserCreate(BaseModel):
     """User creation model."""
+
     email: EmailStr
     username: str
     password: str
@@ -56,6 +52,7 @@ class UserCreate(BaseModel):
 
 class UserResponse(BaseModel):
     """User response model."""
+
     id: int
     email: str
     username: str
@@ -74,7 +71,7 @@ async def login(
     request: Request,
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Authenticate user, set HttpOnly access_token cookie, return user info."""
     user = db.query(User).filter(User.username == form_data.username).first()
@@ -82,7 +79,7 @@ async def login(
     if not user or not verify_password(form_data.password, user.hashed_password):
         # Log failed attempt when user exists (don't reveal whether user exists)
         if user:
-            log_user_action('login_failed', user, db=db, outcome='failure', details={'reason': 'invalid_password'})
+            log_user_action("login_failed", user, db=db, outcome="failure", details={"reason": "invalid_password"})
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -94,8 +91,7 @@ async def login(
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(user.id), "role": user.role.value},
-        expires_delta=access_token_expires
+        data={"sub": str(user.id), "role": user.role.value}, expires_delta=access_token_expires
     )
 
     # Set HttpOnly cookie — token NOT exposed in response body
@@ -103,13 +99,13 @@ async def login(
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
-        secure=not settings.LOCAL_DEV_MODE,   # False over HTTP in local dev, True on HTTPS in staging
+        secure=not settings.LOCAL_DEV_MODE,  # False over HTTP in local dev, True on HTTPS in staging
         samesite="strict",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
     # Log successful login
-    log_user_action('login', user, db=db, outcome='success')
+    log_user_action("login", user, db=db, outcome="success")
 
     return {
         "user": {
@@ -117,7 +113,7 @@ async def login(
             "email": user.email,
             "username": user.username,
             "role": user.role.value,
-            "sales_team_id": user.sales_team_id
+            "sales_team_id": user.sales_team_id,
         }
     }
 
@@ -137,9 +133,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 
 @router.post("/register", response_model=UserResponse)
 async def register(
-    user_data: UserCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN]))
+    user_data: UserCreate, db: Session = Depends(get_db), current_user: User = Depends(require_role([UserRole.ADMIN]))
 ):
     """Register a new user (admin only)."""
     # Check if user already exists
@@ -160,7 +154,7 @@ async def register(
         hashed_password=hashed_password,
         full_name=user_data.full_name,
         role=user_data.role,
-        sales_team_id=user_data.sales_team_id
+        sales_team_id=user_data.sales_team_id,
     )
 
     db.add(db_user)
@@ -168,16 +162,19 @@ async def register(
     db.refresh(db_user)
 
     # Log user creation
-    log_user_action('create_user', current_user, target_user_id=db_user.id, details={
-        'new_user_role': db_user.role.value,
-        'new_user_sales_team_id': db_user.sales_team_id
-    })
+    log_user_action(
+        "create_user",
+        current_user,
+        target_user_id=db_user.id,
+        details={"new_user_role": db_user.role.value, "new_user_sales_team_id": db_user.sales_team_id},
+    )
 
     return db_user
 
 
 class UserUpdate(BaseModel):
     """User update model."""
+
     email: EmailStr | None = None
     username: str | None = None
     full_name: str | None = None
@@ -192,7 +189,7 @@ async def update_user(
     user_id: int,
     user_data: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN]))
+    current_user: User = Depends(require_role([UserRole.ADMIN])),
 ):
     """Update a user (admin only)."""
     db_user = db.query(User).filter(User.id == user_id).first()
@@ -200,13 +197,7 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found")
 
     # Validate update
-    validate_user_update(
-        user_id,
-        user_data.role,
-        user_data.sales_team_id,
-        current_user,
-        db
-    )
+    validate_user_update(user_id, user_data.role, user_data.sales_team_id, current_user, db)
 
     # Validate sales team assignment if role is being changed
     if user_data.role is not None:
@@ -215,20 +206,14 @@ async def update_user(
     # Update fields
     if user_data.email is not None:
         # Check if email is already taken by another user
-        existing = db.query(User).filter(
-            User.email == user_data.email,
-            User.id != user_id
-        ).first()
+        existing = db.query(User).filter(User.email == user_data.email, User.id != user_id).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
         db_user.email = user_data.email
 
     if user_data.username is not None:
         # Check if username is already taken by another user
-        existing = db.query(User).filter(
-            User.username == user_data.username,
-            User.id != user_id
-        ).first()
+        existing = db.query(User).filter(User.username == user_data.username, User.id != user_id).first()
         if existing:
             raise HTTPException(status_code=400, detail="Username already taken")
         db_user.username = user_data.username
@@ -252,9 +237,12 @@ async def update_user(
     db.refresh(db_user)
 
     # Log user update
-    log_user_action('update_user', current_user, target_user_id=user_id, details={
-        'updated_fields': {k: v for k, v in user_data.dict(exclude_unset=True).items() if k != 'password'}
-    })
+    log_user_action(
+        "update_user",
+        current_user,
+        target_user_id=user_id,
+        details={"updated_fields": {k: v for k, v in user_data.dict(exclude_unset=True).items() if k != "password"}},
+    )
 
     return db_user
 
@@ -266,7 +254,7 @@ async def list_users(
     role: UserRole | None = None,
     sales_team_id: int | None = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN]))
+    current_user: User = Depends(require_role([UserRole.ADMIN])),
 ):
     """List all users (admin only)."""
     query = db.query(User)

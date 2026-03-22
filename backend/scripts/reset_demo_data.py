@@ -16,6 +16,7 @@ Usage:
     # Skip confirmation prompt (e.g. for CI)
     python backend/scripts/reset_demo_data.py --yes
 """
+
 import argparse
 import sys
 from pathlib import Path

@@ -10,6 +10,7 @@ Requirements covered:
 - FF-06: Poll endpoint returns current job status
 - FF-09: Concurrent job for same mode returns 409
 """
+
 import pytest
 from unittest.mock import patch, MagicMock
 
@@ -21,19 +22,18 @@ try:
         _run_ff_job_background,
         _check_concurrent_ff_job,
     )
+
     _IMPL_AVAILABLE = True
 except ImportError:
     _IMPL_AVAILABLE = False
 
-pytestmark = pytest.mark.skipif(
-    not _IMPL_AVAILABLE,
-    reason="api.program_run_jobs not yet implemented (Plan 03)"
-)
+pytestmark = pytest.mark.skipif(not _IMPL_AVAILABLE, reason="api.program_run_jobs not yet implemented (Plan 03)")
 
 
 # ---------------------------------------------------------------------------
 # FF-03: job creation returns QUEUED
 # ---------------------------------------------------------------------------
+
 
 def test_create_job_returns_queued():
     """POST job creation for mode='sg' returns dict with job_id and status QUEUED.
@@ -88,14 +88,13 @@ def test_create_job_returns_queued():
 
     assert isinstance(result, dict), "Expected dict return from _create_ff_job"
     assert result.get("status") == "QUEUED", f"Expected status QUEUED, got {result.get('status')!r}"
-    assert isinstance(result.get("job_id"), str) and result["job_id"], (
-        "Expected non-empty string job_id"
-    )
+    assert isinstance(result.get("job_id"), str) and result["job_id"], "Expected non-empty string job_id"
 
 
 # ---------------------------------------------------------------------------
 # FF-04: job lifecycle completes to COMPLETED
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skip(reason="requires live psycopg DB — run manually: pytest -m 'not skip'")
 def test_job_lifecycle_success(ff_db_conn):
@@ -114,9 +113,7 @@ def test_job_lifecycle_success(ff_db_conn):
         _run_ff_job_background(job_id=job_id, mode="sg", folder=None)
 
     with ff_db_conn() as conn:
-        row = conn.execute(
-            "SELECT status FROM ff_jobs WHERE job_id = %s", (job_id,)
-        ).fetchone()
+        row = conn.execute("SELECT status FROM ff_jobs WHERE job_id = %s", (job_id,)).fetchone()
 
     assert row is not None, f"Job row not found for job_id={job_id}"
     assert row["status"] == "COMPLETED", f"Expected COMPLETED, got {row['status']!r}"
@@ -125,6 +122,7 @@ def test_job_lifecycle_success(ff_db_conn):
 # ---------------------------------------------------------------------------
 # FF-05: job lifecycle transitions to FAILED on error
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skip(reason="requires live psycopg DB — run manually: pytest -m 'not skip'")
 def test_job_lifecycle_failure(ff_db_conn):
@@ -142,9 +140,7 @@ def test_job_lifecycle_failure(ff_db_conn):
         _run_ff_job_background(job_id=job_id, mode="sg", folder=None)
 
     with ff_db_conn() as conn:
-        row = conn.execute(
-            "SELECT status, error_detail FROM ff_jobs WHERE job_id = %s", (job_id,)
-        ).fetchone()
+        row = conn.execute("SELECT status, error_detail FROM ff_jobs WHERE job_id = %s", (job_id,)).fetchone()
 
     assert row is not None, f"Job row not found for job_id={job_id}"
     assert row["status"] == "FAILED", f"Expected FAILED, got {row['status']!r}"
@@ -154,6 +150,7 @@ def test_job_lifecycle_failure(ff_db_conn):
 # ---------------------------------------------------------------------------
 # FF-06: poll endpoint returns job status
 # ---------------------------------------------------------------------------
+
 
 def test_poll_endpoint():
     """GET /api/program-run/jobs/{job_id} returns 404 for non-existent job.
@@ -196,6 +193,7 @@ def test_poll_endpoint():
 # FF-09: concurrent job for same mode returns 409
 # ---------------------------------------------------------------------------
 
+
 def test_concurrent_job_409():
     """Creating a second job for the same mode while first is RUNNING raises 409.
 
@@ -216,6 +214,4 @@ def test_concurrent_job_409():
     with pytest.raises(HTTPException) as exc_info:
         _check_concurrent_ff_job(mode="sg", conn=mock_conn)
 
-    assert exc_info.value.status_code == 409, (
-        f"Expected 409 Conflict, got {exc_info.value.status_code}"
-    )
+    assert exc_info.value.status_code == 409, f"Expected 409 Conflict, got {exc_info.value.status_code}"

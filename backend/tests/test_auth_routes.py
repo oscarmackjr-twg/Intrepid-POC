@@ -1,13 +1,11 @@
 """Tests for authentication routes."""
-import pytest
-from fastapi.testclient import TestClient
-from db.models import User, SalesTeam, UserRole
-from auth.security import create_access_token
+
+from db.models import User, UserRole
 
 
 class TestUserRegistration:
     """Test user registration."""
-    
+
     def test_register_user_admin(self, client, auth_headers_admin, test_db_session, sample_sales_team):
         """Test admin can register users."""
         response = client.post(
@@ -18,13 +16,13 @@ class TestUserRegistration:
                 "password": "TestPass123!",
                 "full_name": "New User",
                 "role": "analyst",
-                "sales_team_id": None
+                "sales_team_id": None,
             },
-            headers=auth_headers_admin
+            headers=auth_headers_admin,
         )
         assert response.status_code == 200
         assert response.json()["email"] == "newuser@test.com"
-    
+
     def test_register_sales_team_user(self, client, auth_headers_admin, test_db_session, sample_sales_team):
         """Test registering sales team user with sales_team_id."""
         response = client.post(
@@ -35,13 +33,13 @@ class TestUserRegistration:
                 "password": "TestPass123!",
                 "full_name": "Sales User",
                 "role": "sales_team",
-                "sales_team_id": sample_sales_team.id
+                "sales_team_id": sample_sales_team.id,
             },
-            headers=auth_headers_admin
+            headers=auth_headers_admin,
         )
         assert response.status_code == 200
         assert response.json()["sales_team_id"] == sample_sales_team.id
-    
+
     def test_register_sales_team_without_id(self, client, auth_headers_admin, test_db_session):
         """Test registering sales team user without sales_team_id fails."""
         response = client.post(
@@ -52,12 +50,12 @@ class TestUserRegistration:
                 "password": "TestPass123!",
                 "full_name": "Sales User",
                 "role": "sales_team",
-                "sales_team_id": None
+                "sales_team_id": None,
             },
-            headers=auth_headers_admin
+            headers=auth_headers_admin,
         )
         assert response.status_code == 400
-    
+
     def test_register_duplicate_email(self, client, auth_headers_admin, test_db_session, sample_admin_user):
         """Test registering with duplicate email fails."""
         response = client.post(
@@ -67,12 +65,12 @@ class TestUserRegistration:
                 "username": "different",
                 "password": "TestPass123!",
                 "full_name": "Different User",
-                "role": "analyst"
+                "role": "analyst",
             },
-            headers=auth_headers_admin
+            headers=auth_headers_admin,
         )
         assert response.status_code == 400
-    
+
     def test_register_non_admin_forbidden(self, client, auth_headers_sales):
         """Test non-admin cannot register users."""
         response = client.post(
@@ -82,116 +80,81 @@ class TestUserRegistration:
                 "username": "test",
                 "password": "TestPass123!",
                 "full_name": "Test User",
-                "role": "analyst"
+                "role": "analyst",
             },
-            headers=auth_headers_sales
+            headers=auth_headers_sales,
         )
         assert response.status_code == 403
 
 
 class TestUserUpdate:
     """Test user update."""
-    
+
     def test_update_user_admin(self, client, auth_headers_admin, test_db_session, sample_sales_team):
         """Test admin can update users."""
         # Create user to update
-        user = User(
-            email="update@test.com",
-            username="update",
-            hashed_password="hash",
-            role=UserRole.ANALYST
-        )
+        user = User(email="update@test.com", username="update", hashed_password="hash", role=UserRole.ANALYST)
         test_db_session.add(user)
         test_db_session.commit()
-        
+
         response = client.put(
             f"/api/auth/users/{user.id}",
-            json={
-                "full_name": "Updated Name",
-                "role": "sales_team",
-                "sales_team_id": sample_sales_team.id
-            },
-            headers=auth_headers_admin
+            json={"full_name": "Updated Name", "role": "sales_team", "sales_team_id": sample_sales_team.id},
+            headers=auth_headers_admin,
         )
         assert response.status_code == 200
         assert response.json()["full_name"] == "Updated Name"
         assert response.json()["role"] == "sales_team"
-    
+
     def test_update_sales_team_assignment(self, client, auth_headers_admin, test_db_session, sample_sales_team):
         """Test updating sales team assignment."""
-        user = User(
-            email="update@test.com",
-            username="update",
-            hashed_password="hash",
-            role=UserRole.ANALYST
-        )
+        user = User(email="update@test.com", username="update", hashed_password="hash", role=UserRole.ANALYST)
         test_db_session.add(user)
         test_db_session.commit()
-        
+
         response = client.put(
             f"/api/auth/users/{user.id}",
-            json={
-                "role": "sales_team",
-                "sales_team_id": sample_sales_team.id
-            },
-            headers=auth_headers_admin
+            json={"role": "sales_team", "sales_team_id": sample_sales_team.id},
+            headers=auth_headers_admin,
         )
         assert response.status_code == 200
         assert response.json()["sales_team_id"] == sample_sales_team.id
-    
+
     def test_update_sales_team_without_id_fails(self, client, auth_headers_admin, test_db_session):
         """Test updating to sales_team without sales_team_id fails."""
-        user = User(
-            email="update@test.com",
-            username="update",
-            hashed_password="hash",
-            role=UserRole.ANALYST
-        )
+        user = User(email="update@test.com", username="update", hashed_password="hash", role=UserRole.ANALYST)
         test_db_session.add(user)
         test_db_session.commit()
-        
+
         response = client.put(
-            f"/api/auth/users/{user.id}",
-            json={
-                "role": "sales_team",
-                "sales_team_id": None
-            },
-            headers=auth_headers_admin
+            f"/api/auth/users/{user.id}", json={"role": "sales_team", "sales_team_id": None}, headers=auth_headers_admin
         )
         assert response.status_code == 400
-    
+
     def test_update_own_role_forbidden(self, client, auth_headers_admin, test_db_session, sample_admin_user):
         """Test user cannot change own role."""
         response = client.put(
-            f"/api/auth/users/{sample_admin_user.id}",
-            json={
-                "role": "sales_team"
-            },
-            headers=auth_headers_admin
+            f"/api/auth/users/{sample_admin_user.id}", json={"role": "sales_team"}, headers=auth_headers_admin
         )
         assert response.status_code == 403
 
 
 class TestUserList:
     """Test user listing."""
-    
+
     def test_list_users_admin(self, client, auth_headers_admin, test_db_session):
         """Test admin can list users."""
         response = client.get("/api/auth/users", headers=auth_headers_admin)
         assert response.status_code == 200
         assert isinstance(response.json(), list)
-    
+
     def test_list_users_filter_by_role(self, client, auth_headers_admin, test_db_session):
         """Test filtering users by role."""
-        response = client.get(
-            "/api/auth/users",
-            params={"role": "sales_team"},
-            headers=auth_headers_admin
-        )
+        response = client.get("/api/auth/users", params={"role": "sales_team"}, headers=auth_headers_admin)
         assert response.status_code == 200
         users = response.json()
         assert all(u["role"] == "sales_team" for u in users)
-    
+
     def test_list_users_non_admin_forbidden(self, client, auth_headers_sales):
         """Test non-admin cannot list users."""
         response = client.get("/api/auth/users", headers=auth_headers_sales)
@@ -368,6 +331,7 @@ class TestLoginAuditLog:
     def test_successful_login_writes_audit_row(self, client, sample_admin_user, test_db_session):
         """Successful login writes a row to audit_log with event_type='login' outcome='success'."""
         from db.models import AuditLog
+
         client.post(
             "/api/auth/login",
             data={"username": "admin", "password": "testpass"},
@@ -380,6 +344,7 @@ class TestLoginAuditLog:
     def test_failed_login_writes_audit_row(self, client, sample_admin_user, test_db_session):
         """Failed login (wrong password) writes a row to audit_log with event_type='login_failed' outcome='failure'."""
         from db.models import AuditLog
+
         client.post(
             "/api/auth/login",
             data={"username": "admin", "password": "wrongpassword"},
@@ -392,6 +357,7 @@ class TestLoginAuditLog:
     def test_unknown_user_login_does_not_write_audit_row(self, client, test_db_session):
         """Login attempt for non-existent username does NOT write an audit row."""
         from db.models import AuditLog
+
         client.post(
             "/api/auth/login",
             data={"username": "nobody", "password": "anything"},

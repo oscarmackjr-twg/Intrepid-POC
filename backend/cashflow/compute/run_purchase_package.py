@@ -9,6 +9,7 @@ master-sheet assumptions, then writes:
 - loans_data_<buy_num>_<buyer>.csv
 - cashflows_<buy_num>_<target>_<buyer>.xlsx
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,18 +28,55 @@ from cashflow.compute.behavioral_model import (
 
 BD_PROGRAMS = frozenset({"6 Mth BD WPDI", "Unsec Std - 1490 - 120", "6 Mth BD WPDI 12S"})
 RAW_CASHFLOW_COLS = [
-    "dates", "loan_dates", "modeled_interest", "modeled_principal", "pre_payment",
-    "write_off", "late_fee", "recovery", "end_upb", "total_principal_collected", "wal",
-    "opening_upb", "servicing_cost", "interest paid", "loan_number", "loan_program",
-    "platform", "cash_adjustment", "wal_adjustment", "purchase_price", "irr_support",
-    "servicing_percent", "opening_mv_upb",
+    "dates",
+    "loan_dates",
+    "modeled_interest",
+    "modeled_principal",
+    "pre_payment",
+    "write_off",
+    "late_fee",
+    "recovery",
+    "end_upb",
+    "total_principal_collected",
+    "wal",
+    "opening_upb",
+    "servicing_cost",
+    "interest paid",
+    "loan_number",
+    "loan_program",
+    "platform",
+    "cash_adjustment",
+    "wal_adjustment",
+    "purchase_price",
+    "irr_support",
+    "servicing_percent",
+    "opening_mv_upb",
 ]
 LOANS_DATA_COLS = [
-    "loan_program", "loan_id", "platform", "Original Loan Amount", "type", "promo_term",
-    "loan_term", "SFC_loan_term", "SFC_coupon", "coupon", "STATED_APR", "STATED_pmt",
-    "OUR_pmt", "servicing_percent", "irr_support", "modeled_purchase_price", "IRR", "WAL",
-    "SFC_IRR", "SFC_WAL", "SFC_gross_dlq", "SFC_gross_dlq_with_recoveries",
-    "OUR_gross_dlq", "OUR_gross_dlq_with_recoveries",
+    "loan_program",
+    "loan_id",
+    "platform",
+    "Original Loan Amount",
+    "type",
+    "promo_term",
+    "loan_term",
+    "SFC_loan_term",
+    "SFC_coupon",
+    "coupon",
+    "STATED_APR",
+    "STATED_pmt",
+    "OUR_pmt",
+    "servicing_percent",
+    "irr_support",
+    "modeled_purchase_price",
+    "IRR",
+    "WAL",
+    "SFC_IRR",
+    "SFC_WAL",
+    "SFC_gross_dlq",
+    "SFC_gross_dlq_with_recoveries",
+    "OUR_gross_dlq",
+    "OUR_gross_dlq_with_recoveries",
 ]
 
 
@@ -229,47 +267,67 @@ def _portfolio_irr_support(
     sfc["reserve_cost"] = sfc["servicing_cost"] * (sfc["irr_support"] / sfc["servicing_percent"])
     our["reserve_cost"] = our["servicing_cost"] * (our["irr_support"] / our["servicing_percent"])
 
-    base_data = sfc.groupby("dates").agg({
-        "modeled_interest": "sum",
-        "modeled_principal": "sum",
-        "opening_upb": "sum",
-        "pre_payment": "sum",
-        "write_off": "sum",
-        "late_fee": "sum",
-        "recovery": "sum",
-        "servicing_cost": "sum",
-        "total_principal_collected": "sum",
-        "reserve_cost": "sum",
-        "cash_adjustment": "sum",
-        "interest paid": "sum",
-        "wal_adjustment": "sum",
-    }).reset_index()
-    x2_data = our.groupby("dates").agg({
-        "modeled_interest": "sum",
-        "modeled_principal": "sum",
-        "pre_payment": "sum",
-        "write_off": "sum",
-        "late_fee": "sum",
-        "recovery": "sum",
-        "servicing_cost": "sum",
-        "reserve_cost": "sum",
-        "total_principal_collected": "sum",
-        "cash_adjustment": "sum",
-        "interest paid": "sum",
-        "wal_adjustment": "sum",
-        "irr_support": "unique",
-        "servicing_percent": "unique",
-        "opening_upb": "sum",
-        "opening_mv_upb": "sum",
-    }).reset_index()
+    base_data = (
+        sfc.groupby("dates")
+        .agg(
+            {
+                "modeled_interest": "sum",
+                "modeled_principal": "sum",
+                "opening_upb": "sum",
+                "pre_payment": "sum",
+                "write_off": "sum",
+                "late_fee": "sum",
+                "recovery": "sum",
+                "servicing_cost": "sum",
+                "total_principal_collected": "sum",
+                "reserve_cost": "sum",
+                "cash_adjustment": "sum",
+                "interest paid": "sum",
+                "wal_adjustment": "sum",
+            }
+        )
+        .reset_index()
+    )
+    x2_data = (
+        our.groupby("dates")
+        .agg(
+            {
+                "modeled_interest": "sum",
+                "modeled_principal": "sum",
+                "pre_payment": "sum",
+                "write_off": "sum",
+                "late_fee": "sum",
+                "recovery": "sum",
+                "servicing_cost": "sum",
+                "reserve_cost": "sum",
+                "total_principal_collected": "sum",
+                "cash_adjustment": "sum",
+                "interest paid": "sum",
+                "wal_adjustment": "sum",
+                "irr_support": "unique",
+                "servicing_percent": "unique",
+                "opening_upb": "sum",
+                "opening_mv_upb": "sum",
+            }
+        )
+        .reset_index()
+    )
 
     x2_data["total_inflow"] = (
-        x2_data["modeled_interest"] + x2_data["modeled_principal"] + x2_data["pre_payment"]
-        + x2_data["recovery"] - x2_data["cash_adjustment"] - x2_data["servicing_cost"]
+        x2_data["modeled_interest"]
+        + x2_data["modeled_principal"]
+        + x2_data["pre_payment"]
+        + x2_data["recovery"]
+        - x2_data["cash_adjustment"]
+        - x2_data["servicing_cost"]
     )
     base_data["total_base_inflow"] = (
-        base_data["modeled_interest"] + base_data["modeled_principal"] + base_data["pre_payment"]
-        + base_data["recovery"] - base_data["cash_adjustment"] - base_data["servicing_cost"]
+        base_data["modeled_interest"]
+        + base_data["modeled_principal"]
+        + base_data["pre_payment"]
+        + base_data["recovery"]
+        - base_data["cash_adjustment"]
+        - base_data["servicing_cost"]
     )
     x2_data = x2_data.merge(base_data[["dates", "total_base_inflow"]], on="dates", how="left")
     x2_data["reserve_cost_cumsum"] = x2_data["reserve_cost"].cumsum()
@@ -285,11 +343,13 @@ def _portfolio_irr_support(
         if cutoff_idx >= len(x2_data):
             year_vals[year] = 0.0
             continue
-        new_yr_col = np.concatenate((
-            irr_arr,
-            x2_data["total_inflow"].iloc[1: cutoff_idx + 1].to_numpy(dtype=float),
-            x2_data["total_base_inflow"].iloc[cutoff_idx + 1:].to_numpy(dtype=float),
-        ))
+        new_yr_col = np.concatenate(
+            (
+                irr_arr,
+                x2_data["total_inflow"].iloc[1 : cutoff_idx + 1].to_numpy(dtype=float),
+                x2_data["total_base_inflow"].iloc[cutoff_idx + 1 :].to_numpy(dtype=float),
+            )
+        )
         curr_yr_val = new_yr_col[cutoff_idx]
         if year > 1:
             for prior_year in range(1, year):
@@ -316,9 +376,7 @@ def _portfolio_irr_support(
                 year_vals[year] = max(start - 1.0, 0.0)
 
         subtract_val = min(float(x2_data["reserve_cost_cumsum"].iloc[cutoff_idx]), year_vals[year])
-        x2_data.loc[cutoff_idx:, "reserve_cost_cumsum"] = (
-            x2_data.loc[cutoff_idx:, "reserve_cost_cumsum"] - subtract_val
-        )
+        x2_data.loc[cutoff_idx:, "reserve_cost_cumsum"] = x2_data.loc[cutoff_idx:, "reserve_cost_cumsum"] - subtract_val
         year_vals[year] = subtract_val
         new_yr_col[cutoff_idx] = curr_yr_val + subtract_val
         x2_data[f"year_{year}"] = new_yr_col
@@ -327,13 +385,15 @@ def _portfolio_irr_support(
     return x2_data
 
 
-def _build_shift_stack(df: pd.DataFrame, left_col: str, right_col: str, left_label: str, right_label: str) -> pd.DataFrame:
+def _build_shift_stack(
+    df: pd.DataFrame, left_col: str, right_col: str, left_label: str, right_label: str
+) -> pd.DataFrame:
     stack = df[["dates", left_col]].merge(df[["dates", right_col]], on="dates", how="outer")
     stack["Total_UPB"] = stack[left_col] + stack[right_col]
     for i in range(1, 18):
-        stack[f"{i+1}_{left_col}"] = stack[left_col].shift(i)
-        stack[f"{i+1}_{right_col}"] = stack[right_col].shift(i)
-        stack[f"{i+1}_Total_UPB"] = stack["Total_UPB"].shift(i)
+        stack[f"{i + 1}_{left_col}"] = stack[left_col].shift(i)
+        stack[f"{i + 1}_{right_col}"] = stack[right_col].shift(i)
+        stack[f"{i + 1}_Total_UPB"] = stack["Total_UPB"].shift(i)
     left_cols = [col for col in stack.columns if left_col in col]
     right_cols = [col for col in stack.columns if right_col in col]
     total_cols = [col for col in stack.columns if "Total_UPB" in col]
@@ -358,35 +418,45 @@ def _write_cibc_workbook(
     sfy_sfc = sfc_cashflows[sfc_cashflows["platform"] == "sfy"].copy()
     sfy_our = our_cashflows[our_cashflows["platform"] == "sfy"].copy()
 
-    portfolio_level_prime = _portfolio_irr_support(prime_sfc, prime_our, prime_data["Original Loan Amount"].mul(prime_data["modeled_purchase_price"]).sum(), target)
-    portfolio_level_sfy = _portfolio_irr_support(sfy_sfc, sfy_our, sfy_data["Original Loan Amount"].mul(sfy_data["modeled_purchase_price"]).sum(), target)
+    portfolio_level_prime = _portfolio_irr_support(
+        prime_sfc, prime_our, prime_data["Original Loan Amount"].mul(prime_data["modeled_purchase_price"]).sum(), target
+    )
+    portfolio_level_sfy = _portfolio_irr_support(
+        sfy_sfc, sfy_our, sfy_data["Original Loan Amount"].mul(sfy_data["modeled_purchase_price"]).sum(), target
+    )
 
-    bd_sfc = sfc_cashflows[sfc_cashflows["loan_program"].isin(BD_PROGRAMS)].copy()
+    sfc_cashflows[sfc_cashflows["loan_program"].isin(BD_PROGRAMS)].copy()
     bd_our = our_cashflows[our_cashflows["loan_program"].isin(BD_PROGRAMS)].copy()
-    non_bd_sfc = sfc_cashflows[~sfc_cashflows["loan_program"].isin(BD_PROGRAMS)].copy()
+    sfc_cashflows[~sfc_cashflows["loan_program"].isin(BD_PROGRAMS)].copy()
     non_bd_our = our_cashflows[~our_cashflows["loan_program"].isin(BD_PROGRAMS)].copy()
 
     def _portfolio_level(df: pd.DataFrame) -> pd.DataFrame:
         out = df.copy()
         out["reserve_cost"] = out["servicing_cost"] * (out["irr_support"] / out["servicing_percent"])
-        return out.groupby("dates").agg({
-            "modeled_interest": "sum",
-            "modeled_principal": "sum",
-            "pre_payment": "sum",
-            "write_off": "sum",
-            "late_fee": "sum",
-            "recovery": "sum",
-            "servicing_cost": "sum",
-            "total_principal_collected": "sum",
-            "cash_adjustment": "sum",
-            "interest paid": "sum",
-            "wal_adjustment": "sum",
-            "reserve_cost": "sum",
-            "irr_support": "unique",
-            "servicing_percent": "unique",
-            "opening_upb": "sum",
-            "opening_mv_upb": "sum",
-        }).reset_index()
+        return (
+            out.groupby("dates")
+            .agg(
+                {
+                    "modeled_interest": "sum",
+                    "modeled_principal": "sum",
+                    "pre_payment": "sum",
+                    "write_off": "sum",
+                    "late_fee": "sum",
+                    "recovery": "sum",
+                    "servicing_cost": "sum",
+                    "total_principal_collected": "sum",
+                    "cash_adjustment": "sum",
+                    "interest paid": "sum",
+                    "wal_adjustment": "sum",
+                    "reserve_cost": "sum",
+                    "irr_support": "unique",
+                    "servicing_percent": "unique",
+                    "opening_upb": "sum",
+                    "opening_mv_upb": "sum",
+                }
+            )
+            .reset_index()
+        )
 
     portfolio_level_bd = _portfolio_level(bd_our)
     portfolio_level_non_bd = _portfolio_level(non_bd_our)
@@ -397,14 +467,27 @@ def _write_cibc_workbook(
     portfolio_level_non_bd.columns = non_bd_columns
 
     portfolio_level_bd["int-CA"] = portfolio_level_bd["BD_modeled_interest"] - portfolio_level_bd["BD_cash_adjustment"]
-    portfolio_level_non_bd["int-CA"] = portfolio_level_non_bd["Non_BD_modeled_interest"] - portfolio_level_non_bd["Non_BD_cash_adjustment"]
+    portfolio_level_non_bd["int-CA"] = (
+        portfolio_level_non_bd["Non_BD_modeled_interest"] - portfolio_level_non_bd["Non_BD_cash_adjustment"]
+    )
 
     bd_df = portfolio_level_bd[["dates", "BD_opening_upb", "BD_opening_mv_upb"]].reset_index(drop=False).iloc[1:].copy()
-    non_bd_df = portfolio_level_non_bd[["dates", "Non_BD_opening_upb", "Non_BD_opening_mv_upb"]].reset_index(drop=False).iloc[1:].copy()
-    upb_df = bd_df[["dates", "BD_opening_upb"]].merge(non_bd_df[["dates", "Non_BD_opening_upb"]], on="dates", how="outer")
-    upbmv_df = bd_df[["dates", "BD_opening_mv_upb"]].merge(non_bd_df[["dates", "Non_BD_opening_mv_upb"]], on="dates", how="outer")
+    non_bd_df = (
+        portfolio_level_non_bd[["dates", "Non_BD_opening_upb", "Non_BD_opening_mv_upb"]]
+        .reset_index(drop=False)
+        .iloc[1:]
+        .copy()
+    )
+    upb_df = bd_df[["dates", "BD_opening_upb"]].merge(
+        non_bd_df[["dates", "Non_BD_opening_upb"]], on="dates", how="outer"
+    )
+    upbmv_df = bd_df[["dates", "BD_opening_mv_upb"]].merge(
+        non_bd_df[["dates", "Non_BD_opening_mv_upb"]], on="dates", how="outer"
+    )
     upb_df = _build_shift_stack(upb_df, "BD_opening_upb", "Non_BD_opening_upb", "Pool BD UPB", "Pool Non BD UPB")
-    upbmv_df = _build_shift_stack(upbmv_df, "BD_opening_mv_upb", "Non_BD_opening_mv_upb", "Pool BD UPB", "Pool Non BD UPB")
+    upbmv_df = _build_shift_stack(
+        upbmv_df, "BD_opening_mv_upb", "Non_BD_opening_mv_upb", "Pool BD UPB", "Pool Non BD UPB"
+    )
 
     prime_cols = ["dates"] + [f"prime_{col}" for col in portfolio_level_prime.columns if col != "dates"]
     sfy_cols = ["dates"] + [f"sfy_{col}" for col in portfolio_level_sfy.columns if col != "dates"]
@@ -412,12 +495,24 @@ def _write_cibc_workbook(
     portfolio_level_sfy.columns = sfy_cols
     combined_data = portfolio_level_prime.merge(portfolio_level_sfy, on="dates", how="outer")
     common_cols = [
-        "modeled_interest", "modeled_principal", "pre_payment", "write_off", "late_fee", "recovery",
-        "servicing_cost", "total_principal_collected", "cash_adjustment", "interest paid",
-        "wal_adjustment", "reserve_cost_cumsum", "Reverse_Servicing_cost_addition",
+        "modeled_interest",
+        "modeled_principal",
+        "pre_payment",
+        "write_off",
+        "late_fee",
+        "recovery",
+        "servicing_cost",
+        "total_principal_collected",
+        "cash_adjustment",
+        "interest paid",
+        "wal_adjustment",
+        "reserve_cost_cumsum",
+        "Reverse_Servicing_cost_addition",
     ]
     for col in common_cols:
-        combined_data[col] = combined_data.get(f"prime_{col}", 0).fillna(0) + combined_data.get(f"sfy_{col}", 0).fillna(0)
+        combined_data[col] = combined_data.get(f"prime_{col}", 0).fillna(0) + combined_data.get(f"sfy_{col}", 0).fillna(
+            0
+        )
 
     sfy_mv = portfolio_level_sfy[["dates", "sfy_opening_mv_upb"]].reset_index(drop=False).iloc[1:].copy()
     prime_mv = portfolio_level_prime[["dates", "prime_opening_mv_upb"]].reset_index(drop=False).iloc[1:].copy()
@@ -436,20 +531,45 @@ def _write_cibc_workbook(
         combined_data.loc[:, ["reserve_cost_cumsum", "Reverse_Servicing_cost_addition"]].to_excel(
             writer, sheet_name="IRR support"
         )
-        portfolio_level_bd[[
-            "dates", "BD_modeled_principal", "BD_pre_payment", "BD_recovery", "BD_write_off",
-            "int-CA", "BD_late_fee", "BD_servicing_cost", "BD_modeled_interest",
-            "BD_total_principal_collected", "BD_cash_adjustment", "BD_wal_adjustment",
-        ]].to_excel(writer, sheet_name="BD Cashflows")
-        portfolio_level_non_bd[[
-            "dates", "Non_BD_modeled_principal", "Non_BD_pre_payment", "Non_BD_recovery",
-            "Non_BD_write_off", "int-CA", "Non_BD_late_fee", "Non_BD_servicing_cost",
-            "Non_BD_modeled_interest", "Non_BD_total_principal_collected",
-            "Non_BD_cash_adjustment", "Non_BD_wal_adjustment",
-        ]].to_excel(writer, sheet_name="Non BD cashflows")
+        portfolio_level_bd[
+            [
+                "dates",
+                "BD_modeled_principal",
+                "BD_pre_payment",
+                "BD_recovery",
+                "BD_write_off",
+                "int-CA",
+                "BD_late_fee",
+                "BD_servicing_cost",
+                "BD_modeled_interest",
+                "BD_total_principal_collected",
+                "BD_cash_adjustment",
+                "BD_wal_adjustment",
+            ]
+        ].to_excel(writer, sheet_name="BD Cashflows")
+        portfolio_level_non_bd[
+            [
+                "dates",
+                "Non_BD_modeled_principal",
+                "Non_BD_pre_payment",
+                "Non_BD_recovery",
+                "Non_BD_write_off",
+                "int-CA",
+                "Non_BD_late_fee",
+                "Non_BD_servicing_cost",
+                "Non_BD_modeled_interest",
+                "Non_BD_total_principal_collected",
+                "Non_BD_cash_adjustment",
+                "Non_BD_wal_adjustment",
+            ]
+        ].to_excel(writer, sheet_name="Non BD cashflows")
         upb_df[["dates", "Pool BD UPB", "Pool Non BD UPB"]].to_excel(writer, sheet_name="18 mth Stack")
-        upbmv_df[["dates", "Pool BD UPB", "Pool Non BD UPB"]].to_excel(writer, sheet_name="Market Value UPB 18 mth Stack")
-        mv_prime_sfy_df[["dates", "Pool SFY UPB", "Pool PRIME UPB"]].to_excel(writer, sheet_name="PRIME & SFY Market Value UPB 18")
+        upbmv_df[["dates", "Pool BD UPB", "Pool Non BD UPB"]].to_excel(
+            writer, sheet_name="Market Value UPB 18 mth Stack"
+        )
+        mv_prime_sfy_df[["dates", "Pool SFY UPB", "Pool PRIME UPB"]].to_excel(
+            writer, sheet_name="PRIME & SFY Market Value UPB 18"
+        )
         prime_data.to_excel(writer, sheet_name="PRIME Data")
         sfy_data.to_excel(writer, sheet_name="SFY Data")
 
@@ -493,7 +613,7 @@ def run_purchase_package(
         if should_cancel and should_cancel():
             raise InterruptedError("Cashflow job cancelled.")
         if idx % 100 == 0 or idx == total:
-            print(f"  {idx}/{total} ({idx/total*100:.0f}%) …")
+            print(f"  {idx}/{total} ({idx / total * 100:.0f}%) …")
         if progress_callback and (idx == total or idx % max(25, total // 20 or 1) == 0):
             progress = min(82, 8 + int((idx / max(total, 1)) * 70))
             progress_callback(progress, f"Processed {idx:,} of {total:,} {buyer_norm.upper()} loans")

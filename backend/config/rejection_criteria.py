@@ -5,6 +5,7 @@ Use these constants when setting LoanException.rejection_criteria and
 LoanFact.rejection_criteria so reporting and filtering align with notebook logic.
 See backend/docs/NOTEBOOK_REJECTION_MAPPING.md for full mapping.
 """
+
 from typing import Optional
 
 # Purchase price (notebook: purchase price / lender price vs modeled)
@@ -49,6 +50,4 @@ EXCEPTION_TYPE_TO_CRITERIA = {
 def get_rejection_criteria(exception_type: str, exception_category: str = "") -> Optional[str]:
     """Return canonical rejection_criteria for exception_type + category."""
     key = (exception_type, exception_category)
-    return EXCEPTION_TYPE_TO_CRITERIA.get(key) or EXCEPTION_TYPE_TO_CRITERIA.get(
-        (exception_type, "")
-    )
+    return EXCEPTION_TYPE_TO_CRITERIA.get(key) or EXCEPTION_TYPE_TO_CRITERIA.get((exception_type, ""))

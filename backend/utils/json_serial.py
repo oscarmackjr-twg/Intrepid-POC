@@ -1,4 +1,5 @@
 """Convert Python/pandas/numpy values to JSON-serializable form for JSON columns."""
+
 from datetime import datetime, date
 from typing import Any
 import numpy as np

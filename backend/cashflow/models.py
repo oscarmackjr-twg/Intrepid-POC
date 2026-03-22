@@ -71,4 +71,3 @@ class CashflowJobResponse(BaseModel):
     log_messages: List[str] = Field(default_factory=list)
     error_detail: Optional[str] = None
     cancel_requested: bool = False
-

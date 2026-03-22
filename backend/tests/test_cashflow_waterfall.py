@@ -1,4 +1,5 @@
 """Unit tests for cashflow.compute.waterfall module."""
+
 import pytest
 
 from cashflow.compute.waterfall import apply_waterfall, run_waterfall

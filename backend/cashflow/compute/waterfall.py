@@ -5,6 +5,7 @@ Supports generic CLO/CDO structures with senior, mezzanine, and equity tranches.
 
 Complex deal-specific waterfalls require per-deal customization.
 """
+
 from __future__ import annotations
 
 from typing import Dict, Any, List
@@ -39,29 +40,24 @@ def apply_waterfall(
         True
     """
     # Sort tranches by priority (lower number = higher priority)
-    sorted_tranches = sorted(tranches, key=lambda t: t.get('priority', 999))
+    sorted_tranches = sorted(tranches, key=lambda t: t.get("priority", 999))
 
     # Initialize result dict: tranche_id -> list of cashflows
-    result: Dict[str, List[Dict[str, Any]]] = {
-        tranche['tranche_id']: [] for tranche in sorted_tranches
-    }
+    result: Dict[str, List[Dict[str, Any]]] = {tranche["tranche_id"]: [] for tranche in sorted_tranches}
 
     # Track outstanding notional for each tranche (for principal allocation)
-    outstanding = {
-        tranche['tranche_id']: float(tranche['notional'])
-        for tranche in sorted_tranches
-    }
+    outstanding = {tranche["tranche_id"]: float(tranche["notional"]) for tranche in sorted_tranches}
 
     # Allocate each period's cashflows
     for cf in cashflows:
-        period = cf.get('period', 0)
-        available_interest = float(cf.get('interest', 0.0))
-        available_principal = float(cf.get('principal', 0.0))
+        period = cf.get("period", 0)
+        available_interest = float(cf.get("interest", 0.0))
+        available_principal = float(cf.get("principal", 0.0))
 
         # Allocate interest payments by priority
         for tranche in sorted_tranches:
-            tranche_id = tranche['tranche_id']
-            coupon = float(tranche.get('coupon', 0.0))
+            tranche_id = tranche["tranche_id"]
+            coupon = float(tranche.get("coupon", 0.0))
             notional = outstanding[tranche_id]
 
             # Calculate interest due for this tranche
@@ -77,17 +73,19 @@ def apply_waterfall(
             if tranche_id not in result:
                 result[tranche_id] = []
 
-            result[tranche_id].append({
-                'period': period,
-                'interest': interest_paid,
-                'principal': 0.0,  # Will be filled in principal allocation
-                'shortfall': shortfall_interest,
-                'excess': 0.0,  # Will be filled if junior tranche
-            })
+            result[tranche_id].append(
+                {
+                    "period": period,
+                    "interest": interest_paid,
+                    "principal": 0.0,  # Will be filled in principal allocation
+                    "shortfall": shortfall_interest,
+                    "excess": 0.0,  # Will be filled if junior tranche
+                }
+            )
 
         # Allocate principal payments by priority
         for idx, tranche in enumerate(sorted_tranches):
-            tranche_id = tranche['tranche_id']
+            tranche_id = tranche["tranche_id"]
             notional = outstanding[tranche_id]
 
             # Allocate available principal to pay down notional
@@ -100,17 +98,17 @@ def apply_waterfall(
             # Update the cashflow record for this period
             # (Already created in interest allocation loop)
             for cf_record in result[tranche_id]:
-                if cf_record['period'] == period:
-                    cf_record['principal'] = principal_paid
+                if cf_record["period"] == period:
+                    cf_record["principal"] = principal_paid
                     break
 
         # Any remaining cash goes to equity tranche (most junior)
         if available_interest > 0 or available_principal > 0:
             # Allocate excess to most junior tranche
-            junior_tranche_id = sorted_tranches[-1]['tranche_id']
+            junior_tranche_id = sorted_tranches[-1]["tranche_id"]
             for cf_record in result[junior_tranche_id]:
-                if cf_record['period'] == period:
-                    cf_record['excess'] = available_interest + available_principal
+                if cf_record["period"] == period:
+                    cf_record["excess"] = available_interest + available_principal
                     break
 
     return result
@@ -131,5 +129,5 @@ def run_waterfall(
     Returns:
         Dict mapping tranche_id to list of distributed cash flows.
     """
-    tranches = waterfall_definition.get('tranches', [])
+    tranches = waterfall_definition.get("tranches", [])
     return apply_waterfall(collateral_flows, tranches)

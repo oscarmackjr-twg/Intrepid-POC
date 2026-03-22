@@ -4,6 +4,7 @@ These tests are RED (failing) until the startup guard is implemented in
 config/settings.py. The guard must raise ValueError/ValidationError when
 Settings is instantiated with the sentinel key outside LOCAL_DEV_MODE.
 """
+
 import pytest
 from pydantic import ValidationError
 

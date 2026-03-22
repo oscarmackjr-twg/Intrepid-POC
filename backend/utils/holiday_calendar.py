@@ -6,6 +6,7 @@ or the following business day if that Tuesday is a US holiday.
 
 Holidays are loaded for the next 10 years from a reference year.
 """
+
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional, Set, Union
 import logging
@@ -32,6 +33,7 @@ def _get_holiday_lib():
     """Lazy import to avoid import errors if holidays is not installed."""
     try:
         import holidays as hl
+
         return hl
     except ImportError:
         logger.warning("holidays package not installed; holiday calendar will be empty")
@@ -157,11 +159,13 @@ def get_holidays_list(
         obj = hl.country_holidays(country, years=years)
         out = []
         for d, name in sorted(obj.items()):
-            out.append({
-                "date": d.strftime("%Y-%m-%d"),
-                "name": name,
-                "country": country,
-            })
+            out.append(
+                {
+                    "date": d.strftime("%Y-%m-%d"),
+                    "name": name,
+                    "country": country,
+                }
+            )
         return out
     except Exception as e:
         logger.warning("Could not list holidays for %s: %s", country, e)

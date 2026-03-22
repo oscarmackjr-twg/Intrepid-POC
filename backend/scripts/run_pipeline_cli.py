@@ -22,6 +22,7 @@ Usage:
   # Optional: IRR target, sales team, tday (base date for file naming)
   python backend/scripts/run_pipeline_cli.py --folder ./legacy --pdate 2026-03-04 --irr-target 8.05 --tday 2026-03-01
 """
+
 import argparse
 import logging
 import os
@@ -45,6 +46,7 @@ if _backend_env.exists():
         pass  # chdir back after importing
 # Import settings now so .env is loaded from backend/ when present
 import config.settings as _settings_module  # noqa: F401
+
 if _backend_env.exists():
     os.chdir(_cwd)
 
@@ -70,7 +72,9 @@ def main():
         description="Run the pipeline from the command line (full logs to stdout for troubleshooting).",
         epilog="Example: python backend/scripts/run_pipeline_cli.py --run-id run_xxx --sync-s3",
     )
-    parser.add_argument("--folder", type=str, help="Local input folder path (ignored if --run-id or --sync-s3 without --folder).")
+    parser.add_argument(
+        "--folder", type=str, help="Local input folder path (ignored if --run-id or --sync-s3 without --folder)."
+    )
     parser.add_argument("--pdate", type=str, help="Purchase date YYYY-MM-DD. Default: next Tuesday.")
     parser.add_argument("--tday", type=str, help="Base date YYYY-MM-DD for file naming. Default: today.")
     parser.add_argument("--irr-target", type=float, default=8.05, help="IRR target percentage.")
@@ -102,10 +106,12 @@ def main():
             pdate = run.pdate
             tday = run.pdate  # match file naming to original run
             input_path = run.input_file_path or ""
-            output_dir = run.output_dir or f"runs/cli_{args.run_id[:20]}"
+            run.output_dir or f"runs/cli_{args.run_id[:20]}"
             sales_team_id = run.sales_team_id
             irr_target = run.irr_target if run.irr_target is not None else args.irr_target
-            print(f"Re-running with same parameters as run_id={args.run_id}: pdate={pdate}, input_file_path={input_path}")
+            print(
+                f"Re-running with same parameters as run_id={args.run_id}: pdate={pdate}, input_file_path={input_path}"
+            )
         finally:
             db.close()
 

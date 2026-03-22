@@ -1,4 +1,5 @@
 """Async job tracking for Final Funding SG and CIBC program runs."""
+
 import os
 import socket
 import threading
@@ -155,9 +156,7 @@ async def create_final_funding_job(
 @router.get("/jobs")
 async def list_final_funding_jobs(current_user=Depends(get_current_user)):
     with db_conn() as conn:
-        rows = conn.execute(
-            "SELECT * FROM final_funding_job ORDER BY created_at DESC LIMIT 20"
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM final_funding_job ORDER BY created_at DESC LIMIT 20").fetchall()
     return [dict(r) for r in rows]
 
 

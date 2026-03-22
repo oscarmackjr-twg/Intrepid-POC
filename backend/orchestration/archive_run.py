@@ -4,13 +4,14 @@
 - At the start of a new run, the previous run is archived (its output dir and, when available, input prefix).
 - At the end of a run, the current run is also archived (inputs from run folder, outputs from storage).
 """
+
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from storage import get_storage_backend
 from storage.base import StorageBackend
-from utils.date_utils import calculate_pipeline_dates, calculate_last_month_end
+from utils.date_utils import calculate_pipeline_dates
 from utils.file_discovery import discover_input_files
 
 logger = logging.getLogger(__name__)
@@ -220,7 +221,9 @@ def archive_previous_run(prev_run_id: str, output_prefix: str, input_prefix: Opt
                 except Exception as e:
                     logger.warning("Failed to archive previous output %s: %s", f.path, e)
             if out_count:
-                logger.info("Archived previous run %s: %d output file(s) -> %s", prev_run_id, out_count, archive_out_prefix)
+                logger.info(
+                    "Archived previous run %s: %d output file(s) -> %s", prev_run_id, out_count, archive_out_prefix
+                )
     except Exception as e:
         logger.warning("Failed to archive previous run outputs: %s", e)
 
@@ -244,6 +247,8 @@ def archive_previous_run(prev_run_id: str, output_prefix: str, input_prefix: Opt
                 except Exception as e:
                     logger.warning("Failed to archive previous input %s: %s", f.path, e)
             if in_count:
-                logger.info("Archived previous run %s: %d input file(s) -> %s", prev_run_id, in_count, archive_in_prefix)
+                logger.info(
+                    "Archived previous run %s: %d input file(s) -> %s", prev_run_id, in_count, archive_in_prefix
+                )
         except Exception as e:
             logger.debug("Could not archive previous run inputs from storage: %s", e)

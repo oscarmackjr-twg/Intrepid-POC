@@ -1,4 +1,5 @@
 """Tests for authentication security — cookie-based token extraction."""
+
 import pytest
 from fastapi.testclient import TestClient
 from auth.security import create_access_token

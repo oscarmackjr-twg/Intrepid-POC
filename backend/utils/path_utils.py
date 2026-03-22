@@ -1,4 +1,5 @@
 """Path utilities for sales team isolation."""
+
 from pathlib import Path
 from typing import Optional
 
@@ -6,11 +7,11 @@ from typing import Optional
 def get_sales_team_input_path(base_path: str, sales_team_id: Optional[int]) -> str:
     """
     Get input path for sales team (with isolation if sales_team_id provided).
-    
+
     Args:
         base_path: Base input directory
         sales_team_id: Optional sales team ID
-    
+
     Returns:
         Input path string
     """
@@ -22,11 +23,11 @@ def get_sales_team_input_path(base_path: str, sales_team_id: Optional[int]) -> s
 def get_sales_team_output_path(base_path: str, sales_team_id: Optional[int]) -> str:
     """
     Get output path for sales team (with isolation if sales_team_id provided).
-    
+
     Args:
         base_path: Base output directory
         sales_team_id: Optional sales team ID
-    
+
     Returns:
         Output path string
     """
@@ -38,11 +39,11 @@ def get_sales_team_output_path(base_path: str, sales_team_id: Optional[int]) -> 
 def get_sales_team_share_path(base_path: str, sales_team_id: Optional[int]) -> str:
     """
     Get output_share path for sales team (with isolation if sales_team_id provided).
-    
+
     Args:
         base_path: Base output directory
         sales_team_id: Optional sales team ID
-    
+
     Returns:
         Output share path string
     """

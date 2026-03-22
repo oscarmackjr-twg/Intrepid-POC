@@ -1,13 +1,12 @@
 """Tests for business holiday calendar (US, IN, GB, SG)."""
-import pytest
-from datetime import date, datetime
+
+from datetime import date
 
 from utils.holiday_calendar import (
     is_business_day,
     next_business_day,
     get_holidays_list,
     get_supported_countries,
-    PDATE_COUNTRY,
 )
 
 

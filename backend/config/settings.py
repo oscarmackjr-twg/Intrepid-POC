@@ -1,8 +1,8 @@
 """Application configuration and settings."""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import model_validator
 from typing import Optional
-import os
 from pathlib import Path
 from urllib.parse import quote_plus
 
@@ -47,7 +47,7 @@ class Settings(BaseSettings):
         if self.DATABASE_SSLMODE:
             self.DATABASE_URL = f"{self.DATABASE_URL}?sslmode={self.DATABASE_SSLMODE}"
         return self
-    
+
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
@@ -63,7 +63,7 @@ class Settings(BaseSettings):
                 "Set a strong random SECRET_KEY, or set LOCAL_DEV_MODE=true in .env for local development."
             )
         return self
-    
+
     # File Storage
     STORAGE_TYPE: str = "local"  # "local" or "s3"
     INPUT_DIR: str = "./data/inputs"
@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     DEV_INPUT: Optional[str] = None
     DEV_OUTPUT: Optional[str] = None
     DEV_OUTPUT_SHARED: Optional[str] = None
-    
+
     # S3 Configuration (required when STORAGE_TYPE=s3)
     S3_BUCKET_NAME: Optional[str] = None
     S3_REGION: Optional[str] = None
@@ -93,7 +93,7 @@ class Settings(BaseSettings):
     S3_INPUT: Optional[str] = None
     S3_OUTPUT: Optional[str] = None
     S3_OUTPUT_SHARED: Optional[str] = None
-    
+
     # Pipeline
     IRR_TARGET: float = 8.05
     DEFAULT_PDATE: Optional[str] = None
@@ -105,11 +105,11 @@ class Settings(BaseSettings):
     # we copy to outputs and output_share areas under final_funding_sg/ or final_funding_cibc/ (same convention as main runs).
     FINAL_FUNDING_SG_SCRIPT_PATH: Optional[str] = None
     FINAL_FUNDING_CIBC_SCRIPT_PATH: Optional[str] = None
-    
+
     # Scheduler
     ENABLE_SCHEDULER: bool = True
     DAILY_RUN_TIME: str = "02:00"  # 2 AM
-    
+
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
@@ -140,7 +140,8 @@ class Settings(BaseSettings):
             if self.DEV_OUTPUT_SHARED:
                 self.OUTPUT_SHARE_DIR = self.DEV_OUTPUT_SHARED
         return self
-    
+
+
 # Load settings
 # Note: If .env file has parsing errors, pydantic-settings will show a warning
 # but the application will still start using defaults and environment variables

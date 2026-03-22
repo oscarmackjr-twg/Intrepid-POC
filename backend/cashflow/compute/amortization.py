@@ -3,18 +3,14 @@
 Supports level pay, bullet, custom, and interest-only amortization types.
 Uses standard PMT formula for level pay calculations.
 """
+
 from __future__ import annotations
 
 from typing import Dict, List
 import math
 
 
-def level_pay_schedule(
-    principal: float,
-    annual_rate: float,
-    num_periods: int,
-    frequency: int = 12
-) -> List[Dict]:
+def level_pay_schedule(principal: float, annual_rate: float, num_periods: int, frequency: int = 12) -> List[Dict]:
     """Generate level-pay amortization schedule.
 
     Calculates constant payment using PMT formula:
@@ -62,13 +58,15 @@ def level_pay_schedule(
             # Avoid floating point negative zeros
             remaining = max(0.0, remaining)
 
-            schedule.append({
-                'period': period,
-                'payment': payment_amount,
-                'principal': principal_payment,
-                'interest': interest_payment,
-                'remaining_balance': remaining
-            })
+            schedule.append(
+                {
+                    "period": period,
+                    "payment": payment_amount,
+                    "principal": principal_payment,
+                    "interest": interest_payment,
+                    "remaining_balance": remaining,
+                }
+            )
         return schedule
 
     # Calculate level payment using PMT formula
@@ -94,23 +92,20 @@ def level_pay_schedule(
         if period == num_periods:
             remaining_balance = 0.0
 
-        schedule.append({
-            'period': period,
-            'payment': payment_amount,
-            'principal': principal_payment,
-            'interest': interest_payment,
-            'remaining_balance': max(0.0, remaining_balance)  # Avoid negative zero
-        })
+        schedule.append(
+            {
+                "period": period,
+                "payment": payment_amount,
+                "principal": principal_payment,
+                "interest": interest_payment,
+                "remaining_balance": max(0.0, remaining_balance),  # Avoid negative zero
+            }
+        )
 
     return schedule
 
 
-def bullet_schedule(
-    principal: float,
-    annual_rate: float,
-    num_periods: int,
-    frequency: int = 12
-) -> List[Dict]:
+def bullet_schedule(principal: float, annual_rate: float, num_periods: int, frequency: int = 12) -> List[Dict]:
     """Generate bullet amortization schedule (interest-only with principal at maturity).
 
     Args:
@@ -146,22 +141,26 @@ def bullet_schedule(
     for period in range(1, num_periods + 1):
         if period < num_periods:
             # Interest-only periods
-            schedule.append({
-                'period': period,
-                'payment': interest_payment,
-                'principal': 0.0,
-                'interest': interest_payment,
-                'remaining_balance': principal
-            })
+            schedule.append(
+                {
+                    "period": period,
+                    "payment": interest_payment,
+                    "principal": 0.0,
+                    "interest": interest_payment,
+                    "remaining_balance": principal,
+                }
+            )
         else:
             # Final period: interest + principal
-            schedule.append({
-                'period': period,
-                'payment': interest_payment + principal,
-                'principal': principal,
-                'interest': interest_payment,
-                'remaining_balance': 0.0
-            })
+            schedule.append(
+                {
+                    "period": period,
+                    "payment": interest_payment + principal,
+                    "principal": principal,
+                    "interest": interest_payment,
+                    "remaining_balance": 0.0,
+                }
+            )
 
     return schedule
 
@@ -195,41 +194,41 @@ def custom_schedule(cashflow_specs: List[Dict]) -> List[Dict]:
         raise ValueError("Cashflow specifications cannot be empty")
 
     # Sort by period to handle out-of-order inputs
-    specs_sorted = sorted(cashflow_specs, key=lambda x: x['period'])
+    specs_sorted = sorted(cashflow_specs, key=lambda x: x["period"])
 
     # Validate period sequence (must be 1, 2, 3, ..., N)
     expected_period = 1
     for spec in specs_sorted:
-        if spec['period'] != expected_period:
-            raise ValueError(
-                f"Missing or duplicate period: expected {expected_period}, got {spec['period']}"
-            )
+        if spec["period"] != expected_period:
+            raise ValueError(f"Missing or duplicate period: expected {expected_period}, got {spec['period']}")
         expected_period += 1
 
         # Validate non-negative values
-        if spec.get('principal', 0) < 0:
+        if spec.get("principal", 0) < 0:
             raise ValueError(f"Principal cannot be negative in period {spec['period']}")
-        if spec.get('interest', 0) < 0:
+        if spec.get("interest", 0) < 0:
             raise ValueError(f"Interest cannot be negative in period {spec['period']}")
 
     # Calculate total principal to determine starting balance
-    total_principal = sum(spec.get('principal', 0) for spec in specs_sorted)
+    total_principal = sum(spec.get("principal", 0) for spec in specs_sorted)
 
     # Generate schedule with remaining balance calculations
     schedule = []
     remaining_balance = total_principal
 
     for spec in specs_sorted:
-        principal_payment = spec.get('principal', 0)
-        interest_payment = spec.get('interest', 0)
+        principal_payment = spec.get("principal", 0)
+        interest_payment = spec.get("interest", 0)
 
-        schedule.append({
-            'period': spec['period'],
-            'payment': principal_payment + interest_payment,
-            'principal': principal_payment,
-            'interest': interest_payment,
-            'remaining_balance': remaining_balance - principal_payment
-        })
+        schedule.append(
+            {
+                "period": spec["period"],
+                "payment": principal_payment + interest_payment,
+                "principal": principal_payment,
+                "interest": interest_payment,
+                "remaining_balance": remaining_balance - principal_payment,
+            }
+        )
 
         remaining_balance -= principal_payment
 

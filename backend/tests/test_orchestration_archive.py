@@ -6,6 +6,7 @@ Tests focus on:
 
 Per D-11: s3_input_sync.py is explicitly out of scope and not tested here.
 """
+
 import pytest
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from orchestration.archive_run import _is_s3_style_prefix, _collect_input_paths
 # ---------------------------------------------------------------------------
 # _is_s3_style_prefix tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestIsS3StylePrefix:
@@ -67,6 +69,7 @@ class TestIsS3StylePrefix:
 # ---------------------------------------------------------------------------
 # _collect_input_paths tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestCollectInputPaths:

@@ -82,7 +82,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r backend/requirements.txt
+        run: |
+          pip install -r backend/requirements.txt
+          pip install pytest-cov  # ensure coverage plugin available even if requirements install is partial
 
       - name: Run unit tests with coverage
         working-directory: backend

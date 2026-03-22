@@ -9,6 +9,7 @@ The script uses the same database configuration as the main application:
 To change the database, set DATABASE_URL environment variable or create a .env file:
     DATABASE_URL=postgresql://user:password@host:port/database
 """
+
 import sys
 import secrets
 from pathlib import Path
@@ -58,23 +59,22 @@ def create_admin_user(
     pwd_bytes = one_time_password.encode("utf-8")
     if len(pwd_bytes) > BCRYPT_MAX_PASSWORD_BYTES:
         raise ValueError(
-            f"Password is too long ({len(pwd_bytes)} bytes). "
-            f"Bcrypt allows at most {BCRYPT_MAX_PASSWORD_BYTES} bytes."
+            f"Password is too long ({len(pwd_bytes)} bytes). Bcrypt allows at most {BCRYPT_MAX_PASSWORD_BYTES} bytes."
         )
 
-    print(f"Connecting to database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL}")
+    print(
+        f"Connecting to database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL}"
+    )
     db: Session = SessionLocal()
-    
+
     try:
         # Check if admin already exists
-        existing = db.query(User).filter(
-            (User.username == username) | (User.email == email)
-        ).first()
-        
+        existing = db.query(User).filter((User.username == username) | (User.email == email)).first()
+
         if existing:
             print(f"User already exists: {existing.username} ({existing.email})")
             return existing
-        
+
         # Create admin user
         admin_user = User(
             email=email,
@@ -82,19 +82,19 @@ def create_admin_user(
             hashed_password=get_password_hash(one_time_password),
             full_name=full_name,
             role=UserRole.ADMIN,
-            is_active=True
+            is_active=True,
         )
 
         db.add(admin_user)
         db.commit()
         db.refresh(admin_user)
 
-        print(f"Admin user created successfully.")
+        print("Admin user created successfully.")
         print(f"   Username: {username}")
         print(f"   Email: {email}")
 
         return admin_user
-        
+
     except Exception as e:
         db.rollback()
         print(f"❌ Error creating admin user: {e}")
@@ -118,15 +118,12 @@ def create_user_if_missing(
     pwd_bytes = password.encode("utf-8")
     if len(pwd_bytes) > BCRYPT_MAX_PASSWORD_BYTES:
         raise ValueError(
-            f"Password is too long ({len(pwd_bytes)} bytes). "
-            f"Bcrypt allows at most {BCRYPT_MAX_PASSWORD_BYTES} bytes."
+            f"Password is too long ({len(pwd_bytes)} bytes). Bcrypt allows at most {BCRYPT_MAX_PASSWORD_BYTES} bytes."
         )
 
     db: Session = SessionLocal()
     try:
-        existing = db.query(User).filter(
-            (User.username == username) | (User.email == email)
-        ).first()
+        existing = db.query(User).filter((User.username == username) | (User.email == email)).first()
 
         if existing:
             print(f"User already exists: {existing.username} ({existing.email})")
@@ -162,7 +159,7 @@ def _print_permission_help():
     print("\nOptions:")
     print("1. Run seed_admin using a superuser (e.g. postgres):")
     print("   CMD:  set DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/cursor_db")
-    print("   PS:   $env:DATABASE_URL=\"postgresql://postgres:YOUR_PASSWORD@localhost:5432/cursor_db\"")
+    print('   PS:   $env:DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/cursor_db"')
     print("   Then: python scripts/seed_admin.py")
     print("\n2. Grant privileges (run as superuser, e.g. psql -U postgres -d cursor_db):")
     print("   -- Replace 'your_app_user' with the user from your DATABASE_URL")

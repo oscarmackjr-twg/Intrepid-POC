@@ -1,4 +1,5 @@
 """Unit tests for cashflow.compute.amortization module."""
+
 import pytest
 
 from cashflow.compute.amortization import level_pay_schedule, bullet_schedule, custom_schedule

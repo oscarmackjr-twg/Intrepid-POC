@@ -17,6 +17,7 @@ Public API:
     price_loan_our_case(loan_row, df)  → (modeled_df, irr, wal)  OUR assumptions
     xirr(values, dates)                → float
 """
+
 from __future__ import annotations
 
 from typing import Tuple
@@ -31,28 +32,96 @@ from scipy.optimize import newton
 # WPDI loan IDs where the promo period is capped at 12 months.
 # These are legacy loans with truncated promo structures; identified manually.
 # ---------------------------------------------------------------------------
-WPDI_SHORT_PROMO_IDS: frozenset = frozenset({
-    "SFC_5387026", "SFC_4762813", "SFC_4773432", "SFC_5086492", "SFC_5118100",
-    "SFC_5211106", "SFC_5275587", "SFC_5361860", "SFC_5368751", "SFC_5431496",
-    "SFC_5463542", "SFC_5491704", "SFC_5493276", "SFC_5496710", "SFC_5509444",
-    "SFC_5533868", "SFC_5545063", "SFC_5568733", "SFC_5576392", "SFC_5612338",
-    "SFC_5324404", "SFC_5517937", "SFC_5612811", "SFC_5635256", "SFC_5664371",
-    "SFC_5728818", "SFC_5752586", "SFC_5791594", "SFC_5804963", "SFC_5831579",
-    "SFC_5868362", "SFC_5865793", "SFC_5884928", "SFC_5867531", "SFC_5899605",
-    "SFC_5938501", "SFC_5857664", "SFC_5992457", "SFC_6035636", "SFC_6015062",
-    "SFC_6106710", "SFC_6137800", "SFC_6103974", "SFC_6116907", "SFC_6153806",
-    "SFC_5929608", "SFC_6170323", "SFC_6190788", "SFC_6194378", "SFC_6232757",
-    "SFC_6192857", "SFC_6253445", "SFC_6286111", "SFC_6289448", "SFC_6289486",
-    "SFC_6340544", "SFC_6357984", "SFC_6221709", "SFC_6412846", "SFC_6423359",
-    "SFC_6432202", "SFC_6459331", "SFC_6460832", "SFC_6473886", "SFC_6507769",
-    "SFC_6482551", "SFC_6487703", "SFC_6601710", "SFC_6594697", "SFC_6614154",
-    "SFC_6649460",
-})
+WPDI_SHORT_PROMO_IDS: frozenset = frozenset(
+    {
+        "SFC_5387026",
+        "SFC_4762813",
+        "SFC_4773432",
+        "SFC_5086492",
+        "SFC_5118100",
+        "SFC_5211106",
+        "SFC_5275587",
+        "SFC_5361860",
+        "SFC_5368751",
+        "SFC_5431496",
+        "SFC_5463542",
+        "SFC_5491704",
+        "SFC_5493276",
+        "SFC_5496710",
+        "SFC_5509444",
+        "SFC_5533868",
+        "SFC_5545063",
+        "SFC_5568733",
+        "SFC_5576392",
+        "SFC_5612338",
+        "SFC_5324404",
+        "SFC_5517937",
+        "SFC_5612811",
+        "SFC_5635256",
+        "SFC_5664371",
+        "SFC_5728818",
+        "SFC_5752586",
+        "SFC_5791594",
+        "SFC_5804963",
+        "SFC_5831579",
+        "SFC_5868362",
+        "SFC_5865793",
+        "SFC_5884928",
+        "SFC_5867531",
+        "SFC_5899605",
+        "SFC_5938501",
+        "SFC_5857664",
+        "SFC_5992457",
+        "SFC_6035636",
+        "SFC_6015062",
+        "SFC_6106710",
+        "SFC_6137800",
+        "SFC_6103974",
+        "SFC_6116907",
+        "SFC_6153806",
+        "SFC_5929608",
+        "SFC_6170323",
+        "SFC_6190788",
+        "SFC_6194378",
+        "SFC_6232757",
+        "SFC_6192857",
+        "SFC_6253445",
+        "SFC_6286111",
+        "SFC_6289448",
+        "SFC_6289486",
+        "SFC_6340544",
+        "SFC_6357984",
+        "SFC_6221709",
+        "SFC_6412846",
+        "SFC_6423359",
+        "SFC_6432202",
+        "SFC_6459331",
+        "SFC_6460832",
+        "SFC_6473886",
+        "SFC_6507769",
+        "SFC_6482551",
+        "SFC_6487703",
+        "SFC_6601710",
+        "SFC_6594697",
+        "SFC_6614154",
+        "SFC_6649460",
+    }
+)
 
 _OUTPUT_COLS = [
-    "dates", "loan_dates", "modeled_interest", "modeled_principal",
-    "pre_payment", "write_off", "late_fee", "recovery", "end_upb",
-    "total_principal_collected", "wal", "opening_upb", "servicing_cost",
+    "dates",
+    "loan_dates",
+    "modeled_interest",
+    "modeled_principal",
+    "pre_payment",
+    "write_off",
+    "late_fee",
+    "recovery",
+    "end_upb",
+    "total_principal_collected",
+    "wal",
+    "opening_upb",
+    "servicing_cost",
     "interest paid",
 ]
 
@@ -64,6 +133,7 @@ _EPOCH = pd.Timestamp("2022-01-01")
 # ---------------------------------------------------------------------------
 # Date helpers
 # ---------------------------------------------------------------------------
+
 
 def _date_range(start, n_extra: int) -> pd.DatetimeIndex:
     """Monthly date range: [start, start+1m, ..., start+n_extra months]."""
@@ -77,6 +147,7 @@ def _date_range(start, n_extra: int) -> pd.DatetimeIndex:
 # ---------------------------------------------------------------------------
 # XIRR
 # ---------------------------------------------------------------------------
+
 
 def xnpv(rate: float, values, dates) -> float:
     """Net present value for irregular cash flows."""
@@ -99,6 +170,7 @@ def xirr(values, dates) -> float:
 # ---------------------------------------------------------------------------
 # Contractual cashflow schedule
 # ---------------------------------------------------------------------------
+
 
 def create_contractual_flow(
     monthly_payment: float,
@@ -148,13 +220,13 @@ def create_contractual_flow(
     elif loan_type in ("ninp", "hybrid"):
         amort_n = loan_term - promo_loan_term
         periods = np.arange(1, amort_n + 1)
-        principals[promo_loan_term + 1:] = -1.0 * npf.ppmt(
+        principals[promo_loan_term + 1 :] = -1.0 * npf.ppmt(
             loan_rate / 12.0,
             periods,
             amort_n,
             loan_original_amount,
         )
-        interests[promo_loan_term + 1:] = -1.0 * npf.ipmt(
+        interests[promo_loan_term + 1 :] = -1.0 * npf.ipmt(
             loan_rate / 12.0,
             periods,
             amort_n,
@@ -181,21 +253,24 @@ def create_contractual_flow(
     opening_balance[0] = np.nan
     opening_balance[1:] = closing_balance[:-1]
 
-    return pd.DataFrame({
-        "dates": _date_range(_EPOCH, loan_term),
-        "loan_dates": _date_range(loan_date, loan_term),
-        "principal paid": principals,
-        "interest paid": interests,
-        "pricipal_paid_cumsum": principal_cumsum,
-        "closing balance": closing_balance,
-        "opening balance": opening_balance,
-        "loan_number": loan_id,
-    })
+    return pd.DataFrame(
+        {
+            "dates": _date_range(_EPOCH, loan_term),
+            "loan_dates": _date_range(loan_date, loan_term),
+            "principal paid": principals,
+            "interest paid": interests,
+            "pricipal_paid_cumsum": principal_cumsum,
+            "closing balance": closing_balance,
+            "opening balance": opening_balance,
+            "loan_number": loan_id,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
 # Low-level modeled curve engines
 # ---------------------------------------------------------------------------
+
 
 def _model_standard_epni(
     contractual_df: pd.DataFrame,
@@ -239,12 +314,7 @@ def _model_standard_epni(
         pre_payment[1] = smm_cpr * opening_balance[1]
         write_off[1] = smm_cdr * opening_balance[1]
         late_fee[1] = late_fee_pct * opening_balance[1]
-        end_upb[1] = (
-            opening_balance[1]
-            - write_off[1]
-            - pre_payment[1]
-            - modeled_principal[1]
-        )
+        end_upb[1] = opening_balance[1] - write_off[1] - pre_payment[1] - modeled_principal[1]
 
     # Survival ratio: scales CPR/CDR in later periods
     ratio = end_upb[1] / closing_balance[1] if n > 1 else 0.0
@@ -324,22 +394,13 @@ def _model_ninp_wpdi(
         pre_payment[1] = cpr_schedule[0] * opening_balance[1]
         write_off[1] = smm_cdr_promo * opening_balance[1]
         late_fee[1] = late_fee_pct * opening_balance[1]
-        end_upb[1] = (
-            opening_balance[1]
-            - write_off[1]
-            - pre_payment[1]
-            - modeled_principal[1]
-        )
+        end_upb[1] = opening_balance[1] - write_off[1] - pre_payment[1] - modeled_principal[1]
 
     for i in range(2, n):
         if i <= promo_term:
             # Promo window: use per-period CPR schedule; scale CDR by survival
             cpr[i] = cpr_schedule[i - 1]
-            cdr_arr[i] = (
-                smm_cdr_promo
-                * end_upb[i - 1]
-                / closing_balance[i - 1]
-            )
+            cdr_arr[i] = smm_cdr_promo * end_upb[i - 1] / closing_balance[i - 1]
         else:
             # Post-promo: both CPR and CDR scale with cumulative survival
             cpr[i] = smm_const_cpr * cpr_cdr_cum_bal[i - 1]
@@ -423,7 +484,8 @@ def _finalize(
     total_pc = total_principal_collected.sum()
     wal = (
         (total_principal_collected / total_pc) * np.arange(out_len, dtype=float)
-        if total_pc > 0 else np.zeros(out_len, dtype=float)
+        if total_pc > 0
+        else np.zeros(out_len, dtype=float)
     )
 
     opening_upb = np.zeros(out_len, dtype=float)
@@ -432,27 +494,30 @@ def _finalize(
         opening_upb[1] = original_opening_balance
     servicing_cost = opening_upb * (1.0 / 12.0) * servicing_cost_pct
 
-    return pd.DataFrame({
-        "dates": dates_arr,
-        "loan_dates": loan_dates_arr,
-        "modeled_interest": modeled_interest_out,
-        "modeled_principal": modeled_principal_out,
-        "pre_payment": pre_payment_out,
-        "write_off": write_off_out,
-        "late_fee": late_fee_out,
-        "recovery": recovery,
-        "end_upb": end_upb_out,
-        "total_principal_collected": total_principal_collected,
-        "wal": wal,
-        "opening_upb": opening_upb,
-        "servicing_cost": servicing_cost,
-        "interest paid": interest_paid_out,
-    })[_OUTPUT_COLS]
+    return pd.DataFrame(
+        {
+            "dates": dates_arr,
+            "loan_dates": loan_dates_arr,
+            "modeled_interest": modeled_interest_out,
+            "modeled_principal": modeled_principal_out,
+            "pre_payment": pre_payment_out,
+            "write_off": write_off_out,
+            "late_fee": late_fee_out,
+            "recovery": recovery,
+            "end_upb": end_upb_out,
+            "total_principal_collected": total_principal_collected,
+            "wal": wal,
+            "opening_upb": opening_upb,
+            "servicing_cost": servicing_cost,
+            "interest paid": interest_paid_out,
+        }
+    )[_OUTPUT_COLS]
 
 
 # ---------------------------------------------------------------------------
 # CPR array helpers
 # ---------------------------------------------------------------------------
+
 
 def _parse_cpr(cpr_str: str) -> np.ndarray:
     """Parse semicolon-delimited CPR string to numpy array (already in SMM)."""
@@ -467,13 +532,14 @@ def _cap_cpr(cpr: np.ndarray) -> np.ndarray:
     if over_idx.size:
         i = int(over_idx[0])
         cpr[i] -= cumsum[i] - 1.0
-        cpr[i + 1:] = 0.0
+        cpr[i + 1 :] = 0.0
     return cpr
 
 
 # ---------------------------------------------------------------------------
 # WPDI cash/WAL adjustment + IRR builder
 # ---------------------------------------------------------------------------
+
 
 def _build_result(
     curr_df: pd.DataFrame,
@@ -498,7 +564,7 @@ def _build_result(
 
     if loan_type in ("wpdi", "wpdi_bd"):
         # WPDI: accrued interest recapture adjustment during promo window
-        interest_promo = contractual_df["interest paid"].values[1: promo_loan_term + 1]
+        interest_promo = contractual_df["interest paid"].values[1 : promo_loan_term + 1]
         cash_adj = np.cumsum(interest_promo) * resolved_cpr
         adj_cpr = np.insert(np.sum(resolved_cpr) - np.cumsum(resolved_cpr), 0, np.sum(resolved_cpr))[:promo_loan_term]
         total_cf = interest_promo * adj_cpr - cash_adj
@@ -509,17 +575,15 @@ def _build_result(
 
         pool = curr_df["total_principal_collected"].values[1:] + padded_total_cf
         pool_sum = pool.sum()
-        wal = (
-            sum((pool / pool_sum) * curr_df.index.values[1:]) / 12.0
-            if pool_sum > 0 else 0.0
-        )
+        wal = sum((pool / pool_sum) * curr_df.index.values[1:]) / 12.0 if pool_sum > 0 else 0.0
 
         cashflow_arr = (
-            (curr_df["modeled_interest"] + curr_df["modeled_principal"]
-             + curr_df["pre_payment"] + curr_df["recovery"]
-             - curr_df["servicing_cost"]).iloc[1:]
-            - padded_cash_adj
-        )
+            curr_df["modeled_interest"]
+            + curr_df["modeled_principal"]
+            + curr_df["pre_payment"]
+            + curr_df["recovery"]
+            - curr_df["servicing_cost"]
+        ).iloc[1:] - padded_cash_adj
         arr.extend(cashflow_arr.values)
         irr = xirr(arr, contractual_df["loan_dates"])
 
@@ -529,9 +593,13 @@ def _build_result(
     else:
         wal = curr_df["wal"].sum() / 12.0
         arr.extend(
-            (curr_df["modeled_principal"] + curr_df["pre_payment"]
-             + curr_df["recovery"] + curr_df["modeled_interest"]
-             - curr_df["servicing_cost"])[1:-1].values
+            (
+                curr_df["modeled_principal"]
+                + curr_df["pre_payment"]
+                + curr_df["recovery"]
+                + curr_df["modeled_interest"]
+                - curr_df["servicing_cost"]
+            )[1:-1].values
         )
         irr = xirr(arr, contractual_df["loan_dates"])
 
@@ -541,6 +609,7 @@ def _build_result(
 # ---------------------------------------------------------------------------
 # Public high-level entry points
 # ---------------------------------------------------------------------------
+
 
 def price_loan_sfc_case(
     loan_row,
@@ -588,13 +657,24 @@ def price_loan_sfc_case(
 
     if loan_type in ("ninp", "wpdi", "hybrid", "wpdi_bd"):
         curr_df = _model_ninp_wpdi(
-            contractual_df, promo_loan_term, cpr, const_cpr,
-            cdr, cdr_promo, late_fee_pct, recovery_rate, servicing_cost_pct,
+            contractual_df,
+            promo_loan_term,
+            cpr,
+            const_cpr,
+            cdr,
+            cdr_promo,
+            late_fee_pct,
+            recovery_rate,
+            servicing_cost_pct,
         )
     else:  # standard, epni, solar, standard_bd
         curr_df = _model_standard_epni(
-            contractual_df, const_cpr, cdr,
-            late_fee_pct, recovery_rate, servicing_cost_pct,
+            contractual_df,
+            const_cpr,
+            cdr,
+            late_fee_pct,
+            recovery_rate,
+            servicing_cost_pct,
         )
 
     return _build_result(curr_df, contractual_df, loan_row, loan_type, promo_loan_term, cpr)
@@ -635,13 +715,24 @@ def price_loan_our_case(
 
     if loan_type in ("ninp", "wpdi", "hybrid", "wpdi_bd"):
         curr_df = _model_ninp_wpdi(
-            contractual_df, promo_loan_term, cpr, const_cpr,
-            cdr, cdr_promo, late_fee_pct, recovery_rate, servicing_cost_pct,
+            contractual_df,
+            promo_loan_term,
+            cpr,
+            const_cpr,
+            cdr,
+            cdr_promo,
+            late_fee_pct,
+            recovery_rate,
+            servicing_cost_pct,
         )
     else:  # standard, epni, solar, standard_bd
         curr_df = _model_standard_epni(
-            contractual_df, const_cpr, cdr,
-            late_fee_pct, recovery_rate, servicing_cost_pct,
+            contractual_df,
+            const_cpr,
+            cdr,
+            late_fee_pct,
+            recovery_rate,
+            servicing_cost_pct,
         )
 
     return _build_result(curr_df, contractual_df, loan_row, loan_type, promo_loan_term, cpr)

@@ -3,10 +3,6 @@
 These tests are RED (failing) until seed_admin.py is refactored to generate
 a random URL-safe password instead of using hardcoded values.
 """
-import pytest
-import secrets
-import string
-
 
 HARDCODED_PASSWORDS = {"admin123", "twg123"}
 
@@ -18,6 +14,7 @@ def _call_generate_password():
     will fail until one is added.
     """
     from scripts.seed_admin import generate_password
+
     return generate_password()
 
 
@@ -42,7 +39,5 @@ class TestSeedAdminPasswordGeneration:
         """
         password = _call_generate_password()
         assert isinstance(password, str), "Password must be a string"
-        assert len(password) >= 16, (
-            f"Password too short: {len(password)} chars. Must be at least 16."
-        )
+        assert len(password) >= 16, f"Password too short: {len(password)} chars. Must be at least 16."
         assert " " not in password, "Password must not contain spaces"

@@ -2,6 +2,7 @@
 
 Handles rate resets for ARM instruments based on index + margin with caps/floors.
 """
+
 from __future__ import annotations
 
 from typing import Dict, Any, List

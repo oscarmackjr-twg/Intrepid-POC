@@ -2,16 +2,14 @@
 
 Projects defaults and recovery rates for credit-risky instruments.
 """
+
 from __future__ import annotations
 
 from typing import Dict, Any, List
 
 
 def apply_default_model(
-    schedule: List[Dict[str, Any]],
-    pd_curve: List[float],
-    lgd: float,
-    ead_pct: float = 1.0
+    schedule: List[Dict[str, Any]], pd_curve: List[float], lgd: float, ead_pct: float = 1.0
 ) -> List[Dict[str, Any]]:
     """Apply default and recovery model to a cashflow schedule.
 
@@ -35,7 +33,7 @@ def apply_default_model(
 
     for i, cf in enumerate(schedule):
         cf = cf.copy()  # Don't mutate input
-        remaining_principal = cf.get('remaining_principal', 0.0)
+        remaining_principal = cf.get("remaining_principal", 0.0)
 
         # Get PD for this period (default to 0 if curve too short)
         pd = pd_curve[i] if i < len(pd_curve) else 0.0
@@ -48,17 +46,17 @@ def apply_default_model(
         recovery_amount = default_amount * (1.0 - lgd)
 
         # Add fields to cashflow
-        cf['default_loss'] = loss_amount
-        cf['recovery'] = recovery_amount
+        cf["default_loss"] = loss_amount
+        cf["recovery"] = recovery_amount
 
         # Reduce principal cashflow by default amount
-        if 'scheduled_principal' in cf:
-            cf['scheduled_principal'] = cf['scheduled_principal'] - default_amount
-        elif 'principal' in cf:
-            cf['principal'] = cf['principal'] - default_amount
+        if "scheduled_principal" in cf:
+            cf["scheduled_principal"] = cf["scheduled_principal"] - default_amount
+        elif "principal" in cf:
+            cf["principal"] = cf["principal"] - default_amount
 
         # Update remaining principal
-        cf['remaining_principal'] = remaining_principal - default_amount
+        cf["remaining_principal"] = remaining_principal - default_amount
 
         result.append(cf)
 

@@ -4,6 +4,7 @@ Generates projected cash flow schedules for fixed income instruments
 based on their terms, conventions, and amortization type.
 Uses QuantLib for date schedule generation with calendar adjustments.
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -13,11 +14,7 @@ import QuantLib as ql
 
 from compute.quantlib.day_count import get_day_counter
 from compute.quantlib.calendar import get_calendar
-from cashflow.compute.amortization import (
-    level_pay_schedule,
-    bullet_schedule,
-    custom_schedule
-)
+from cashflow.compute.amortization import level_pay_schedule, bullet_schedule, custom_schedule
 
 
 def _parse_date(d: str | date) -> date:
@@ -40,19 +37,16 @@ def _from_ql_date(ql_date: ql.Date) -> date:
 def _parse_frequency(freq_str: str) -> ql.Frequency:
     """Parse frequency string to QuantLib Frequency."""
     freq_map = {
-        'MONTHLY': ql.Monthly,
-        'QUARTERLY': ql.Quarterly,
-        'SEMIANNUAL': ql.Semiannual,
-        'SEMI_ANNUAL': ql.Semiannual,
-        'ANNUAL': ql.Annual,
-        'ANNUALLY': ql.Annual,
+        "MONTHLY": ql.Monthly,
+        "QUARTERLY": ql.Quarterly,
+        "SEMIANNUAL": ql.Semiannual,
+        "SEMI_ANNUAL": ql.Semiannual,
+        "ANNUAL": ql.Annual,
+        "ANNUALLY": ql.Annual,
     }
     freq_upper = freq_str.upper().strip()
     if freq_upper not in freq_map:
-        raise ValueError(
-            f"Unsupported frequency: {freq_str}. "
-            f"Valid options: {', '.join(freq_map.keys())}"
-        )
+        raise ValueError(f"Unsupported frequency: {freq_str}. Valid options: {', '.join(freq_map.keys())}")
     return freq_map[freq_upper]
 
 
@@ -120,12 +114,12 @@ def generate_schedule(
         >>> len(schedule)  # 8 future payments (semiannual from 2026 to 2030)
     """
     # Parse dates
-    issue_date = _parse_date(instrument.get('issue_date', as_of_date))
+    issue_date = _parse_date(instrument.get("issue_date", as_of_date))
 
-    if 'maturity_date' not in instrument or instrument['maturity_date'] is None:
+    if "maturity_date" not in instrument or instrument["maturity_date"] is None:
         raise ValueError("instrument must contain 'maturity_date' field")
 
-    maturity_date = _parse_date(instrument['maturity_date'])
+    maturity_date = _parse_date(instrument["maturity_date"])
 
     if end_date:
         termination_date = _parse_date(end_date)
@@ -138,20 +132,20 @@ def generate_schedule(
         return []
 
     # Parse instrument parameters
-    principal = float(instrument.get('principal', 0))
+    principal = float(instrument.get("principal", 0))
     if principal <= 0:
         raise ValueError(f"Principal must be positive, got {principal}")
 
-    coupon = float(instrument.get('coupon', 0))
-    frequency_str = instrument.get('frequency', 'SEMIANNUAL')
-    day_count_str = instrument.get('day_count', 'ACT/360')
-    calendar_str = instrument.get('calendar', 'US-GOVT')
-    amortization_type = instrument.get('amortization_type', 'BULLET').upper()
+    coupon = float(instrument.get("coupon", 0))
+    frequency_str = instrument.get("frequency", "SEMIANNUAL")
+    day_count_str = instrument.get("day_count", "ACT/360")
+    calendar_str = instrument.get("calendar", "US-GOVT")
+    amortization_type = instrument.get("amortization_type", "BULLET").upper()
 
     # Convert to QuantLib objects
     ql_issue = _to_ql_date(issue_date)
     ql_maturity = _to_ql_date(termination_date)
-    ql_as_of = _to_ql_date(as_of_date)
+    _to_ql_date(as_of_date)
 
     frequency = _parse_frequency(frequency_str)
     calendar = get_calendar(calendar_str)
@@ -161,14 +155,14 @@ def generate_schedule(
     # Use Schedule constructor directly for better control
     try:
         ql_schedule = ql.Schedule(
-            ql_issue,                      # effectiveDate
-            ql_maturity,                   # terminationDate
-            ql.Period(frequency),          # tenor
-            calendar,                      # calendar
-            ql.ModifiedFollowing,          # convention
-            ql.ModifiedFollowing,          # terminationDateConvention
-            ql.DateGeneration.Backward,    # rule (backward from maturity)
-            False                          # endOfMonth
+            ql_issue,  # effectiveDate
+            ql_maturity,  # terminationDate
+            ql.Period(frequency),  # tenor
+            calendar,  # calendar
+            ql.ModifiedFollowing,  # convention
+            ql.ModifiedFollowing,  # terminationDateConvention
+            ql.DateGeneration.Backward,  # rule (backward from maturity)
+            False,  # endOfMonth
         )
     except Exception as e:
         raise ValueError(f"Failed to create QuantLib schedule: {e}")
@@ -191,7 +185,7 @@ def generate_schedule(
     periods_per_year = _frequency_to_periods_per_year(frequency)
 
     # Generate amortization schedule based on type
-    if amortization_type == 'LEVEL_PAY':
+    if amortization_type == "LEVEL_PAY":
         # Calculate total periods from issue to maturity
         ql_full_schedule = ql.Schedule(
             ql_issue,
@@ -201,33 +195,27 @@ def generate_schedule(
             ql.ModifiedFollowing,
             ql.ModifiedFollowing,
             ql.DateGeneration.Backward,
-            False
+            False,
         )
 
         total_periods = len(ql_full_schedule) - 1  # Exclude start date
 
         amort_schedule = level_pay_schedule(
-            principal=principal,
-            annual_rate=coupon,
-            num_periods=total_periods,
-            frequency=periods_per_year
+            principal=principal, annual_rate=coupon, num_periods=total_periods, frequency=periods_per_year
         )
 
         # Map to future payments only
         # Calculate which period we're starting from
         start_period = total_periods - num_payments + 1
-        amort_schedule = amort_schedule[start_period - 1:]  # Adjust to 0-based index
+        amort_schedule = amort_schedule[start_period - 1 :]  # Adjust to 0-based index
 
-    elif amortization_type == 'BULLET':
+    elif amortization_type == "BULLET":
         amort_schedule = bullet_schedule(
-            principal=principal,
-            annual_rate=coupon,
-            num_periods=num_payments,
-            frequency=periods_per_year
+            principal=principal, annual_rate=coupon, num_periods=num_payments, frequency=periods_per_year
         )
 
-    elif amortization_type == 'CUSTOM':
-        custom_cashflows = instrument.get('custom_cashflows', [])
+    elif amortization_type == "CUSTOM":
+        custom_cashflows = instrument.get("custom_cashflows", [])
         if not custom_cashflows:
             raise ValueError("CUSTOM amortization requires 'custom_cashflows' field")
 
@@ -236,15 +224,14 @@ def generate_schedule(
         # Filter to future periods only
         future_periods = []
         for cf in amort_schedule:
-            period_idx = cf['period'] - 1
+            period_idx = cf["period"] - 1
             if period_idx < len(pay_dates):
                 future_periods.append(cf)
         amort_schedule = future_periods
 
     else:
         raise ValueError(
-            f"Unsupported amortization type: {amortization_type}. "
-            "Valid options: LEVEL_PAY, BULLET, CUSTOM"
+            f"Unsupported amortization type: {amortization_type}. Valid options: LEVEL_PAY, BULLET, CUSTOM"
         )
 
     # Merge date schedule with amortization schedule
@@ -264,13 +251,13 @@ def generate_schedule(
         year_frac = day_counter.yearFraction(ql_prev, ql_pay)
 
         cashflow = {
-            'period': idx + 1,
-            'pay_date': pay_date,
-            'principal': amort['principal'],
-            'interest': amort['interest'],
-            'payment': amort['payment'],
-            'remaining_balance': amort['remaining_balance'],
-            'year_fraction': year_frac
+            "period": idx + 1,
+            "pay_date": pay_date,
+            "principal": amort["principal"],
+            "interest": amort["interest"],
+            "payment": amort["payment"],
+            "remaining_balance": amort["remaining_balance"],
+            "year_fraction": year_frac,
         }
 
         cashflow_schedule.append(cashflow)

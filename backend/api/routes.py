@@ -1,4 +1,5 @@
 """API routes for loan engine."""
+
 import io
 import logging
 import threading
@@ -7,7 +8,7 @@ from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 import pandas as pd
 from pydantic import BaseModel
 
@@ -15,7 +16,7 @@ from db.connection import get_db, SessionLocal
 from db.models import PipelineRun, RunStatus, LoanException, LoanFact, User, SalesTeam, Holiday
 from orchestration.pipeline import RunCancelledException, PipelineExecutor, _weekday_from_pdate
 from auth.security import get_current_user, require_role, require_sales_team_access, UserRole
-from auth.validators import get_user_sales_team_id, validate_sales_team_access
+from auth.validators import get_user_sales_team_id
 from auth.audit import log_data_access, log_authorization_failure
 from orchestration.run_context import RunContext
 from orchestration.s3_input_sync import sync_s3_input_to_temp, remove_temp_input_dir
@@ -28,7 +29,7 @@ from utils.holiday_calendar import (
     is_business_day,
     PDATE_COUNTRY,
 )
-from utils.date_utils import calculate_next_tuesday, calculate_pipeline_dates
+from utils.date_utils import calculate_next_tuesday
 from orchestration.tagging_runner import execute_tagging
 from orchestration.final_funding_runner import execute_final_funding_sg, execute_final_funding_cibc
 
@@ -44,18 +45,24 @@ NOTEBOOK_OUTPUT_DEFS = [
     {"key": "special_asset_prime", "filename": "special_asset_prime.xlsx", "label": "Special asset (Prime)"},
     {"key": "special_asset_sfy", "filename": "special_asset_sfy.xlsx", "label": "Special asset (SFY)"},
     {"key": "eligibility_checks_json", "filename": "eligibility_checks.json", "label": "Eligibility checks (JSON)"},
-    {"key": "eligibility_checks_summary", "filename": "eligibility_checks_summary.xlsx", "label": "Eligibility checks summary"},
+    {
+        "key": "eligibility_checks_summary",
+        "filename": "eligibility_checks_summary.xlsx",
+        "label": "Eligibility checks summary",
+    },
 ]
 
 
 class ProgramRunCreate(BaseModel):
     """Program run request (Pre-Funding, Tagging, Final Funding SG, Final Funding CIBC)."""
+
     phase: str  # "pre_funding" | "tagging" | "final_funding_sg" | "final_funding_cibc"
     folder: Optional[str] = None  # optional input folder (local path or S3 prefix); default uses INPUT_DIR / "input"
 
 
 class ProgramRunResponse(BaseModel):
     """Program run response."""
+
     phase: str
     message: str
     output_prefix: Optional[str] = None  # e.g. "tagging" for file manager
@@ -63,6 +70,7 @@ class ProgramRunResponse(BaseModel):
 
 class RunCreate(BaseModel):
     """Pipeline run creation model."""
+
     # Purchase date (YYYY-MM-DD). If omitted, defaults to next Tuesday (US business day; if that Tuesday is a US holiday, the following business day).
     pdate: Optional[str] = None
     # Base "today" date (YYYY-MM-DD) used for file naming (yesterday, last month end).
@@ -76,6 +84,7 @@ class RunCreate(BaseModel):
 
 class RunResponse(BaseModel):
     """Pipeline run response model."""
+
     id: int
     run_id: str
     status: str
@@ -93,13 +102,14 @@ class RunResponse(BaseModel):
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class ExceptionResponse(BaseModel):
     """Exception response model."""
+
     id: int
     seller_loan_number: str
     exception_type: str
@@ -108,13 +118,14 @@ class ExceptionResponse(BaseModel):
     message: Optional[str]
     rejection_criteria: Optional[str] = None
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class LoanFactResponse(BaseModel):
     """Loan fact response (for to_purchase / projected / rejected)."""
+
     id: int
     run_id: int
     seller_loan_number: str
@@ -124,13 +135,14 @@ class LoanFactResponse(BaseModel):
     rejection_criteria: Optional[str] = None
     purchase_price_check: Optional[bool] = None
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class SummaryResponse(BaseModel):
     """Summary response model."""
+
     run_id: str
     total_loans: int
     total_balance: float
@@ -140,6 +152,7 @@ class SummaryResponse(BaseModel):
 
 class HolidayBase(BaseModel):
     """Base holiday fields for admin maintenance."""
+
     date: date
     country: str
     name: Optional[str] = None
@@ -147,11 +160,13 @@ class HolidayBase(BaseModel):
 
 class HolidayCreate(HolidayBase):
     """Create holiday payload."""
+
     pass
 
 
 class HolidayResponse(HolidayBase):
     """Holiday response model."""
+
     id: int
 
     class Config:
@@ -370,7 +385,7 @@ async def create_pipeline_run(
     run_data: RunCreate,
     response: Response,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_sales_team_access())
+    current_user: User = Depends(require_sales_team_access()),
 ):
     """Create a run record immediately and start pipeline in the background. Returns 202 with the run so UI can show status right away."""
     # Block if any run is already in RUNNING state (sequential jobs only)
@@ -453,18 +468,18 @@ async def list_runs(
     status: Optional[str] = None,
     run_weekday: Optional[int] = Query(None, ge=0, le=6, description="Filter by day of week (0=Monday .. 6=Sunday)"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """List pipeline runs with pagination. Filter by run_weekday for day-of-week segregation."""
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
     query = db.query(PipelineRun)
-    
+
     # Apply sales team filter
     query = filter_by_sales_team(query, current_user)
-    
+
     # Log data access
-    log_data_access(current_user, 'pipeline_runs', sales_team_id=current_user.sales_team_id)
-    
+    log_data_access(current_user, "pipeline_runs", sales_team_id=current_user.sales_team_id)
+
     # Filter by status if provided
     if status:
         try:
@@ -472,37 +487,33 @@ async def list_runs(
             query = query.filter(PipelineRun.status == status_enum)
         except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
-    
+
     # Filter by day of week (activity segregation)
     if run_weekday is not None:
         query = query.filter(PipelineRun.run_weekday == run_weekday)
-    
+
     # Order by created_at descending
     query = query.order_by(PipelineRun.created_at.desc())
-    
+
     # Paginate
     runs = query.offset(skip).limit(limit).all()
     return runs
 
 
 @router.get("/runs/{run_id}", response_model=RunResponse)
-async def get_run(
-    run_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
+async def get_run(run_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Get a specific pipeline run."""
     query = db.query(PipelineRun).filter(PipelineRun.run_id == run_id)
     query = filter_by_sales_team(query, current_user)
-    
+
     run = query.first()
     if not run:
-        log_authorization_failure(current_user, 'get_run', 'run_not_found', run_id)
+        log_authorization_failure(current_user, "get_run", "run_not_found", run_id)
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     # Log data access
-    log_data_access(current_user, 'pipeline_run', run_id, sales_team_id=run.sales_team_id)
-    
+    log_data_access(current_user, "pipeline_run", run_id, sales_team_id=run.sales_team_id)
+
     return run
 
 
@@ -645,9 +656,12 @@ async def list_run_archive(
                     "size": f.size,
                     "last_modified": f.last_modified,
                     "name": f.path.split("/")[-1] if "/" in f.path else f.path,
-                    "download_path": f"{download_prefix}/{f.path.split('/')[-1]}" if "/" in f.path else f"{download_prefix}/{f.path}",
+                    "download_path": f"{download_prefix}/{f.path.split('/')[-1]}"
+                    if "/" in f.path
+                    else f"{download_prefix}/{f.path}",
                 }
-                for f in files if not f.is_directory
+                for f in files
+                if not f.is_directory
             ]
         except Exception:
             return []
@@ -702,25 +716,21 @@ async def download_run_archive_file(
 
 
 @router.get("/summary/{run_id}", response_model=SummaryResponse)
-async def get_run_summary(
-    run_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
+async def get_run_summary(run_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Get summary metrics for a pipeline run."""
     query = db.query(PipelineRun).filter(PipelineRun.run_id == run_id)
     query = filter_by_sales_team(query, current_user)
-    
+
     run = query.first()
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     return {
         "run_id": run.run_id,
         "total_loans": run.total_loans,
         "total_balance": run.total_balance,
         "exceptions_count": run.exceptions_count,
-        "eligibility_checks": {}
+        "eligibility_checks": {},
     }
 
 
@@ -751,11 +761,13 @@ async def get_exceptions(
     run_id: Optional[str] = None,
     exception_type: Optional[str] = None,
     severity: Optional[str] = None,
-    rejection_criteria: Optional[str] = Query(None, description="Filter by notebook rejection key (e.g. notebook.purchase_price_mismatch)"),
+    rejection_criteria: Optional[str] = Query(
+        None, description="Filter by notebook rejection key (e.g. notebook.purchase_price_mismatch)"
+    ),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Get loan exceptions with filtering (including rejection_criteria for notebook mapping)."""
     query = _exceptions_query(db, current_user, run_id, exception_type, severity, rejection_criteria)
@@ -827,27 +839,27 @@ async def get_loans(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Get loan facts for a run. Filter by disposition for to_purchase vs projected vs rejected."""
     # Verify run access
     run_query = db.query(PipelineRun).filter(PipelineRun.run_id == run_id)
     run_query = filter_by_sales_team(run_query, current_user)
     run = run_query.first()
-    
+
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     # Get loan facts with sales team filtering
     query = db.query(LoanFact).join(PipelineRun).filter(LoanFact.run_id == run.id)
     query = filter_by_sales_team(query, current_user)
-    
+
     if disposition:
         query = query.filter(LoanFact.disposition == disposition)
-    
+
     query = query.order_by(LoanFact.created_at.desc())
     facts = query.offset(skip).limit(limit).all()
-    
+
     # Return dicts with loan_data plus disposition and rejection_criteria
     out = []
     for fact in facts:
@@ -863,19 +875,11 @@ async def get_loans(
 
 
 @router.get("/sales-teams", response_model=List[dict])
-async def list_sales_teams(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN]))
-):
+async def list_sales_teams(db: Session = Depends(get_db), current_user: User = Depends(require_role([UserRole.ADMIN]))):
     """List all sales teams (admin only)."""
     teams = db.query(SalesTeam).filter(SalesTeam.is_active == True).all()
     return [
-        {
-            "id": team.id,
-            "name": team.name,
-            "description": team.description,
-            "user_count": len(team.users)
-        }
+        {"id": team.id, "name": team.name, "description": team.description, "user_count": len(team.users)}
         for team in teams
     ]
 
@@ -914,7 +918,10 @@ async def admin_clear_run_history(
     db.commit()
     logger.info(
         "Admin clear-run-history: deleted %d runs, %d exceptions, %d facts (user_id=%s)",
-        deleted_runs, deleted_exceptions, deleted_facts, current_user.id,
+        deleted_runs,
+        deleted_exceptions,
+        deleted_facts,
+        current_user.id,
     )
     return {
         "deleted_runs": deleted_runs,
