@@ -104,8 +104,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CICD-02 | Phase 4 | Complete |
 | CICD-03 | Phase 4 | Complete |
 | STAGE-01 | Phase 8 (gap closure) | Complete |
-| STAGE-02 | Phase 8 (gap closure) | Pending |
-| STAGE-03 | Phase 8 (gap closure) | Pending |
+| STAGE-02 | Phase 8 (gap closure) | Complete |
+| STAGE-03 | Phase 8 (gap closure) | Complete |
 
 **Coverage:**
 - v1.0 requirements: 20 total
