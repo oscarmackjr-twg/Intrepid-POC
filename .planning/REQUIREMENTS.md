@@ -86,12 +86,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LOCAL-01 | Phase 9 (gap closure) | Pending |
-| LOCAL-02 | Phase 9 (gap closure) | Pending |
-| LOCAL-03 | Phase 9 (gap closure) | Pending |
-| LOCAL-04 | Phase 9 (gap closure) | Pending |
-| LOCAL-05 | Phase 9 (gap closure) | Pending |
-| LOCAL-06 | Phase 9 (gap closure) | Pending |
+| LOCAL-01 | Phase 9 (gap closure) | Complete |
+| LOCAL-02 | Phase 9 (gap closure) | Complete |
+| LOCAL-03 | Phase 9 (gap closure) | Complete |
+| LOCAL-04 | Phase 9 (gap closure) | Complete |
+| LOCAL-05 | Phase 9 (gap closure) | Complete |
+| LOCAL-06 | Phase 9 (gap closure) | Complete |
 | DOCKER-01 | Phase 2 | Complete |
 | DOCKER-02 | Phase 2 | Complete |
 | DOCKER-03 | Phase 2 | Complete |
