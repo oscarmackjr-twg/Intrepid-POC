@@ -47,7 +47,10 @@ jobs:
         run: mypy backend/ --ignore-missing-imports --no-strict-optional --exclude venv --exclude migrations
 
       - name: pip-audit CVE scan
-        run: pip-audit -r backend/requirements.txt
+        run: pip-audit -r backend/requirements.txt --ignore-vuln CVE-2024-23342
+        # CVE-2024-23342 (ecdsa timing attack) has no fix version; ecdsa is a transitive dep
+        # of python-jose but is not used — we use python-jose[cryptography] which uses the
+        # cryptography library for all operations, not the ecdsa backend.
 
       - name: npm audit
         working-directory: frontend
@@ -89,6 +92,10 @@ jobs:
 
       - name: Run unit tests with coverage
         working-directory: backend
+        env:
+          LOCAL_DEV_MODE: "true"
+          SECRET_KEY: "ci-test-secret-key-not-used-in-production"
+          DATABASE_URL: "sqlite:///./test.db"
         run: pytest -m "not integration" --tb=short -q --cov=. --cov-report=term-missing || pytest -m "not integration" --tb=short -q
 
   deploy:
