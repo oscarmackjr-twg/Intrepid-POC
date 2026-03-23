@@ -166,7 +166,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None.
+1. **Integrate updated tagging allocation ratios and dynamic SG logic** — update `backend/scripts/tagging.py` with new ratios (p=0.325, s=0.5) and dynamic SG dict, fix KeyError guard, update unit tests, run regression tests, update docs. (`2026-03-23-integrate-updated-tagging-allocation-ratios-and-dynamic-sg-logic.md`)
 
 ### Blockers/Concerns
 
