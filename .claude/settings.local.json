@@ -63,7 +63,24 @@
       "Bash(powershell:*)",
       "Skill(gsd:add-phase)",
       "Skill(gsd:update)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(xargs -I{} basename {})",
+      "Skill(gsd:audit-milestone)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Read(//c/Users/omack/AppData/Local/**)",
+      "Read(//c/ProgramData/chocolatey/bin//**)",
+      "Skill(gsd:pause-work)",
+      "Bash(npm audit:*)",
+      "Bash(npm config:*)",
+      "Skill(gsd:progress)",
+      "Bash(TASK_ID=\"45f9306699ed4a1a8dddef40d9a9b6bd\")",
+      "Bash(node -e \":*)",
+      "Bash(codex --help)",
+      "Bash(codex exec:*)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(pip show:*)",
+      "Skill(gsd:check-todos)"
     ]
   }
 }

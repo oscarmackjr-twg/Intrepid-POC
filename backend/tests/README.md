@@ -34,6 +34,7 @@ tests/
 ├── test_seed_admin.py                # Admin seed script tests
 ├── test_settings_guard.py            # Settings/config guard tests
 ├── test_storage_local.py             # Local storage backend tests
+├── test_tagging_allocation.py         # Tagging SG allocation logic (Phase 15)
 └── README.md                         # This file
 ```
 
