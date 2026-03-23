@@ -77,8 +77,26 @@ yestarday = os.environ.get("YESTERDAY", '02-18-2026')
 #file location and importing
 
 #files_required
-fx3_servicing_file = f"{folder}/files_required/FX3_{last_end}.xlsx"
-fx4_servicing_file = f"{folder}/files_required/FX4_{last_end}.xlsx"
+def _find_latest_servicing_file(files_req: Path, prefix: str) -> Path | None:
+    """Return the latest (by mtime) FX3/FX4 servicing file in files_req, or None.
+
+    Matches files starting with <prefix>_ and ending in .xlsx, excluding
+    the _sg.xlsx and _cibc.xlsx exhibit splits.  Falls back to the
+    legacy last_end filename if it exists; returns None if nothing found.
+    """
+    candidates = [
+        f for f in files_req.glob(f"{prefix}_*.xlsx")
+        if not f.name.endswith("_sg.xlsx")
+        and not f.name.endswith("_cibc.xlsx")
+        and "ExhibitAtoFormofSaleNotice" not in f.name
+    ]
+    if candidates:
+        return max(candidates, key=lambda f: f.stat().st_mtime)
+    legacy = files_req / f"{prefix}_{last_end}.xlsx"
+    return legacy if legacy.exists() else None
+
+fx3_servicing_file = _find_latest_servicing_file(folder / "files_required", "FX3")
+fx4_servicing_file = _find_latest_servicing_file(folder / "files_required", "FX4")
 #fx4_servicing_file = f"C:/Users/gdehankar/TWG/Jagadish Balaji - SFC_Loans/78th_buy/files_required/FX4_2025_0010_31.xlsx"
 loans = pd.read_csv(f"{folder}/files_required/Tape20Loans_{yestarday}.csv")
 df_loans_types = pd.read_excel(f'{folder}/files_required/MASTER_SHEET.xlsx')
@@ -245,8 +263,11 @@ final_df_all[["SELLER Loan #", 'Orig. Balance', "tagging", 'Repurchase',
 # %%
 # del rkdf, rkdf1, rkdf2
 rkdf1 = pd.read_excel(fx3_servicing_file)
-rkdf2 = pd.read_excel(fx4_servicing_file)
-rkdf = pd.concat([rkdf1.iloc[:-1], rkdf2.iloc[:-1]])
+frames = [rkdf1.iloc[:-1]]
+if fx4_servicing_file is not None:
+    rkdf2 = pd.read_excel(fx4_servicing_file)
+    frames.append(rkdf2.iloc[:-1])
+rkdf = pd.concat(frames)
 rkdf['SELLER Loan #'] = rkdf['Trial Balance'].apply(lambda x: "SFC_" + str(int(x)))
 rkdf['Current Purchase Price'] = (rkdf["Principal Balance"] * rkdf["PP%"]) / 100
 print(final_df[final_df["SELLER Loan #"].isin(rkdf["SELLER Loan #"])].shape, rkdf.shape)
