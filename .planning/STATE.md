@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 13-final-documentation-cleanup-03-PLAN.md
-last_updated: "2026-03-22T19:35:21.089Z"
+status: Ready to execute
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-23T14:38:09.845Z"
 progress:
-  total_phases: 14
+  total_phases: 15
   completed_phases: 13
-  total_plans: 45
-  completed_plans: 45
+  total_plans: 47
+  completed_plans: 46
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Ops can take a loan tape from email to executed wire instructions in one controlled, visible process — replacing ad hoc scripts
-**Current focus:** Phase 13 — final-documentation-cleanup
+**Current focus:** Phase 15 — integrate-updated-tagging-logic-update-allocation-ratios-p-0-325-s-0-5-replace-hardcoded-sg-dict-with-dynamic-loop-update-unit-tests-run-regression-tests-update-developer-reference-docs
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
+Phase: 15 (integrate-updated-tagging-logic-update-allocation-ratios-p-0-325-s-0-5-replace-hardcoded-sg-dict-with-dynamic-loop-update-unit-tests-run-regression-tests-update-developer-reference-docs) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Plan: Not started
 | Phase 13-final-documentation-cleanup P02 | 1 | 1 tasks | 1 files |
 | Phase 13-final-documentation-cleanup P01 | 5 | 1 tasks | 1 files |
 | Phase 13-final-documentation-cleanup P03 | 5 | 1 tasks | 1 files |
+| Phase 15 P01 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,7 @@ Plan: Not started
 - Phase 10 added: Revamp User Interface - Phase 10
 - Phase 11 added: Refing UI for Regression Testing
 - Phase 12 added: Unit Testing Build Out
+- Phase 15 added: Integrate updated tagging logic — update allocation ratios (p=0.325, s=0.5), replace hardcoded SG dict with dynamic loop, update unit tests, run regression tests, update developer reference docs
 
 ### Decisions
 
@@ -163,6 +165,9 @@ Recent decisions affecting current work:
 - [Phase 13-final-documentation-cleanup]: INFRA-02/03/04 phase column set to 'Phase 3 (verified Phase 13)' following the established pattern from Phase 9 (e.g., 'Phase 1 (verified Phase 9)')
 - [Phase 13-01]: UI-06, UI-07, REG-01, REG-02 are ROADMAP.md-only tracking IDs — same pattern as Phase 12 TEST-xx IDs; no REQUIREMENTS.md traceability update needed
 - [Phase 13-final-documentation-cleanup]: Phase 12 VERIFICATION.md reconciled to passed — test_enrichment.py fix was already applied before Phase 13; CI human-gate accepted as non-blocking for v1.0
+- [Phase 15]: allocate_sg extracted into importable function by guarding script body with if __name__ == '__main__'
+- [Phase 15]: sg dict built dynamically from grouped_sum.index — no hardcoded tag list
+- [Phase 15]: Allocation loop uses sg.get(tag, 0) > 0 — budget can go negative (any positive remainder triggers sg assignment)
 
 ### Pending Todos
 
@@ -177,6 +182,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-22T19:32:11.045Z
-Stopped at: Completed 13-final-documentation-cleanup-03-PLAN.md
+Last session: 2026-03-23T14:38:09.839Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None
