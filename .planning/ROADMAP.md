@@ -119,6 +119,7 @@ Phases execute sequentially: 1 → 2 → 3 → 4 → 5
 | 12. Unit Testing Build Out | 3/3 | Complete   | 2026-03-22 |
 | 13. Final Documentation Cleanup | 3/3 | Complete    | 2026-03-22 |
 | 14. Alembic Migration & Seed Automation | 0/2 | Pending | |
+| 15. Integrate Updated Tagging Logic | 0/2 | Pending | |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
@@ -233,3 +234,14 @@ Plans:
 Plans:
 - [ ] 14-01-PLAN.md — Add Alembic migration for final_funding_job table; remove raw CREATE TABLE from program_run_jobs.py (MISS-04)
 - [ ] 14-02-PLAN.md — Add conditional seed step to deploy-test.yml (runs only when admin user does not exist) or document as formally accepted manual step with runbook (MISS-03)
+
+### Phase 15: Integrate Updated Tagging Logic
+
+**Goal:** Update tagging.py allocation ratios (p=0.325, s=0.5), extract allocation logic into a testable function, replace hardcoded 12-key SG dict with a dynamic loop over grouped_sum keys, fix KeyError guard with .get(), add unit tests, run regression tests and re-baseline golden files, and update developer reference docs.
+**Requirements**: TAG-01, TAG-02, TAG-03, TAG-04, TAG-05, TAG-06
+**Depends on:** Phase 14
+**Plans:** 2 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Extract allocate_sg function, update ratios (p=0.325, s=0.5), dynamic SG dict loop, KeyError guard, unit tests (TAG-01, TAG-02, TAG-03, TAG-04, TAG-05)
+- [ ] 15-02-PLAN.md — Run regression tests, re-baseline golden files, update developer reference docs and tests README (TAG-06)
