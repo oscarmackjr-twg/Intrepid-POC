@@ -1,44 +1,42 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-22T04:23:42Z",
-  "phase": "08",
-  "phase_name": "fix-staging-auth",
-  "phase_dir": ".planning/phases/08-fix-staging-auth",
+  "timestamp": "2026-03-23T19:47:11.538Z",
+  "phase": "15",
+  "phase_name": "integrate-updated-tagging-logic",
+  "phase_dir": ".planning/phases/15-integrate-updated-tagging-logic-update-allocation-ratios-p-0-325-s-0-5-replace-hardcoded-sg-dict-with-dynamic-loop-update-unit-tests-run-regression-tests-update-developer-reference-docs",
   "plan": 2,
-  "task": 1,
+  "task": 3,
   "total_tasks": 3,
   "status": "paused",
   "completed_tasks": [
-    {"id": "08-01-T1", "name": "Add LOCAL_DEV_MODE to docker-compose.yml + smoke test", "status": "done", "commit": "0fb5f48"},
-    {"id": "08-01-T2", "name": "Terraform plan review (no changes needed)", "status": "done", "commit": null},
-    {"id": "08-01-T3", "name": "Verify ECS task def revision 2 live", "status": "done", "commit": "8cf456e"},
-    {"id": "08-02-T1", "name": "Push to main, monitor CI/CD pipeline", "status": "in_progress", "progress": "Background agent spawned (a3c965865227ee17d) — unknown completion status"}
+    {"id": "15-01/T1", "name": "Extract allocate_sg, update ratios p=0.325/s=0.5, dynamic loop, KeyError guard", "status": "done", "commit": "f6e37c9"},
+    {"id": "15-01/T2", "name": "Create 7 unit tests for allocate_sg", "status": "done", "commit": "66514a6"},
+    {"id": "15-01/DOCS", "name": "Plan 15-01 SUMMARY + STATE + ROADMAP", "status": "done", "commit": "7a69480"},
+    {"id": "15-02/T1", "name": "Run regression tests and re-baseline golden files", "status": "in_progress", "progress": "Updated sg/cibc splits in TestData files_required; --update-golden ran (23 files for 93rd+95th); content diffs re-baselined; 38 missing files are pre-existing structural issue"},
+    {"id": "15-02/T2", "name": "Update developer reference docs and tests README", "status": "done", "commit": "0556864"}
   ],
   "remaining_tasks": [
-    {"id": "08-02-T2", "name": "STAGE-01/02/03 smoke test (human checkpoint)", "status": "not_started"},
-    {"id": "08-02-T3", "name": "Write 05-VERIFICATION.md and mark STAGE-01/02/03 complete", "status": "not_started"}
+    {"id": "15-02/T3", "name": "Human verification checkpoint", "status": "waiting_human_approval"}
   ],
-  "blockers": [],
+  "blockers": [
+    {
+      "description": "Funding regression shows 38 missing files (pre-existing: golden has full-pipeline outputs not produced by funding-only test). Content diffs from ratio change are re-baselined. 98th_buy pre-existing crash.",
+      "type": "technical",
+      "workaround": "Accept pre-existing state and approve checkpoint, OR clean golden dir to remove non-funding files first."
+    }
+  ],
   "human_actions_pending": [
     {
-      "action": "Run full STAGE-01/02/03 smoke test at staging URL",
-      "context": "After CI/CD pipeline completes and ECS is stable with new task def, manually test: login at http://intrepid-poc-qa-alb-1332245107.us-east-1.elb.amazonaws.com with admin/IntrepidStaging2024!, file upload, staging banner on all pages",
+      "action": "Type 'approved' to close human checkpoint on plan 15-02 (or decide on golden dir cleanup first)",
+      "context": "Phase 15 code is correct. 255 tests pass. The regression 38-missing issue is pre-existing, not caused by Phase 15.",
       "blocking": true
     }
   ],
   "decisions": [
-    {
-      "decision": "Skipped terraform apply",
-      "rationale": "terraform plan showed no changes — LOCAL_DEV_MODE=true was already live in ECS task def revision 2 from a prior Phase 7 apply",
-      "phase": "08"
-    },
-    {
-      "decision": "Added .dockerignore",
-      "rationale": "Auto-fix: prevents 6GB+ build context on local docker builds",
-      "phase": "08"
-    }
+    {"decision": "Added if __name__ == '__main__': guard to tagging.py", "rationale": "Required for allocate_sg importability", "phase": "15"},
+    {"decision": "Re-ran tagging on TestData before --update-golden", "rationale": "TestData had old sg/cibc splits; had to update them first so funding golden matches pipeline test", "phase": "15"}
   ],
   "uncommitted_files": [],
-  "next_action": "Check git log and gh run list --workflow=deploy-test.yml --limit=3 to see if background agent completed 08-02 Task 1 (CI/CD push). If yes, proceed to smoke test. If no, re-run /gsd:execute-phase 8.",
-  "context_notes": "08-01 fully closed. The staging auth fix (LOCAL_DEV_MODE=true) was already live in AWS. 08-02 needs CI/CD push to force-redeploy the container image with correct VITE_APP_ENV=staging build arg, then human smoke test, then write VERIFICATION.md to formally close STAGE-01/02/03."
+  "next_action": "Run clean funding regression test; expect 0 differ + 38 missing (pre-existing) for 93rd/95th. Then approve checkpoint.",
+  "context_notes": "Code fully correct. 255 tests pass. Regression golden maintenance is the only issue. 38 missing files are pre-existing structural mismatch (golden has files funding-only test never produces)."
 }
