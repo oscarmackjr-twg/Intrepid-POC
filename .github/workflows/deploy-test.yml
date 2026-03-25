@@ -58,6 +58,12 @@ jobs:
           npm ci
           npm audit --audit-level=high
 
+      - name: ESLint (frontend)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
