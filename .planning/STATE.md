@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-23T14:38:09.845Z"
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-25T15:00:42.912Z"
 progress:
-  total_phases: 15
+  total_phases: 16
   completed_phases: 13
-  total_plans: 47
-  completed_plans: 46
+  total_plans: 49
+  completed_plans: 47
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Ops can take a loan tape from email to executed wire instructions in one controlled, visible process — replacing ad hoc scripts
-**Current focus:** Phase 15 — integrate-updated-tagging-logic-update-allocation-ratios-p-0-325-s-0-5-replace-hardcoded-sg-dict-with-dynamic-loop-update-unit-tests-run-regression-tests-update-developer-reference-docs
+**Current focus:** Phase 16 — linting
 
 ## Current Position
 
-Phase: 15 (integrate-updated-tagging-logic-update-allocation-ratios-p-0-325-s-0-5-replace-hardcoded-sg-dict-with-dynamic-loop-update-unit-tests-run-regression-tests-update-developer-reference-docs) — EXECUTING
+Phase: 16 (linting) — EXECUTING
 Plan: 2 of 2
 
 ## Performance Metrics
@@ -76,6 +76,7 @@ Plan: 2 of 2
 | Phase 13-final-documentation-cleanup P01 | 5 | 1 tasks | 1 files |
 | Phase 13-final-documentation-cleanup P03 | 5 | 1 tasks | 1 files |
 | Phase 15 P01 | 4 | 2 tasks | 2 files |
+| Phase 16 P01 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -168,6 +169,9 @@ Recent decisions affecting current work:
 - [Phase 15]: allocate_sg extracted into importable function by guarding script body with if __name__ == '__main__'
 - [Phase 15]: sg dict built dynamically from grouped_sum.index — no hardcoded tag list
 - [Phase 15]: Allocation loop uses sg.get(tag, 0) > 0 — budget can go negative (any positive remainder triggers sg assignment)
+- Phase 16 added: Linting
+- [Phase 16]: [16-01] Disable @typescript-eslint/no-explicit-any and react-hooks/set-state-in-effect at ESLint setup — pre-existing violations suppressed per D-03 (zero violations at setup point)
+- [Phase 16]: [16-01] ESLint v9 flat config uses tseslint.config() helper with react-hooks and react-refresh plugins only; no type-checked rules
 
 ### Pending Todos
 
@@ -182,6 +186,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-23T14:38:09.839Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-25T15:00:42.900Z
+Stopped at: Completed 16-01-PLAN.md
 Resume file: None
