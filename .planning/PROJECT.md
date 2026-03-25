@@ -95,4 +95,4 @@ Ops can take a loan tape from email to executed wire instructions in a single, a
 | Decimal arithmetic throughout | Float accumulates error across 1,000 loans | — Pending (verify in existing code) |
 
 ---
-*Last updated: 2026-03-22 — Phase 13 complete (Final Documentation Cleanup: Phase 11 VERIFICATION.md written, INFRA-02/03/04 traceability closed — all 20 v1.0 requirements now Complete, Phase 12 VERIFICATION.md reconciled to passed/7/7 with CI human-gate formally accepted as non-blocking)*
+*Last updated: 2026-03-25 — Phase 16 complete (Linting: ESLint v9 flat config for frontend, ruff clean for backend, husky+lint-staged pre-commit hooks, ESLint blocking CI gate in security-quality-gate job)*
