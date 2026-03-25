@@ -251,8 +251,8 @@ Plans:
 **Goal:** Establish working, enforced linting across the full project -- ESLint v9 flat config for frontend, fix the single ruff violation in backend, wire ESLint into CI as a blocking gate, and add husky + lint-staged pre-commit hooks for both frontend and backend lint enforcement.
 **Requirements**: LINT-01, LINT-02, LINT-03, LINT-04
 **Depends on:** Phase 15
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 16-01-PLAN.md — Create ESLint v9 flat config, fix ruff violation, add ESLint CI gate (LINT-01, LINT-02, LINT-03)
-- [ ] 16-02-PLAN.md — Install husky + lint-staged, configure pre-commit hooks for ESLint and ruff (LINT-04)
+- [x] 16-02-PLAN.md — Install husky + lint-staged, configure pre-commit hooks for ESLint and ruff (LINT-04)
