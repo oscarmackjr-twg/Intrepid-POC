@@ -4,7 +4,6 @@ Tests use inline DataFrames following the Phase 12 pattern (test_comap.py).
 """
 
 import pandas as pd
-import pytest
 from scripts.tagging import allocate_sg
 
 
