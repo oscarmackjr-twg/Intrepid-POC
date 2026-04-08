@@ -267,7 +267,7 @@ Plans:
 
 ### v2.0 Phases
 
-- [ ] **Phase 17: Data Foundation** - re_loans + re_loan_cashflows schema locked, Alembic migrations applied, seed script populates 500+ loans
+- [x] **Phase 17: Data Foundation** - re_loans + re_loan_cashflows schema locked, Alembic migrations applied, seed script populates 500+ loans
 - [ ] **Phase 18: Core API Layer** - All 11 /api/re/* endpoints return correct data with filter param support
 - [ ] **Phase 19: Filter Hook + TypeScript Foundation** - Filter sidebar, URL param sync, Zustand store, and TanStack Query keys wired before any chart component is built
 - [ ] **Phase 20: Executive Summary Page** - KPI cards populated from real seeded data; chart click-to-filter wired
@@ -294,8 +294,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
-- [ ] 17-02-PLAN.md — Seed script + integration tests for realistic CRE portfolio data (DATA-03, DATA-04)
+- [x] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
+- [x] 17-02-PLAN.md — Seed script + integration tests for realistic CRE portfolio data (DATA-03, DATA-04)
 
 ### Phase 18: Core API Layer
 **Goal**: All eleven /api/re/* endpoints are implemented, return correctly shaped JSON for their respective panels, and respect filter query params â verified via Swagger UI before any frontend work begins

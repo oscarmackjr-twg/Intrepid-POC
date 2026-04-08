@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Real Estate Loan Dashboard POC
-status: Roadmap defined — ready for Phase 17 planning
+status: Phase 17 complete — ready for Phase 18 planning
 stopped_at: ~
 last_updated: "2026-04-08T00:00:00.000Z"
 progress:
   total_phases: 11
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # Project State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-04-08)
 
 ## Current Position
 
-Phase: Not started (roadmap defined, awaiting Phase 17 plan)
-Plan: —
-Status: Roadmap defined — ready for Phase 17 planning
-Last activity: 2026-04-08 — Milestone v2.0 roadmap created (Phases 17–27, 52 requirements mapped)
+Phase: Phase 17 complete
+Plan: 17-02 (final plan for Phase 17)
+Status: Phase 17 complete — ready for Phase 18 planning
+Last activity: 2026-04-08 — Phase 17 (Data Foundation) complete: re_loans + re_loan_cashflows schema, Alembic migrations, seed script (500 T0 + 500 T1 loans, 6000 cashflows), 8 integration tests passing
 
 ## Performance Metrics
 
@@ -80,6 +80,8 @@ Last activity: 2026-04-08 — Milestone v2.0 roadmap created (Phases 17–27, 52
 | Phase 15 P01 | 4 | 2 tasks | 2 files |
 | Phase 16 P01 | 15 | 2 tasks | 3 files |
 | Phase 16 P02 | 3 | 1 tasks | 2 files |
+| Phase 17-data-foundation P01 | 10 | 2 tasks | 4 files |
+| Phase 17-data-foundation P02 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -93,6 +95,7 @@ Last activity: 2026-04-08 — Milestone v2.0 roadmap created (Phases 17–27, 52
 - Phase 15 added: Integrate updated tagging logic — update allocation ratios (p=0.325, s=0.5), replace hardcoded SG dict with dynamic loop, update unit tests, run regression tests, update developer reference docs
 - Phase 16 added: Linting
 - Milestone v2.0 started 2026-04-08: Phases 17–27 added (RE Loan Dashboard POC, 52 requirements mapped)
+- Phase 17 complete 2026-04-08: re_loans + re_loan_cashflows schema, migrations, seed, tests (DATA-01–DATA-04)
 
 ### v2.0 Phase Map (Phases 17–27)
 
@@ -200,6 +203,10 @@ Recent decisions affecting current work:
 - [v2.0 Roadmap]: sales_team_id scope injected server-side from JWT in build_filters() — never a user-facing query param; must audit existing JWT payload in Phase 18 planning
 - [v2.0 Roadmap]: PDF export (EXPORT-02) built last (Phase 26) after all sections stable; html2canvas-pro + jsPDF; isAnimationActive=false + 500ms delay + scale cap at 1.5 required
 - [v2.0 Roadmap]: faker>=33.0.0 added to requirements-dev.txt (not requirements.txt) for seed script
+- [Phase 17-data-foundation]: re_loans has 24 columns (plan body listed 24, plan success criteria text said "22" — implementation is 24, which is correct); both model and migration are consistent
+- [Phase 17-data-foundation]: seed_re_loans.py uses rng = np.random.default_rng(seed=42) and Faker.seed(42) — fully reproducible; idempotent via child-before-parent truncate
+- [Phase 17-data-foundation]: T1 loans share loan_number with T0 (same loan population, different snapshot date); cashflows linked to T0 loan IDs only (no duplication for T1)
+- [Phase 17-data-foundation]: Migration chain: 60a8a67090c8 -> efe3898fdf4b -> c56f6c6372a0 (re_loans) -> 119641453e41 (re_loan_cashflows)
 
 ### Pending Todos
 
@@ -215,5 +222,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-08T00:00:00.000Z
-Stopped at: Milestone v2.0 roadmap created — Phases 17–27 defined, 52 requirements mapped
+Stopped at: Phase 17 (Data Foundation) complete — verified 2026-04-08; ready for Phase 18 (Core API Layer)
 Resume file: None
