@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Real Estate Loan Dashboard POC
-status: Defining requirements
+status: Roadmap defined — ready for Phase 17 planning
 stopped_at: ~
 last_updated: "2026-04-08T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 11
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-04-08)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Not started (roadmap defined, awaiting Phase 17 plan)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-08 — Milestone v2.0 started
+Status: Roadmap defined — ready for Phase 17 planning
+Last activity: 2026-04-08 — Milestone v2.0 roadmap created (Phases 17–27, 52 requirements mapped)
 
 ## Performance Metrics
 
@@ -91,6 +91,24 @@ Last activity: 2026-04-08 — Milestone v2.0 started
 - Phase 11 added: Refing UI for Regression Testing
 - Phase 12 added: Unit Testing Build Out
 - Phase 15 added: Integrate updated tagging logic — update allocation ratios (p=0.325, s=0.5), replace hardcoded SG dict with dynamic loop, update unit tests, run regression tests, update developer reference docs
+- Phase 16 added: Linting
+- Milestone v2.0 started 2026-04-08: Phases 17–27 added (RE Loan Dashboard POC, 52 requirements mapped)
+
+### v2.0 Phase Map (Phases 17–27)
+
+| Phase | Name | Requirements |
+|-------|------|--------------|
+| 17 | Data Foundation | DATA-01, DATA-02, DATA-03, DATA-04 |
+| 18 | Core API Layer | API-01, API-02, API-03, API-04, API-05, API-06, API-07, API-08, API-09, API-10, API-11 |
+| 19 | Filter Hook + TypeScript Foundation | FILTER-01, FILTER-02, FILTER-03, FILTER-04 |
+| 20 | Executive Summary Page | EXEC-01, EXEC-02, UX-01 (partial) |
+| 21 | Portfolio Composition Page | COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, COMP-06, UX-01 (partial) |
+| 22 | Credit Quality Page | CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05, CREDIT-06, UX-01 (partial) |
+| 23 | Cash Flow & Performance Page | CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01 (partial) |
+| 24 | Origination Pipeline + Market Context | ORIGIN-01, ORIGIN-02, ORIGIN-03, ORIGIN-04, MARKET-01, MARKET-02, UX-01 (partial) |
+| 25 | Loan Detail Side-Panel | UX-02, UX-03 |
+| 26 | Export | EXPORT-01, EXPORT-02 |
+| 27 | Role Scope Validation | ROLES-01, ROLES-02, ROLES-03 |
 
 ### Decisions
 
@@ -176,6 +194,12 @@ Recent decisions affecting current work:
 - [Phase 16]: [16-01] Disable @typescript-eslint/no-explicit-any and react-hooks/set-state-in-effect at ESLint setup — pre-existing violations suppressed per D-03 (zero violations at setup point)
 - [Phase 16]: [16-01] ESLint v9 flat config uses tseslint.config() helper with react-hooks and react-refresh plugins only; no type-checked rules
 - [Phase 16]: prepare script uses cd .. && node frontend/node_modules/husky/bin.js for monorepo subdirectory layout — husky requires .git in cwd, frontend/ is the package dir
+- [v2.0 Roadmap]: re_loans uses flat table design (not LoanFact reuse) — separate Alembic migration chained off current head; all monetary cols NUMERIC(18,6), rate cols NUMERIC(10,6)
+- [v2.0 Roadmap]: UX-01 (chart click-to-filter) implemented per dashboard page phase (20-24), not a separate phase — each chart needs its own click handler wired at build time
+- [v2.0 Roadmap]: Geo heatmap (COMP-02) has explicit 3-day timebox; fallback to ranked bar chart if over budget — same API endpoint, no TopoJSON required
+- [v2.0 Roadmap]: sales_team_id scope injected server-side from JWT in build_filters() — never a user-facing query param; must audit existing JWT payload in Phase 18 planning
+- [v2.0 Roadmap]: PDF export (EXPORT-02) built last (Phase 26) after all sections stable; html2canvas-pro + jsPDF; isAnimationActive=false + 500ms delay + scale cap at 1.5 required
+- [v2.0 Roadmap]: faker>=33.0.0 added to requirements-dev.txt (not requirements.txt) for seed script
 
 ### Pending Todos
 
@@ -190,6 +214,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-25T15:06:16.217Z
-Stopped at: Completed 16-02-PLAN.md
+Last session: 2026-04-08T00:00:00.000Z
+Stopped at: Milestone v2.0 roadmap created — Phases 17–27 defined, 52 requirements mapped
 Resume file: None

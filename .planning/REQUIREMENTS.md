@@ -126,55 +126,55 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| DATA-01 | — | — |
-| DATA-02 | — | — |
-| DATA-03 | — | — |
-| DATA-04 | — | — |
-| API-01 | — | — |
-| API-02 | — | — |
-| API-03 | — | — |
-| API-04 | — | — |
-| API-05 | — | — |
-| API-06 | — | — |
-| API-07 | — | — |
-| API-08 | — | — |
-| API-09 | — | — |
-| API-10 | — | — |
-| API-11 | — | — |
-| FILTER-01 | — | — |
-| FILTER-02 | — | — |
-| FILTER-03 | — | — |
-| FILTER-04 | — | — |
-| EXEC-01 | — | — |
-| EXEC-02 | — | — |
-| COMP-01 | — | — |
-| COMP-02 | — | — |
-| COMP-03 | — | — |
-| COMP-04 | — | — |
-| COMP-05 | — | — |
-| COMP-06 | — | — |
-| CREDIT-01 | — | — |
-| CREDIT-02 | — | — |
-| CREDIT-03 | — | — |
-| CREDIT-04 | — | — |
-| CREDIT-05 | — | — |
-| CREDIT-06 | — | — |
-| CASHFLOW-01 | — | — |
-| CASHFLOW-02 | — | — |
-| CASHFLOW-03 | — | — |
-| CASHFLOW-04 | — | — |
-| CASHFLOW-05 | — | — |
-| ORIGIN-01 | — | — |
-| ORIGIN-02 | — | — |
-| ORIGIN-03 | — | — |
-| ORIGIN-04 | — | — |
-| MARKET-01 | — | — |
-| MARKET-02 | — | — |
-| UX-01 | — | — |
-| UX-02 | — | — |
-| UX-03 | — | — |
-| EXPORT-01 | — | — |
-| EXPORT-02 | — | — |
-| ROLES-01 | — | — |
-| ROLES-02 | — | — |
-| ROLES-03 | — | — |
+| DATA-01 | Phase 17 | Pending |
+| DATA-02 | Phase 17 | Pending |
+| DATA-03 | Phase 17 | Pending |
+| DATA-04 | Phase 17 | Pending |
+| API-01 | Phase 18 | Pending |
+| API-02 | Phase 18 | Pending |
+| API-03 | Phase 18 | Pending |
+| API-04 | Phase 18 | Pending |
+| API-05 | Phase 18 | Pending |
+| API-06 | Phase 18 | Pending |
+| API-07 | Phase 18 | Pending |
+| API-08 | Phase 18 | Pending |
+| API-09 | Phase 18 | Pending |
+| API-10 | Phase 18 | Pending |
+| API-11 | Phase 18 | Pending |
+| FILTER-01 | Phase 19 | Pending |
+| FILTER-02 | Phase 19 | Pending |
+| FILTER-03 | Phase 19 | Pending |
+| FILTER-04 | Phase 19 | Pending |
+| EXEC-01 | Phase 20 | Pending |
+| EXEC-02 | Phase 20 | Pending |
+| COMP-01 | Phase 21 | Pending |
+| COMP-02 | Phase 21 | Pending |
+| COMP-03 | Phase 21 | Pending |
+| COMP-04 | Phase 21 | Pending |
+| COMP-05 | Phase 21 | Pending |
+| COMP-06 | Phase 21 | Pending |
+| CREDIT-01 | Phase 22 | Pending |
+| CREDIT-02 | Phase 22 | Pending |
+| CREDIT-03 | Phase 22 | Pending |
+| CREDIT-04 | Phase 22 | Pending |
+| CREDIT-05 | Phase 22 | Pending |
+| CREDIT-06 | Phase 22 | Pending |
+| CASHFLOW-01 | Phase 23 | Pending |
+| CASHFLOW-02 | Phase 23 | Pending |
+| CASHFLOW-03 | Phase 23 | Pending |
+| CASHFLOW-04 | Phase 23 | Pending |
+| CASHFLOW-05 | Phase 23 | Pending |
+| ORIGIN-01 | Phase 24 | Pending |
+| ORIGIN-02 | Phase 24 | Pending |
+| ORIGIN-03 | Phase 24 | Pending |
+| ORIGIN-04 | Phase 24 | Pending |
+| MARKET-01 | Phase 24 | Pending |
+| MARKET-02 | Phase 24 | Pending |
+| UX-01 | Phases 20–24 | Pending |
+| UX-02 | Phase 25 | Pending |
+| UX-03 | Phase 25 | Pending |
+| EXPORT-01 | Phase 26 | Pending |
+| EXPORT-02 | Phase 26 | Pending |
+| ROLES-01 | Phase 27 | Pending |
+| ROLES-02 | Phase 27 | Pending |
+| ROLES-03 | Phase 27 | Pending |

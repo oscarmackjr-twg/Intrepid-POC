@@ -256,3 +256,181 @@ Plans:
 Plans:
 - [x] 16-01-PLAN.md — Create ESLint v9 flat config, fix ruff violation, add ESLint CI gate (LINT-01, LINT-02, LINT-03)
 - [x] 16-02-PLAN.md — Install husky + lint-staged, configure pre-commit hooks for ESLint and ruff (LINT-04)
+
+---
+
+## Milestone v2.0: Real Estate Loan Dashboard POC
+
+**Goal:** Build a comprehensive RE loan portfolio dashboard POC inside the existing React + FastAPI platform, powered by a seeded Postgres dataset — covering Executive Summary, Portfolio Composition, Credit Quality, Cash Flow, Origination Pipeline, and Market Context pages with global filtering, drill-down interactivity, export, and role-based view scoping.
+
+**Phase Numbering:** Continues from v1.0. Phases 17–27.
+
+### v2.0 Phases
+
+- [ ] **Phase 17: Data Foundation** - re_loans + re_loan_cashflows schema locked, Alembic migrations applied, seed script populates 500+ loans
+- [ ] **Phase 18: Core API Layer** - All 11 /api/re/* endpoints return correct data with filter param support
+- [ ] **Phase 19: Filter Hook + TypeScript Foundation** - Filter sidebar, URL param sync, Zustand store, and TanStack Query keys wired before any chart component is built
+- [ ] **Phase 20: Executive Summary Page** - KPI cards populated from real seeded data; chart click-to-filter wired
+- [ ] **Phase 21: Portfolio Composition Page** - Property type chart, geo map/bar fallback, loan size histogram, maturity profile, top-10 table, concentration limits; click-to-filter wired
+- [ ] **Phase 22: Credit Quality Page** - LTV/DSCR histograms, watchlist table, delinquency waterfall, migration matrix, rate sensitivity; click-to-filter wired
+- [ ] **Phase 23: Cash Flow & Performance Page** - P&I line chart, NOI trend, yield analysis, CPR, loss/recovery; click-to-filter wired
+- [ ] **Phase 24: Origination Pipeline + Market Context** - Origination volume, payoffs, pipeline funnel, vintage analysis, market context stub panel; click-to-filter wired
+- [ ] **Phase 25: Loan Detail Side-Panel** - Read-only loan detail slide-in panel, closes without page navigation
+- [ ] **Phase 26: Export** - CSV download per filterable table, PDF dashboard snapshot
+- [ ] **Phase 27: Role Scope Validation** - admin/analyst see full portfolio, sales_team sees only their book, enforced server-side
+
+### v2.0 Phase Details
+
+### Phase 17: Data Foundation
+**Goal**: The re_loans and re_loan_cashflows tables exist with correct schema and are seeded with realistic CRE portfolio data, making the database the single source of truth for all subsequent development
+**Depends on**: Phase 16
+**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04
+**Success Criteria** (what must be TRUE):
+  1. Developer runs `alembic upgrade head` with no errors and `SELECT COUNT(*) FROM re_loans` returns 500 or more rows
+  2. All monetary columns in re_loans are NUMERIC(18,6) and all rate columns are NUMERIC(10,6) — confirmed via `\d re_loans` in psql
+  3. `SELECT COUNT(*) FROM re_loan_cashflows` returns 12 records per loan (12 months of cashflow history for each seeded loan)
+  4. Seeded data spans at least 5 property types, 20 states, 8 MSAs, and includes two distinct as_of_date snapshots
+  5. `alembic upgrade head` runs to completion in CI without conflicts with the existing migration chain
+**Plans**: TBD
+
+### Phase 18: Core API Layer
+**Goal**: All eleven /api/re/* endpoints are implemented, return correctly shaped JSON for their respective panels, and respect filter query params — verified via Swagger UI before any frontend work begins
+**Depends on**: Phase 17
+**Requirements**: API-01, API-02, API-03, API-04, API-05, API-06, API-07, API-08, API-09, API-10, API-11
+**Success Criteria** (what must be TRUE):
+  1. GET /api/re/kpis with no filter params returns total UPB, WAC, WAM, WA LTV, WA DSCR, active loan count, and delinquency buckets populated with non-zero values from seeded data
+  2. GET /api/re/loans?property_type=multifamily returns only multifamily loans — confirming filter enforcement works across all endpoints
+  3. GET /api/re/loans/{id} for a known seeded loan returns full detail including terms, collateral, and payment history summary
+  4. A sales_team role JWT passed to any /api/re/* endpoint returns only loans matching that user's sales_team_id — not the full portfolio
+  5. All endpoints respond under 500ms for the full seeded dataset with no active filters
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 19: Filter Hook + TypeScript Foundation
+**Goal**: The global filter sidebar component, useReLoanFilters hook, Zustand store, and all TypeScript response types are in place so that every subsequent chart component can import them directly without retrofitting
+**Depends on**: Phase 18
+**Requirements**: FILTER-01, FILTER-02, FILTER-03, FILTER-04
+**Success Criteria** (what must be TRUE):
+  1. The filter sidebar renders on the /re-dashboard route with all documented controls: as-of date, property type, state/MSA, loan size range, risk rating, vintage, borrower, rate type
+  2. Selecting a property type filter updates the browser URL query params and the Zustand store simultaneously without page reload
+  3. Clicking "Clear all filters" resets all URL params and store state to defaults in a single action
+  4. Changing any filter causes all TanStack Query keys to invalidate — confirmed by watching network requests in browser DevTools
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 20: Executive Summary Page
+**Goal**: Users can open /re-dashboard and immediately see KPI cards populated with real portfolio data, with loading and no-data states handled, and clicking any metric initiates a filter
+**Depends on**: Phase 19
+**Requirements**: EXEC-01, EXEC-02, UX-01
+**Success Criteria** (what must be TRUE):
+  1. Visiting /re-dashboard shows KPI cards for total UPB, WAC, WAM, WA LTV, WA DSCR, active loan count, delinquency buckets, and portfolio yield — all populated with non-zero values from seeded data
+  2. Applying a property type filter from the sidebar updates all KPI card values without page reload
+  3. Filtering to a combination that returns zero matching loans shows a visible no-data state on each card — not zeros or blank space
+  4. A KPI card in a loading state shows a visible loading indicator — not a flash of empty content
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 21: Portfolio Composition Page
+**Goal**: Users can see the full portfolio broken down by property type, geography, loan size, maturity, and top exposures — and can click any chart segment to filter the entire dashboard
+**Depends on**: Phase 20
+**Requirements**: COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, COMP-06, UX-01
+**Success Criteria** (what must be TRUE):
+  1. The Portfolio Composition page shows a pie/donut chart of loans by property type, a loan size histogram, and a maturity profile stacked bar chart — all populated from seeded data
+  2. The geographic view shows either a US state choropleth or a ranked bar chart of top states by UPB — at least one is present and populated
+  3. The top-10 exposures table shows the 10 largest loans by UPB with LTV, DSCR, property type, and location columns
+  4. Clicking a pie slice or histogram bar applies that dimension as a filter — confirmed by URL param change and updated KPI cards
+  5. Concentration limit indicators are visible and show proximity to policy limits for borrower, geography, and property type concentrations
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 22: Credit Quality Page
+**Goal**: Users can assess portfolio credit risk through color-coded LTV and DSCR distributions, a watchlist of criticized loans, delinquency flow, risk rating migration, and rate sensitivity analysis
+**Depends on**: Phase 21
+**Requirements**: CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05, CREDIT-06, UX-01
+**Success Criteria** (what must be TRUE):
+  1. The Credit Quality page shows an LTV histogram with green bars below 65%, yellow bars 65–75%, and red bars above 75%, populated from seeded data
+  2. The DSCR histogram shows color-banded bars (above 1.4x green, 1.0–1.4x yellow, below 1.0x red)
+  3. The watchlist table shows criticized loans with risk rating and trend arrow columns, and is filterable by risk rating
+  4. The delinquency waterfall displays loan flow from current to 30, 60, 90, and default buckets
+  5. The risk rating migration matrix shows movement between current and prior period ratings using the two seeded as_of_date snapshots
+  6. The interest rate sensitivity table shows portfolio impact under +/−100, 200, and 300 bps scenarios
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 23: Cash Flow & Performance Page
+**Goal**: Users can evaluate portfolio cash flow health through actual vs projected P&I, NOI trends, yield analysis, CPR tracking, and loss/recovery history — all drawn from the re_loan_cashflows time-series data
+**Depends on**: Phase 22
+**Requirements**: CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01
+**Success Criteria** (what must be TRUE):
+  1. The Cash Flow page shows a monthly P&I line chart with separate actual and projected series and a variance indicator, populated from re_loan_cashflows seeded data
+  2. The NOI trend chart shows aggregated net operating income over the 12 seeded months
+  3. The yield analysis section shows gross yield, net yield after losses, and spread to SOFR and Treasury
+  4. The CPR trend line and loss/recovery tracking section (realized losses, recoveries, net loss rate) are both visible and populated
+  5. Applying a filter from the sidebar updates all Cash Flow charts without page reload
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 24: Origination Pipeline + Market Context
+**Goal**: Users can track new origination activity, portfolio growth, and pipeline stage progression, and can view stubbed market benchmark rates clearly labeled as indicative — completing all six dashboard sections
+**Depends on**: Phase 23
+**Requirements**: ORIGIN-01, ORIGIN-02, ORIGIN-03, ORIGIN-04, MARKET-01, MARKET-02, UX-01
+**Success Criteria** (what must be TRUE):
+  1. The Origination Pipeline page shows a monthly origination volume bar chart broken down by property type
+  2. Net portfolio growth (originations minus payoffs) is visible as a trend or summary metric
+  3. The pipeline funnel shows stage counts for underwriting, approved, closing, and funded
+  4. The vintage analysis section shows performance metrics grouped by origination year
+  5. The Market Context panel shows 10Y Treasury and SOFR stub values with trend shapes and cap rates/vacancy rates by property type, each clearly labeled as indicative with live-feed hook markers in the code
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 25: Loan Detail Side-Panel
+**Goal**: Users can click any loan row in any table across the dashboard and see a read-only detail panel with full loan information, without leaving the current page
+**Depends on**: Phase 24
+**Requirements**: UX-02, UX-03
+**Success Criteria** (what must be TRUE):
+  1. Clicking a loan row in any table (top-10 exposures, watchlist, loan list) opens a slide-in side-panel showing full terms, collateral, borrower, payment history summary, and appraisal history
+  2. The side-panel closes when the user clicks a close button or presses Escape — the underlying dashboard page remains in place with active filters unchanged
+  3. Opening the side-panel does not trigger a page navigation or modify any URL query params
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 26: Export
+**Goal**: Users can download the current filtered view of any table as CSV and can capture the current dashboard page as a labeled PDF snapshot
+**Depends on**: Phase 25
+**Requirements**: EXPORT-01, EXPORT-02
+**Success Criteria** (what must be TRUE):
+  1. Each filterable table (top-10 exposures, watchlist, loan list, pipeline) has a "Download CSV" button that downloads a CSV file containing exactly the rows and columns currently visible with active filters applied
+  2. A "Download PDF" button on each dashboard page triggers a rasterized PDF download labeled "Dashboard Snapshot" containing all visible charts and tables from that page
+  3. The PDF export does not show blank charts — all Recharts visualizations are fully rendered in the captured output
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 27: Role Scope Validation
+**Goal**: Role-based view scoping is verified end-to-end — admin and analyst users see the full portfolio, sales_team users see only their assigned loans enforced at the API layer, and all authenticated users can navigate to the RE dashboard
+**Depends on**: Phase 26
+**Requirements**: ROLES-01, ROLES-02, ROLES-03
+**Success Criteria** (what must be TRUE):
+  1. Logging in as an admin or analyst user and visiting /re-dashboard shows KPI cards and charts for the full seeded portfolio
+  2. Logging in as a sales_team user and visiting /re-dashboard shows only the loans assigned to that user's sales_team_id — confirmed by checking total UPB against the expected subset
+  3. A sales_team user calling GET /api/re/loans directly (bypassing the UI) still receives only their scoped loans — server-side enforcement confirmed
+  4. The RE dashboard nav link is visible in the sidebar for all authenticated users regardless of role
+**Plans**: TBD
+
+### v2.0 Progress
+
+**Execution Order:**
+Phases execute sequentially: 17 → 18 → 19 → 20 → 21 → 22 → 23 → 24 → 25 → 26 → 27
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 17. Data Foundation | 0/TBD | Not started | - |
+| 18. Core API Layer | 0/TBD | Not started | - |
+| 19. Filter Hook + TypeScript Foundation | 0/TBD | Not started | - |
+| 20. Executive Summary Page | 0/TBD | Not started | - |
+| 21. Portfolio Composition Page | 0/TBD | Not started | - |
+| 22. Credit Quality Page | 0/TBD | Not started | - |
+| 23. Cash Flow & Performance Page | 0/TBD | Not started | - |
+| 24. Origination Pipeline + Market Context | 0/TBD | Not started | - |
+| 25. Loan Detail Side-Panel | 0/TBD | Not started | - |
+| 26. Export | 0/TBD | Not started | - |
+| 27. Role Scope Validation | 0/TBD | Not started | - |
