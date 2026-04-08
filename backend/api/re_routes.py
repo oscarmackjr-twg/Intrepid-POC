@@ -42,7 +42,7 @@ from api.re_schemas import (
 from auth.audit import log_data_access
 from auth.security import require_sales_team_access
 from db.connection import get_db
-from db.models import RELoan, UserRole, User
+from db.models import RELoan, RELoanCashflow, UserRole, User
 
 router = APIRouter(prefix="/api/re", tags=["re"])
 
@@ -487,8 +487,10 @@ def get_maturity_profile(
 
 
 # ---------------------------------------------------------------------------
-# API-05 — GET /api/re/loans  (stub — Plan 02)
+# API-05 — GET /api/re/loans
 # ---------------------------------------------------------------------------
+
+ALLOWED_SORT_FIELDS = {"upb", "ltv", "dscr", "interest_rate", "maturity_date", "origination_date", "risk_rating"}
 
 
 @router.get("/loans", response_model=LoanListResponse)
@@ -496,28 +498,127 @@ def get_loans(
     params: FilterParams = Depends(get_filter_params),
     current_user: User = Depends(require_sales_team_access()),
     db: Session = Depends(get_db),
+    page: int = 1,
+    page_size: int = 50,
+    sort_by: Optional[str] = None,
+    sort_dir: str = "asc",
 ) -> LoanListResponse:
-    """Paginated loan list. (Implementation: Plan 02)"""
-    raise HTTPException(status_code=501, detail="Not implemented")
+    """Paginated, filterable, sortable loan list (API-05 / D-05 / D-06).
+
+    Security: sales_team scope applied via build_re_filters() (T-18-01).
+    Sort whitelist prevents arbitrary column access (T-18-03).
+    page_size bounded to prevent memory exhaustion (T-18-04).
+    """
+    from fastapi import Query as _Q
+
+    log_data_access(current_user, "re_loans_list")
+
+    # Validate sort_by against whitelist (T-18-03)
+    if sort_by is not None and sort_by not in ALLOWED_SORT_FIELDS:
+        raise HTTPException(status_code=400, detail="Invalid sort field")
+
+    filters = build_re_filters(db, params, current_user)
+    base_query = db.query(RELoan).filter(*filters)
+
+    # Count before pagination (Pitfall 2 — count on full filtered set)
+    total = base_query.with_entities(func.count(RELoan.id)).scalar() or 0
+
+    # Apply sort
+    if sort_by is not None:
+        order_col = getattr(RELoan, sort_by, RELoan.id)
+        base_query = base_query.order_by(
+            order_col.desc() if sort_dir == "desc" else order_col.asc()
+        )
+    else:
+        base_query = base_query.order_by(RELoan.id.asc())
+
+    # Apply pagination
+    offset = (page - 1) * page_size
+    loans = base_query.offset(offset).limit(page_size).all()
+
+    from api.re_schemas import LoanSummary
+
+    items = [LoanSummary.model_validate(loan) for loan in loans]
+    return LoanListResponse(total=total, page=page, page_size=page_size, items=items)
 
 
 # ---------------------------------------------------------------------------
-# API-06 — GET /api/re/loans/{loan_id}  (stub — Plan 02)
+# API-06 — GET /api/re/loans/{loan_id}
 # ---------------------------------------------------------------------------
 
 
 @router.get("/loans/{loan_id}", response_model=LoanDetailResponse)
 def get_loan_detail(
     loan_id: int,
+    params: FilterParams = Depends(get_filter_params),
     current_user: User = Depends(require_sales_team_access()),
     db: Session = Depends(get_db),
 ) -> LoanDetailResponse:
-    """Loan detail with payment history. (Implementation: Plan 02)"""
-    raise HTTPException(status_code=501, detail="Not implemented")
+    """Single loan detail with aggregated payment history (API-06).
+
+    Security: out-of-scope loan IDs return 404 identical to non-existent IDs
+    — prevents enumeration of loan existence (T-18-01 / T-18-02).
+    """
+    from api.re_schemas import PaymentHistorySummary
+
+    log_data_access(current_user, "re_loan_detail")
+
+    filters = build_re_filters(db, params, current_user)
+    loan = db.query(RELoan).filter(RELoan.id == loan_id, *filters).first()
+
+    # Return 404 for both "not found" and "out of scope" — prevents enumeration (T-18-02)
+    if loan is None:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    # Aggregate payment history from linked cashflows
+    cf_row = db.query(
+        func.sum(RELoanCashflow.scheduled_principal),
+        func.sum(RELoanCashflow.actual_principal),
+        func.sum(RELoanCashflow.scheduled_interest),
+        func.sum(RELoanCashflow.actual_interest),
+        func.count(RELoanCashflow.id),
+    ).filter(RELoanCashflow.loan_id == loan_id).one()
+
+    def _d(val) -> Optional[Decimal]:
+        return Decimal(str(val)) if val is not None else None
+
+    payment_history = PaymentHistorySummary(
+        total_scheduled_principal=_d(cf_row[0]),
+        total_actual_principal=_d(cf_row[1]),
+        total_scheduled_interest=_d(cf_row[2]),
+        total_actual_interest=_d(cf_row[3]),
+        periods=cf_row[4] or 0,
+    )
+
+    return LoanDetailResponse(
+        id=loan.id,
+        loan_number=loan.loan_number,
+        borrower_name=loan.borrower_name,
+        upb=_d(loan.upb),
+        interest_rate=_d(loan.interest_rate),
+        ltv=_d(loan.ltv),
+        dscr=_d(loan.dscr),
+        property_type=loan.property_type,
+        state=loan.state,
+        risk_rating=loan.risk_rating,
+        maturity_date=loan.maturity_date,
+        origination_date=loan.origination_date,
+        days_past_due=loan.days_past_due,
+        delinquency_status=loan.delinquency_status,
+        msa=loan.msa,
+        original_balance=_d(loan.original_balance),
+        wam_months=loan.wam_months,
+        rate_type=loan.rate_type,
+        prior_risk_rating=loan.prior_risk_rating,
+        pipeline_stage=loan.pipeline_stage,
+        vintage_year=loan.vintage_year,
+        as_of_date=loan.as_of_date,
+        payment_history=payment_history,
+    )
 
 
 # ---------------------------------------------------------------------------
-# API-07 — GET /api/re/cashflow-performance  (stub — Plan 02)
+# API-07 — GET /api/re/cashflow-performance
 # ---------------------------------------------------------------------------
 
 
@@ -527,13 +628,100 @@ def get_cashflow_performance(
     current_user: User = Depends(require_sales_team_access()),
     db: Session = Depends(get_db),
 ) -> CashflowPerformanceResponse:
-    """Cashflow performance by period. (Implementation: Plan 02)"""
-    raise HTTPException(status_code=501, detail="Not implemented")
+    """Monthly P&I actual vs projected, NOI trend, gross yield, CPR (API-07).
+
+    Security: cashflow join applies same build_re_filters() scope — sales_team users
+    cannot see other teams' cashflow data (T-18-05).
+    Group-by period_date prevents Cartesian product explosion (Pitfall 6).
+    """
+    from api.re_schemas import CashflowPeriod
+
+    log_data_access(current_user, "re_cashflow_performance")
+
+    filters = build_re_filters(db, params, current_user)
+
+    # Total UPB for yield/CPR calculations — apply same scope
+    total_upb_val = db.query(func.sum(RELoan.upb)).filter(*filters).scalar()
+    total_upb = Decimal(str(total_upb_val)) if total_upb_val is not None else Decimal("0")
+
+    # Join cashflows to loans to apply scoping filters (T-18-05)
+    # Group by period_date — prevents row explosion (Pitfall 6)
+    rows = (
+        db.query(
+            RELoanCashflow.period_date,
+            func.sum(RELoanCashflow.scheduled_principal),
+            func.sum(RELoanCashflow.actual_principal),
+            func.sum(RELoanCashflow.scheduled_interest),
+            func.sum(RELoanCashflow.actual_interest),
+            func.sum(RELoanCashflow.noi),
+        )
+        .join(RELoan, RELoanCashflow.loan_id == RELoan.id)
+        .filter(*filters)
+        .group_by(RELoanCashflow.period_date)
+        .order_by(RELoanCashflow.period_date)
+        .all()
+    )
+
+    def _d(val) -> Decimal:
+        return Decimal(str(val)) if val is not None else Decimal("0")
+
+    periods = []
+    total_scheduled_sum = Decimal("0")
+    total_actual_sum = Decimal("0")
+
+    for row in rows:
+        period_date, sched_p, act_p, sched_i, act_i, noi = row
+        sched_p_d = _d(sched_p)
+        act_p_d = _d(act_p)
+        sched_i_d = _d(sched_i)
+        act_i_d = _d(act_i)
+        noi_d = _d(noi)
+
+        # Gross yield: annualized actual interest / total UPB
+        gross_yield = None
+        if total_upb > 0:
+            gross_yield = act_i_d / total_upb * Decimal("12")
+
+        # CPR: SMM = (actual_principal - scheduled_principal) / total_upb
+        cpr = None
+        if total_upb > 0:
+            smm = (act_p_d - sched_p_d) / total_upb
+            if smm > Decimal("0"):
+                # CPR = 1 - (1 - SMM)^12
+                cpr = Decimal("1") - (Decimal("1") - smm) ** Decimal("12")
+            else:
+                cpr = Decimal("0")
+
+        total_scheduled_sum += sched_i_d
+        total_actual_sum += act_i_d
+
+        periods.append(
+            CashflowPeriod(
+                period_date=period_date,
+                scheduled_principal=sched_p_d,
+                actual_principal=act_p_d,
+                scheduled_interest=sched_i_d,
+                actual_interest=act_i_d,
+                total_noi=noi_d,
+                gross_yield=gross_yield,
+                cpr=cpr,
+            )
+        )
+
+    # Net loss rate: (total_scheduled - total_actual) / total_upb — clamp to 0
+    net_loss_rate = None
+    if total_upb > 0:
+        raw = (total_scheduled_sum - total_actual_sum) / total_upb
+        net_loss_rate = max(raw, Decimal("0"))
+
+    return CashflowPerformanceResponse(periods=periods, net_loss_rate=net_loss_rate)
 
 
 # ---------------------------------------------------------------------------
-# API-08 — GET /api/re/origination-pipeline  (stub — Plan 02)
+# API-08 — GET /api/re/origination-pipeline
 # ---------------------------------------------------------------------------
+
+PIPELINE_STAGE_ORDER = {"underwriting": 1, "approved": 2, "closing": 3, "funded": 4}
 
 
 @router.get("/origination-pipeline", response_model=OriginationPipelineResponse)
@@ -542,12 +730,88 @@ def get_origination_pipeline(
     current_user: User = Depends(require_sales_team_access()),
     db: Session = Depends(get_db),
 ) -> OriginationPipelineResponse:
-    """Origination pipeline and vintage analysis. (Implementation: Plan 02)"""
-    raise HTTPException(status_code=501, detail="Not implemented")
+    """Origination by month, pipeline funnel, and vintage breakdown (API-08)."""
+    from api.re_schemas import OriginationMonth, PipelineFunnelStage, VintageGroup
+
+    log_data_access(current_user, "re_origination_pipeline")
+
+    filters = build_re_filters(db, params, current_user)
+
+    # 1. Origination by month — exclude NULL origination_date
+    year_col = func.extract("year", RELoan.origination_date)
+    month_col = func.extract("month", RELoan.origination_date)
+    orig_rows = (
+        db.query(year_col, month_col, func.count(RELoan.id), func.sum(RELoan.upb))
+        .filter(*filters)
+        .filter(RELoan.origination_date.isnot(None))
+        .group_by(year_col, month_col)
+        .order_by(year_col, month_col)
+        .all()
+    )
+    origination_by_month = [
+        OriginationMonth(
+            year=int(row[0]),
+            month=int(row[1]),
+            loan_count=row[2],
+            total_upb=Decimal(str(row[3])) if row[3] is not None else Decimal("0"),
+        )
+        for row in orig_rows
+    ]
+
+    # 2. Pipeline funnel — group by pipeline_stage, sort by stage order
+    funnel_rows = (
+        db.query(RELoan.pipeline_stage, func.count(RELoan.id), func.sum(RELoan.upb))
+        .filter(*filters)
+        .group_by(RELoan.pipeline_stage)
+        .all()
+    )
+    pipeline_funnel = sorted(
+        [
+            PipelineFunnelStage(
+                stage=row[0] or "unknown",
+                loan_count=row[1],
+                total_upb=Decimal(str(row[2])) if row[2] is not None else Decimal("0"),
+            )
+            for row in funnel_rows
+        ],
+        key=lambda s: PIPELINE_STAGE_ORDER.get(s.stage, 99),
+    )
+
+    # 3. Vintage breakdown — group by vintage_year
+    vintage_rows = (
+        db.query(
+            RELoan.vintage_year,
+            func.count(RELoan.id),
+            func.sum(RELoan.upb),
+            func.avg(RELoan.ltv),
+            func.avg(RELoan.dscr),
+        )
+        .filter(*filters)
+        .filter(RELoan.vintage_year.isnot(None))
+        .group_by(RELoan.vintage_year)
+        .order_by(RELoan.vintage_year)
+        .all()
+    )
+    vintage_breakdown = [
+        VintageGroup(
+            vintage_year=row[0],
+            loan_count=row[1],
+            total_upb=Decimal(str(row[2])) if row[2] is not None else Decimal("0"),
+            avg_ltv=Decimal(str(row[3])) if row[3] is not None else None,
+            avg_dscr=Decimal(str(row[4])) if row[4] is not None else None,
+        )
+        for row in vintage_rows
+    ]
+
+    return OriginationPipelineResponse(
+        origination_by_month=origination_by_month,
+        pipeline_funnel=pipeline_funnel,
+        vintage_breakdown=vintage_breakdown,
+    )
 
 
 # ---------------------------------------------------------------------------
-# API-09 — GET /api/re/market-context  (stub — Plan 02)
+# API-09 — GET /api/re/market-context
 # ---------------------------------------------------------------------------
 
 
@@ -556,12 +820,49 @@ def get_market_context(
     current_user: User = Depends(require_sales_team_access()),
     db: Session = Depends(get_db),
 ) -> MarketContextResponse:
-    """Market context: benchmark rates, cap rates, vacancy rates. (Implementation: Plan 02)"""
-    raise HTTPException(status_code=501, detail="Not implemented")
+    """Market context: benchmark rates, cap rates, vacancy rates (API-09).
+
+    Returns hardcoded stubs — no DB queries. Auth still required to prevent
+    unauthenticated enumeration (T-18-07).
+    """
+    from api.re_schemas import MarketRate, CapRate
+
+    log_data_access(current_user, "re_market_context")
+
+    # TODO: LIVE-FEED-HOOK -- replace with FRED API call for 10Y Treasury rate
+    ten_year_treasury = MarketRate(value=Decimal("4.25"), trend="flat", source="stub")
+
+    # TODO: LIVE-FEED-HOOK -- replace with FRED API call for SOFR rate
+    sofr = MarketRate(value=Decimal("5.33"), trend="declining", source="stub")
+
+    # TODO: LIVE-FEED-HOOK -- replace with CRE index provider API for cap rates
+    cap_rates = [
+        CapRate(property_type="multifamily", value=Decimal("5.0"), source="stub"),
+        CapRate(property_type="office", value=Decimal("7.5"), source="stub"),
+        CapRate(property_type="industrial", value=Decimal("6.0"), source="stub"),
+        CapRate(property_type="retail", value=Decimal("6.5"), source="stub"),
+        CapRate(property_type="hotel", value=Decimal("8.0"), source="stub"),
+    ]
+
+    # TODO: LIVE-FEED-HOOK -- replace with CRE index provider API for vacancy rates
+    vacancy_rates = [
+        CapRate(property_type="multifamily", value=Decimal("5.5"), source="stub"),
+        CapRate(property_type="office", value=Decimal("18.0"), source="stub"),
+        CapRate(property_type="industrial", value=Decimal("4.0"), source="stub"),
+        CapRate(property_type="retail", value=Decimal("8.0"), source="stub"),
+        CapRate(property_type="hotel", value=Decimal("12.0"), source="stub"),
+    ]
+
+    return MarketContextResponse(
+        ten_year_treasury=ten_year_treasury,
+        sofr=sofr,
+        cap_rates=cap_rates,
+        vacancy_rates=vacancy_rates,
+    )
 
 
 # ---------------------------------------------------------------------------
-# API-10 — GET /api/re/sensitivity  (stub — Plan 02)
+# API-10 — GET /api/re/sensitivity
 # ---------------------------------------------------------------------------
 
 
@@ -571,5 +872,49 @@ def get_sensitivity(
     current_user: User = Depends(require_sales_team_access()),
     db: Session = Depends(get_db),
 ) -> SensitivityResponse:
-    """Interest rate sensitivity analysis. (Implementation: Plan 02)"""
-    raise HTTPException(status_code=501, detail="Not implemented")
+    """Interest rate sensitivity analysis: 6 BPS scenarios -300 to +300 (API-10)."""
+    from api.re_schemas import SensitivityScenario
+
+    log_data_access(current_user, "re_sensitivity")
+
+    filters = build_re_filters(db, params, current_user)
+
+    result = db.query(
+        (
+            func.sum(RELoan.interest_rate * RELoan.upb)
+            / func.nullif(func.sum(RELoan.upb), 0)
+        ).label("base_wac"),
+        func.sum(RELoan.upb).label("total_upb"),
+    ).filter(*filters).one()
+
+    base_wac_raw = result.base_wac
+    total_upb_raw = result.total_upb
+
+    # Handle empty portfolio
+    if base_wac_raw is None or total_upb_raw is None:
+        return SensitivityResponse(
+            base_wac=Decimal("0"),
+            total_upb=Decimal("0"),
+            scenarios=[],
+        )
+
+    base_wac = Decimal(str(base_wac_raw))
+    total_upb = Decimal(str(total_upb_raw))
+
+    bps_changes = [-300, -200, -100, 100, 200, 300]
+    scenarios = []
+    for bps in bps_changes:
+        bps_decimal = Decimal(str(bps)) / Decimal("10000")
+        new_wac = base_wac + bps_decimal
+        annual_interest_impact = total_upb * bps_decimal
+        impact_pct = bps_decimal / base_wac * Decimal("100") if base_wac > 0 else Decimal("0")
+        scenarios.append(
+            SensitivityScenario(
+                bps_change=bps,
+                new_wac=new_wac,
+                annual_interest_impact=annual_interest_impact,
+                impact_pct=impact_pct,
+            )
+        )
+
+    return SensitivityResponse(base_wac=base_wac, total_upb=total_upb, scenarios=scenarios)

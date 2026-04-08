@@ -255,53 +255,219 @@ def test_sales_team_scoping_kpis(client, re_loan_fixtures, auth_headers_sales, a
 
 
 # ---------------------------------------------------------------------------
-# Plan 02 stubs — API-05 through API-10 + full scoping test
+# API-05 — Paginated loan list
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="Plan 02")
 def test_loans_list(client, re_loan_fixtures, auth_headers_admin):
-    """API-05: Paginated loan list."""
-    ...
+    """API-05: Paginated loan list returns correct envelope shape."""
+    response = client.get("/api/re/loans", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert "total" in data
+    assert "page" in data
+    assert "page_size" in data
+    assert "items" in data
+    assert data["total"] >= 1
+    assert isinstance(data["items"], list)
+    assert len(data["items"]) >= 1
 
 
-@pytest.mark.skip(reason="Plan 02")
 def test_loans_filter(client, re_loan_fixtures, auth_headers_admin):
-    """API-05: Filtered loan list."""
-    ...
+    """API-05: Filtered loan list returns only matching property type."""
+    response = client.get("/api/re/loans?property_type=Multifamily", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] >= 1
+    for item in data["items"]:
+        assert item["property_type"] == "Multifamily"
 
 
-@pytest.mark.skip(reason="Plan 02")
+def test_loans_sort_invalid(client, re_loan_fixtures, auth_headers_admin):
+    """API-05: Invalid sort_by returns 400 (T-18-03 whitelist enforcement)."""
+    response = client.get("/api/re/loans?sort_by=borrower_name__injected", headers=auth_headers_admin)
+    assert response.status_code == 400
+
+
+def test_loans_sort_valid(client, re_loan_fixtures, auth_headers_admin):
+    """API-05: Valid sort_by=upb with sort_dir=desc returns 200."""
+    response = client.get("/api/re/loans?sort_by=upb&sort_dir=desc", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    upbs = [Decimal(str(item["upb"])) for item in data["items"] if item["upb"] is not None]
+    # Verify descending order
+    assert upbs == sorted(upbs, reverse=True)
+
+
+# ---------------------------------------------------------------------------
+# API-06 — Loan detail
+# ---------------------------------------------------------------------------
+
+
 def test_loan_detail(client, re_loan_fixtures, auth_headers_admin):
-    """API-06: Loan detail with payment history."""
-    ...
+    """API-06: Loan detail returns full shape including payment_history."""
+    # First get a valid loan ID from the list endpoint
+    list_resp = client.get("/api/re/loans", headers=auth_headers_admin)
+    assert list_resp.status_code == 200
+    loan_id = list_resp.json()["items"][0]["id"]
+
+    response = client.get(f"/api/re/loans/{loan_id}", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert "loan_number" in data
+    assert "payment_history" in data
+    ph = data["payment_history"]
+    assert "periods" in ph
+    assert ph["periods"] >= 0
 
 
-@pytest.mark.skip(reason="Plan 02")
+def test_loan_detail_not_found(client, re_loan_fixtures, auth_headers_admin):
+    """API-06: Non-existent loan ID returns 404."""
+    response = client.get("/api/re/loans/999999", headers=auth_headers_admin)
+    assert response.status_code == 404
+
+
+def test_loan_detail_out_of_scope_returns_404(client, re_loan_fixtures, auth_headers_sales):
+    """API-06 / T-18-02: Out-of-scope loan returns 404, not 403 — prevents enumeration."""
+    # Loans 3 and 4 have sales_team_id=None — not in the sales user's scope
+    # Find their IDs via admin
+    # We know from fixture: RE-003 and RE-004 have sales_team_id=None
+    # Get all loan IDs via admin to find one outside scope
+    from db.models import RELoan as _RELoan
+    # Use the fixture list — loans index 2 (RE-003) has sales_team_id=None
+    # Get the ID from the fixture directly
+    loan_no_team = re_loan_fixtures[2]  # RE-003, sales_team_id=None
+    response = client.get(f"/api/re/loans/{loan_no_team.id}", headers=auth_headers_sales)
+    assert response.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# API-07 — Cashflow performance
+# ---------------------------------------------------------------------------
+
+
 def test_cashflow_performance(client, re_loan_fixtures, auth_headers_admin):
-    """API-07: Cashflow performance by period."""
-    ...
+    """API-07: Cashflow performance returns non-empty periods list."""
+    response = client.get("/api/re/cashflow-performance", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert "periods" in data
+    assert isinstance(data["periods"], list)
+    assert len(data["periods"]) > 0
+    # Check period shape
+    period = data["periods"][0]
+    assert "period_date" in period
+    assert "scheduled_principal" in period
+    assert "actual_principal" in period
+    assert "scheduled_interest" in period
+    assert "actual_interest" in period
 
 
-@pytest.mark.skip(reason="Plan 02")
+# ---------------------------------------------------------------------------
+# API-08 — Origination pipeline
+# ---------------------------------------------------------------------------
+
+
 def test_origination_pipeline(client, re_loan_fixtures, auth_headers_admin):
-    """API-08: Origination pipeline and vintage analysis."""
-    ...
+    """API-08: Origination pipeline returns all three sub-structures."""
+    response = client.get("/api/re/origination-pipeline", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert "origination_by_month" in data
+    assert "pipeline_funnel" in data
+    assert "vintage_breakdown" in data
+    assert isinstance(data["origination_by_month"], list)
+    assert isinstance(data["pipeline_funnel"], list)
+    assert isinstance(data["vintage_breakdown"], list)
 
 
-@pytest.mark.skip(reason="Plan 02")
+# ---------------------------------------------------------------------------
+# API-09 — Market context
+# ---------------------------------------------------------------------------
+
+
 def test_market_context(client, re_loan_fixtures, auth_headers_admin):
-    """API-09: Market context benchmark rates."""
-    ...
+    """API-09: Market context returns stubbed values with source='stub'."""
+    response = client.get("/api/re/market-context", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert "ten_year_treasury" in data
+    assert "sofr" in data
+    assert "cap_rates" in data
+    assert "vacancy_rates" in data
+    assert data["ten_year_treasury"]["source"] == "stub"
+    assert data["sofr"]["source"] == "stub"
+    assert len(data["cap_rates"]) > 0
+    for rate in data["cap_rates"]:
+        assert rate["source"] == "stub"
 
 
-@pytest.mark.skip(reason="Plan 02")
+# ---------------------------------------------------------------------------
+# API-10 — Sensitivity
+# ---------------------------------------------------------------------------
+
+
 def test_sensitivity(client, re_loan_fixtures, auth_headers_admin):
-    """API-10: Interest rate sensitivity scenarios."""
-    ...
+    """API-10: Sensitivity returns exactly 6 scenarios spanning -300 to +300 bps."""
+    response = client.get("/api/re/sensitivity", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert "scenarios" in data
+    assert len(data["scenarios"]) == 6
+    bps_values = [s["bps_change"] for s in data["scenarios"]]
+    assert -300 in bps_values
+    assert 300 in bps_values
+    # Each scenario has required fields
+    for s in data["scenarios"]:
+        assert "bps_change" in s
+        assert "new_wac" in s
+        assert "annual_interest_impact" in s
 
 
-@pytest.mark.skip(reason="Plan 02")
-def test_sales_team_scoping(client, re_loan_fixtures, auth_headers_sales, auth_headers_admin):
-    """API-11 (full): sales_team scoping across all endpoints."""
-    ...
+# ---------------------------------------------------------------------------
+# API-11 — Full sales team scoping tests
+# ---------------------------------------------------------------------------
+
+
+def test_sales_team_scope_loans_list(client, re_loan_fixtures, auth_headers_sales, auth_headers_admin):
+    """API-11: sales_team user sees only their team's loans in the list."""
+    admin_resp = client.get("/api/re/loans", headers=auth_headers_admin)
+    sales_resp = client.get("/api/re/loans", headers=auth_headers_sales)
+    assert admin_resp.status_code == 200
+    assert sales_resp.status_code == 200
+    # Admin sees all 5; sales user sees only 3 (loans 1, 2, 5)
+    assert admin_resp.json()["total"] == 5
+    assert sales_resp.json()["total"] == 3
+
+
+def test_sales_team_scope_loan_detail_own(client, re_loan_fixtures, auth_headers_sales):
+    """API-11: sales_team user can access their own team's loan detail."""
+    # Loan 0 (RE-001) belongs to the sales team
+    own_loan = re_loan_fixtures[0]
+    response = client.get(f"/api/re/loans/{own_loan.id}", headers=auth_headers_sales)
+    assert response.status_code == 200
+
+
+def test_sales_team_scope_loan_detail_other(client, re_loan_fixtures, auth_headers_sales):
+    """API-11: sales_team user gets 404 for loan outside their team (T-18-02)."""
+    # Loan 2 (RE-003) has sales_team_id=None
+    other_loan = re_loan_fixtures[2]
+    response = client.get(f"/api/re/loans/{other_loan.id}", headers=auth_headers_sales)
+    assert response.status_code == 404
+
+
+def test_sales_team_scope_concentration(client, re_loan_fixtures, auth_headers_sales, auth_headers_admin):
+    """API-11: sales_team user sees scoped concentration (fewer loans than admin)."""
+    admin_resp = client.get("/api/re/concentration", headers=auth_headers_admin)
+    sales_resp = client.get("/api/re/concentration", headers=auth_headers_sales)
+    assert admin_resp.status_code == 200
+    assert sales_resp.status_code == 200
+    admin_total = sum(item["loan_count"] for item in admin_resp.json()["property_type"])
+    sales_total = sum(item["loan_count"] for item in sales_resp.json()["property_type"])
+    assert sales_total < admin_total
+
+
+def test_unauthenticated_rejected(client, re_loan_fixtures):
+    """API-11: Unauthenticated request to any /api/re/* endpoint returns 401."""
+    response = client.get("/api/re/kpis")
+    assert response.status_code == 401
