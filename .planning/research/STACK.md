@@ -1,616 +1,432 @@
-# Stack Research: Internal Loan Purchase Operations Dashboard
+# Stack Research: RE Loan Portfolio Dashboard (Milestone v2.0 Additions)
 
-**Research Type:** Project Research — Stack Dimension
-**Date:** 2026-03-04
-**Milestone:** Greenfield — Standard Stack Definition
-**Question:** What is the standard 2025/2026 stack for an internal financial operations dashboard that processes loan tapes, runs Python business logic, generates PDFs, and sends emails?
-
----
-
-## Summary Verdict
-
-The fixed stack (React / Node.js / Python / PostgreSQL / AWS / Terraform) is well-suited for this use case. The decisions below are about which specific libraries to use within each layer. The biggest risks in this build are: (1) file upload reliability for large spreadsheets, (2) Node-to-Python job orchestration and error propagation, and (3) PDF generation fidelity for wire instruction documents. All three have clear, well-established solutions in 2025/2026.
+**Research Type:** Subsequent Milestone — Stack Additions Only
+**Date:** 2026-04-08
+**Milestone:** v2.0 — Real Estate Loan Portfolio Dashboard POC
+**Scope:** NEW libraries only. Existing stack (React 19, Vite 7, TypeScript 5, FastAPI, SQLAlchemy, Alembic, PostgreSQL, S3, TailwindCSS 4, Axios) is validated and unchanged.
 
 ---
 
-## Layer 1: Frontend (React)
+## Existing Stack Snapshot (DO NOT RE-RESEARCH)
 
-### Framework and Build
-
-| Choice | Version | Rationale |
-|--------|---------|-----------|
-| **React** | 19.x | Fixed by project. React 19 ships with the `use` hook and improved Suspense — no breaking changes from 18. |
-| **Vite** | 6.x | Faster dev server and build than CRA (deprecated) or webpack for an internal app. No SSR needed, so Next.js is overkill. |
-| **TypeScript** | 5.x | Required for financial data handling. Strict mode enforced. Catches loan amount / rate type errors at compile time. |
-
-### UI Component Library
-
-**Use: shadcn/ui (Radix UI primitives) + Tailwind CSS 3.x**
-
-Rationale:
-- shadcn/ui components (Dialog, Table, Badge, Progress, Toast) are copy-owned, not imported from a versioned package. No breaking upstream dependency changes mid-project.
-- Radix UI provides accessible, unstyled primitives — critical for data tables, modal confirmations, and step indicators.
-- Tailwind CSS 3 is the standard in 2025 for internal tools. Avoids writing custom CSS for a dashboard that has no brand requirements.
-- Alternative considered: MUI v6 — rejected because it imposes Material Design opinions that conflict with financial dashboard aesthetics, and the `sx` prop pattern is harder to maintain than Tailwind utility classes.
-
-**Do NOT use:** Ant Design — it is a full opinionated framework that makes customization painful and has a large bundle size.
-
-### State Management
-
-**Use: TanStack Query (React Query) v5 + Zustand v5**
-
-| Library | Purpose |
-|---------|---------|
-| **TanStack Query v5** | All server state: loan tape upload status, processing job polling, counterparty data fetching. Handles caching, background refetch, and stale-while-revalidate automatically. |
-| **Zustand v5** | Local UI state only: current wizard step, selected loans, filter state. Lightweight with no boilerplate. |
-
-Rationale:
-- TanStack Query v5 (released late 2023, stable through 2025) eliminates manual `useEffect` fetch patterns. The `useQuery` + `useMutation` pattern maps perfectly to: upload tape → poll job status → display results.
-- Do NOT use Redux for this. The data flow is simple (upload → process → review → send). Redux adds unnecessary boilerplate for a workflow that is mostly server-driven.
-- Do NOT use React Context for server state. Context causes full subtree re-renders on every update — catastrophic for a table displaying 1,000 loan rows.
-
-### File Upload
-
-**Use: react-dropzone v14 + custom chunked upload to Node.js**
-
-Rationale:
-- `react-dropzone` is the standard for drag-and-drop file input in React (14M weekly downloads). Handles file type validation (`.xlsx`, `.csv`), size limits, and multi-file rejection.
-- For ~1,000-loan spreadsheets, files will typically be 500KB–5MB. A single multipart POST to Node.js via `multer` is sufficient — no need for chunked upload or S3 presigned URLs at this scale.
-- If files grow beyond 10MB (future state), switch to S3 presigned URL direct upload and notify Node.js of the S3 key post-upload.
-- Do NOT use `<input type="file">` directly — react-dropzone adds critical UX feedback (drag state, rejection messages) that the ops team needs.
-
-### Step-by-Step Workflow UI Pattern
-
-**Use: local multi-step wizard with URL-synced step state**
-
-Pattern:
-```
-/upload        → Step 1: Upload loan tape
-/review        → Step 2: Review parsed loans, flag errors
-/counterparty  → Step 3: Review counterparty tagging (prime/SFY)
-/cashflows     → Step 4: Review calculated cashflows
-/confirm       → Step 5: Confirm and trigger PDF + email send
-```
-
-Implementation:
-- Each step is a separate route (React Router v7).
-- Step progression is gated: user cannot advance until the previous step's server job is `COMPLETE`.
-- TanStack Query polls job status every 2 seconds during Python processing steps.
-- `react-hook-form` v7 handles any form inputs (override fields, email recipients) with Zod v3 schema validation.
-
-Rationale for URL-based steps over in-memory wizard:
-- Ops users can bookmark, refresh, and share links to a specific run in progress.
-- Browser back button works naturally.
-- Avoids the complexity of hydrating wizard state from localStorage.
-
-**Do NOT use:** React stepper component libraries (MUI Stepper, react-step-wizard) — they obscure routing state and are hard to debug.
-
-### Data Tables
-
-**Use: TanStack Table v8**
-
-Rationale:
-- 1,000-row loan tables require virtualization. TanStack Table v8 with `@tanstack/react-virtual` handles this.
-- Supports column sorting, filtering, row selection (for loan approval/rejection), and sticky headers.
-- Headless — styled with Tailwind/shadcn, not locked to any design system.
+| Layer | Already Installed |
+|-------|-----------------|
+| Frontend framework | React 19.2.x + Vite 7.x + TypeScript 5.9 |
+| Routing | react-router 7.x + react-router-dom 6.x |
+| Styling | Tailwind CSS 4.x (via `@tailwindcss/vite`) |
+| HTTP client | Axios 1.7.x |
+| Backend | FastAPI, SQLAlchemy 2, Alembic, psycopg2-binary + psycopg3 |
+| Data processing | pandas 2.2, numpy 2, numpy-financial, openpyxl, scipy |
+| Auth | python-jose, passlib, bcrypt |
+| AWS | boto3, botocore |
+| Linting | ESLint 9, ruff, husky, lint-staged |
 
 ---
 
-## Layer 2: Node.js API / Middleware
+## Frontend Additions
 
-### Runtime and Framework
+### 1. Charting — Recharts 3.x
 
-| Choice | Version | Rationale |
-|--------|---------|-----------|
-| **Node.js** | 22 LTS | Fixed by project. Node 22 is the current LTS (October 2024). Use `--experimental-strip-types` if writing TypeScript without a build step, or compile with `tsc`. |
-| **Express** | 5.x | The standard. Express 5 (released October 2024) adds async error handling natively — no more wrapping routes in `try/catch` or using `express-async-errors`. |
-| **TypeScript** | 5.x | Same as frontend. Type-safe request/response shapes, especially for loan data structures. |
+**Install:** `npm install recharts@^3.8.1`
 
-### File Upload Handling (Server Side)
+**Replaces / Adds:** Nothing currently exists for charts.
 
-**Use: multer v2 (middleware) + store to temp directory or S3**
+**Why Recharts over alternatives:**
+- React 19 compatible in v3 (peer dep issue with `react-is` was resolved in v3; install proceeds cleanly with React 19 — no `--legacy-peer-deps` needed in v3).
+- Composable declarative API maps directly to how React components are built: `<BarChart>`, `<LineChart>`, `<PieChart>` with child `<Bar>`, `<XAxis>`, `<Tooltip>` — no imperative D3 calls.
+- Covers every chart type required: PieChart/donut (property type composition), BarChart stacked (maturity profile), LineChart (P&I actual vs projected), BarChart (histogram buckets for LTV/loan size), ComposedChart (yield analysis overlays).
+- Built on D3 internally — you get D3 accuracy without managing D3's imperative selection model.
+- Recharts is the most downloaded React charting library (3–4M weekly downloads); community support and examples are abundant.
+- Alternative considered: **Nivo** — excellent for complex chart types but adds ~300KB over Recharts and has more setup ceremony for simple line/bar charts. Use Nivo if you later need advanced network graphs or chord diagrams (not needed here).
+- Alternative considered: **Victory** — smaller but less actively maintained; fewer examples for financial dashboards.
+- Alternative considered: **Chart.js via react-chartjs-2** — canvas-based (not SVG), which makes drill-down click interactions harder to implement cleanly with React event system.
 
-```javascript
-import multer from 'multer';
-import multerS3 from 'multer-s3';
+**React 19 notes:** Recharts v3 ships React 19 as a peer dependency. The `react-is` mismatch that affected v2 alphas is fixed in the v3 stable release. Verified: v3.8.1 published 2026-03-25.
 
-// For files under 10MB: temp disk storage
-const upload = multer({
-  dest: '/tmp/loan-tapes/',
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-  fileFilter: (req, file, cb) => {
-    const allowed = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
-    cb(null, allowed.includes(file.mimetype));
-  }
-});
-```
-
-Rationale:
-- `multer` is the standard Node.js multipart form-data handler. v2 (released 2024) has improved TypeScript types.
-- Store uploaded files to a temp directory on the EC2/ECS instance, then pass the file path to the Python worker. Python reads directly from disk — no serialization overhead.
-- Alternatively: upload to S3 via `multer-s3` and pass the S3 key to Python. This is more resilient for multi-instance deployments but adds latency.
-
-### Node-to-Python Orchestration
-
-This is the most architecturally significant decision in the stack.
-
-**Use: HTTP-based orchestration — Python as a FastAPI microservice on the same host or ECS sidecar**
-
-Architecture:
-```
-React → POST /api/jobs/start → Node.js → POST http://localhost:8000/process → FastAPI (Python)
-React → GET  /api/jobs/:id   → Node.js → reads job status from PostgreSQL
-                                          (Python worker writes status/results to DB)
-```
-
-Rationale:
-- A Python FastAPI service is cleaner than `child_process.spawn` for a persistent internal tool. Here is why:
-  - `child_process.spawn` requires Node.js to manage Python subprocess lifecycle, handle stdout/stderr parsing, and deal with process exit codes. This becomes fragile for long-running jobs (30–60 seconds for 1,000 loans).
-  - FastAPI gives Python its own process manager, structured error responses, and a testable API boundary.
-  - The ops team can restart the Python service independently of the Node.js API.
-- FastAPI on `localhost:8000` is simpler than a message queue (Redis/Celery) for this scale. The throughput is: one team, one run at a time, ~60 seconds per run. A queue is premature optimization.
-- Do NOT use Celery + Redis unless concurrent multi-user job submission is required. It adds two infrastructure components (Redis + Celery workers) for no benefit at this scale.
-
-Job status pattern (PostgreSQL-backed):
-```sql
--- Node.js writes the job record, Python updates it
-CREATE TABLE processing_jobs (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  status      TEXT CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETE', 'FAILED')),
-  created_at  TIMESTAMPTZ DEFAULT now(),
-  updated_at  TIMESTAMPTZ DEFAULT now(),
-  input_s3_key TEXT,
-  result_data  JSONB,
-  error_message TEXT
-);
-```
-
-Node.js polls / exposes:
-- `POST /api/jobs` — creates job record, calls Python `/process` async
-- `GET /api/jobs/:id` — returns current status from DB (React polls this every 2s)
-- `GET /api/jobs/:id/results` — returns parsed loan results from `result_data` JSONB
-
-**Alternative considered: BullMQ (Redis-backed job queue)**
-- Rejected: adds Redis infrastructure dependency, over-engineered for single-team internal use.
-- Reconsider if: multiple concurrent users submitting jobs simultaneously.
-
-### Authentication / Authorization
-
-**Use: AWS Cognito + JWT validation middleware (jwks-rsa + express-jwt)**
-
-Rationale:
-- Internal ops tool — no self-service registration needed. Cognito User Pools with an admin-created user list is the correct fit.
-- Cognito integrates with the existing AWS infrastructure (Terraform-managed).
-- All Node.js API routes protected by `express-jwt` middleware that validates the Cognito-issued JWT.
-- Do NOT use Auth0 — it introduces a third-party SaaS dependency outside the AWS perimeter for an internal financial tool.
-- Do NOT build custom JWT issuance — unnecessary complexity.
-
-### API Validation
-
-**Use: Zod v3 (shared with frontend)**
-
-- Define Zod schemas for loan tape row shapes, job request bodies, and API responses.
-- Share schema definitions between frontend and backend via a `packages/shared` workspace package (monorepo pattern).
+**Covers:** KPI sparklines, pie/donut, histogram, stacked bar (maturity), line chart (P&I/NOI/CPR), waterfall (delinquency).
 
 ---
 
-## Layer 3: Python Processing Service
+### 2. US Geographic Heatmap — d3-geo + topojson-client (direct, no wrapper library)
 
-### Framework
+**Install:** `npm install d3-geo@^3.1.0 topojson-client@^3.1.0`
+**Types:** `npm install -D @types/d3-geo @types/topojson-client`
 
-| Choice | Version | Rationale |
-|--------|---------|-----------|
-| **FastAPI** | 0.115.x | Async HTTP server for receiving jobs from Node.js. Auto-generates OpenAPI docs. |
-| **Uvicorn** | 0.32.x | ASGI server for FastAPI. Single worker is sufficient for this workload. |
-| **Python** | 3.12 | Current stable. 3.13 released October 2024 but ecosystem compatibility still catching up in early 2025. Use 3.12. |
+**Replaces / Adds:** Nothing currently exists for maps.
 
-### Spreadsheet / Loan Tape Parsing
+**Why direct d3-geo + topojson over wrapper libraries:**
 
-**Use: openpyxl v3.1.x (xlsx) + csv (stdlib)**
+The two obvious wrappers are `react-simple-maps` (original, last meaningful update 2022, uses outdated React APIs that break with React 19) and `@vnedyalk0v/react19-simple-maps` (a fork rewritten for React 19, v2.0.3 as of 2026-04-07). The fork works and is MIT licensed, but it is a single-maintainer project with unknown long-term support — a meaningful risk for a production codebase.
 
-Rationale:
-- `openpyxl` is the correct library for reading `.xlsx` files without Excel installed. Handles formula results (read-only mode), cell formatting, and named ranges.
-- Do NOT use `xlrd` — it does not support `.xlsx`, only legacy `.xls`.
-- Do NOT use `pandas` as the primary parsing library for loan tapes. Pandas is excellent for data science but adds significant startup overhead and DataFrame memory overhead for a 1,000-row business rules engine. Parse with `openpyxl`, apply rules with plain Python dicts/dataclasses.
-- Exception: if the loan suitability rules require matrix calculations or statistical operations, use `pandas` for those specific calculations only, not for the initial parse.
+The direct approach uses only two stable D3 sub-packages:
+- `d3-geo` provides `geoAlbersUsa()` projection and `geoPath()` path generator. These primitives have been stable for years.
+- `topojson-client` converts compressed TopoJSON state boundaries to SVG path strings.
+- The resulting component is ~80 lines of TypeScript — fully owned, no abstraction layer that can break on a dependency update.
 
-### Business Rules Engine
+For a POC with ~50 US states (fixed static geometry), there is no meaningful complexity reduction from a wrapper library. Build it directly.
 
-**Use: plain Python dataclasses + Pydantic v2**
+**GeoJSON source:** Use the public US state boundaries TopoJSON from `https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json` (US Atlas 3, MIT license). Fetch once at app boot, cache in Zustand. No license or attribution issues.
 
-```python
-from pydantic import BaseModel, validator
-from decimal import Decimal
+**Pattern:**
+```typescript
+import { geoAlbersUsa, geoPath } from 'd3-geo'
+import { feature } from 'topojson-client'
 
-class LoanRecord(BaseModel):
-    loan_id: str
-    original_balance: Decimal
-    interest_rate: Decimal
-    ltv: Decimal
-    fico_score: int
-    property_state: str
-
-    class Config:
-        use_enum_values = True
-
-class SuitabilityResult(BaseModel):
-    loan_id: str
-    is_suitable: bool
-    rejection_reasons: list[str]
-    counterparty: str | None  # 'prime' | 'SFY' | None
+// Color scale: manual linear interpolation on UPB or loan count per state
+// Tooltip: Recharts Tooltip pattern (div positioned on mouse event)
+// Click: sets global filter state (Zustand) → filters all dashboard panels
 ```
 
-Rationale:
-- Pydantic v2 (released 2023, standard in 2025) provides fast validation with clear error messages. Loan record validation errors surface as structured JSON back to Node.js.
-- Business rules (LTV thresholds, FICO minimums, state restrictions) are plain Python functions operating on validated Pydantic models. No rules engine framework needed at this scale.
-- Decimal (not float) for all monetary amounts — critical for financial calculations. Never use `float` for loan balances or interest rates.
-- Do NOT use a rules engine library (Drools, easy-rules Python ports) — they add complexity without benefit for a finite, well-understood ruleset.
-
-### Cashflow Calculation
-
-**Use: numpy-financial v1.0.x + Decimal for monetary output**
-
-Rationale:
-- `numpy-financial` provides `npf.pmt()`, `npf.pv()`, `npf.fv()` for standard mortgage/loan cashflow calculations.
-- Calculate with numpy floats internally, round to `Decimal` at output boundaries.
-- Do NOT use `scipy` — overkill. Do NOT use a third-party loan amortization library — they rarely match the exact calculation conventions (day count, rounding) required by financial counterparties.
+**Covers:** State choropleth heatmap (UPB concentration, loan count, delinquency rate by state). MSA-level can be added later with county-level TopoJSON.
 
 ---
 
-## Layer 4: PDF Generation
+### 3. Server State / Data Fetching — TanStack Query v5
 
-**Use: WeasyPrint v62.x**
+**Install:** `npm install @tanstack/react-query@^5.96.0`
 
-Rationale:
-- WeasyPrint renders HTML+CSS to PDF. Wire instruction documents are structured (tables, headers, amounts, routing numbers) — HTML templates are the most maintainable format for this.
-- Template engine: **Jinja2 v3.x** — renders the HTML template with loan/cashflow data before passing to WeasyPrint.
-- Produces pixel-accurate PDFs from CSS. Supports page breaks, headers, footers, and multi-page tables.
-- Do NOT use ReportLab — it requires constructing PDFs programmatically (drawing text at x,y coordinates). Maintainability is poor when document layout changes.
-- Do NOT use `pdfkit` (wkhtmltopdf wrapper) — wkhtmltopdf is abandoned, uses an old WebKit engine, and has known rendering bugs with modern CSS.
-- Do NOT use Puppeteer/Playwright for PDF generation in the Python layer — introduces a Node.js/browser dependency into the Python service.
+**Replaces / Adds:** Nothing installed yet for server state management (raw Axios calls in existing pages).
 
-PDF generation pattern:
-```python
-from jinja2 import Environment, FileSystemLoader
-from weasyprint import HTML
-import tempfile
+**Why TanStack Query:**
+- Handles caching, background refetch, and stale-while-revalidate for all dashboard API endpoints. Without it, every filter change triggers a fresh fetch with no deduplication.
+- Dashboard has ~10 distinct data endpoints (KPIs, charts, tables, sensitivity analysis). TanStack Query manages all of them with a unified `queryKey` cache — filter changes invalidate the relevant queries automatically.
+- The existing pages use raw `useEffect + axios` patterns. TanStack Query replaces this cleanly; existing pages can migrate incrementally.
+- v5.96.2 verified React 19 compatible (latest published 2026-04-03).
 
-def generate_wire_instruction_pdf(loan_data: dict, output_path: str) -> str:
-    env = Environment(loader=FileSystemLoader('templates/'))
-    template = env.get_template('wire_instruction.html')
-    html_content = template.render(**loan_data)
+**Integration notes:**
+- Wrap the app in `<QueryClientProvider>` in `main.tsx`.
+- Each dashboard panel uses `useQuery({ queryKey: ['kpis', filters], queryFn: () => api.getKPIs(filters) })`.
+- Global filter sidebar changes update Zustand state → `queryKey` arrays change → TanStack Query re-fetches only the affected queries.
 
-    with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
-        HTML(string=html_content).write_pdf(f.name)
-        return f.name
-```
-
-PDF storage: save generated PDFs to S3 (`boto3`). Store the S3 key in PostgreSQL. Node.js generates a presigned URL for download. Do NOT serve PDFs directly from the Python service's filesystem.
+**Do NOT add:** `@tanstack/react-query-devtools` in production build — dev-only, tree-shake with `process.env.NODE_ENV`.
 
 ---
 
-## Layer 5: Email Delivery
+### 4. UI State / Global Filters — Zustand v5
 
-**Use: AWS SES (Simple Email Service) via boto3**
+**Install:** `npm install zustand@^5.0.12`
 
-Rationale:
-- The stack is already AWS-native (Terraform). SES is the correct choice for a financial internal tool.
-- SES supports: raw email with PDF attachments, HTML email bodies, sending from a verified domain, and delivery logs via CloudWatch.
-- No third-party SaaS email service (SendGrid, Mailgun, Postmark) needed. This is important for financial data — wire instruction PDFs should not transit third-party servers.
-- SES sending limits are more than sufficient for an internal ops tool (max ~100 emails/run).
+**Replaces / Adds:** No shared state management exists currently (each page is self-contained).
 
-Python SES pattern:
-```python
-import boto3
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
+**Why Zustand:**
+- The global filter sidebar (date range, property type, geography, risk rating, etc.) must drive all dashboard panels. This is cross-cutting UI state — exactly what Zustand is designed for.
+- No boilerplate: one `create()` call, select slices where needed. No Provider wrapping.
+- v5.0.12 requires React 18–19 and TypeScript 5+ — matches existing stack exactly.
+- Do NOT use React Context for this: context re-renders every consumer on every filter change, which is catastrophic for a dashboard with 10+ panels.
 
-def send_wire_instruction_email(
-    recipient_emails: list[str],
-    pdf_bytes: bytes,
-    loan_summary: dict
-) -> None:
-    msg = MIMEMultipart()
-    msg['Subject'] = f"Wire Instructions — {loan_summary['run_date']} ({loan_summary['loan_count']} loans)"
-    msg['From'] = 'ops-noreply@yourdomain.com'
-    msg['To'] = ', '.join(recipient_emails)
+**Pattern:**
+```typescript
+interface FilterState {
+  asOf: string          // ISO date
+  propertyTypes: string[]
+  states: string[]
+  riskRatings: string[]
+  rateType: 'fixed' | 'floating' | 'all'
+  setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void
+  resetFilters: () => void
+}
 
-    # HTML body
-    body = MIMEText(render_email_template(loan_summary), 'html')
-    msg.attach(body)
-
-    # PDF attachment
-    attachment = MIMEApplication(pdf_bytes, _subtype='pdf')
-    attachment.add_header('Content-Disposition', 'attachment', filename='wire_instructions.pdf')
-    msg.attach(attachment)
-
-    ses = boto3.client('ses', region_name='us-east-1')
-    ses.send_raw_email(
-        Source='ops-noreply@yourdomain.com',
-        Destinations=recipient_emails,
-        RawMessage={'Data': msg.as_bytes()}
-    )
+const useFilterStore = create<FilterState>()(...)
 ```
-
-Do NOT use: `smtplib` directly — brittle, requires SMTP server config. Do NOT use SendGrid/Mailgun — financial data should stay within the AWS perimeter.
 
 ---
 
-## Layer 6: Database (PostgreSQL)
+### 5. Data Tables — TanStack Table v8
 
-### Client / ORM
+**Install:** `npm install @tanstack/react-table@^8.21.3`
 
-**Use: Drizzle ORM v0.38.x (Node.js) + psycopg v3.2.x (Python)**
+**Replaces / Adds:** Existing pages use basic HTML `<table>` elements. TanStack Table replaces tables that need sorting, filtering, and pagination.
 
-Node.js side:
-- **Drizzle ORM** with `drizzle-kit` for migrations. Rationale: Drizzle is TypeScript-first, schema-as-code, and generates raw SQL that is readable and auditable. This matters for financial systems where the DBA or auditor may need to inspect schema migrations.
-- Do NOT use Prisma — Prisma's query engine (a Rust binary) adds deployment complexity in ECS/Lambda environments and has historically had issues with connection pooling.
-- Do NOT use Sequelize — it is not TypeScript-first and encourages patterns that obscure the generated SQL.
+**Why TanStack Table:**
+- Headless — styled entirely with existing Tailwind CSS classes, no design system conflict.
+- Column sorting, multi-column filtering, pagination, and row click handlers are built-in.
+- For the watchlist (500–2,000 rows), pair with `@tanstack/react-virtual` for row virtualization.
+- v8.21.3 React 19 compatible (v9 alpha is in progress but not production-ready as of April 2026 — use v8 stable).
 
-Python side:
-- **psycopg v3** (not psycopg2) — the current standard. Async support, binary protocol, better performance.
-- Use raw SQL in Python for result writes. The Python service has a narrow, well-defined DB interaction: write job status, write results JSON, read counterparty config. ORMs are not needed here.
+**Install virtual:** `npm install @tanstack/react-virtual@^3.13.0`
 
-### Connection Pooling
+**Covers:** Watchlist table, top-10 exposures table, pipeline table, risk rating migration matrix (as a styled table, not chart).
 
-**Use: PgBouncer (AWS RDS Proxy is acceptable alternative)**
+---
 
-- PgBouncer in transaction pooling mode. Reduces connection count from (Node.js workers + Python workers) to a manageable pool.
-- For AWS RDS, use RDS Proxy (Terraform-managed) as an alternative — it provides IAM-authenticated connection pooling without a separate PgBouncer deployment.
+### 6. Filter Forms — react-hook-form v7 + Zod v3
 
-### Schema Patterns for Financial Data
+**Install:** `npm install react-hook-form@^7.72.1 zod@^3.24.0 @hookform/resolvers@^3.10.0`
+
+**Replaces / Adds:** No form validation library exists in the frontend yet.
+
+**Why:**
+- The global filter sidebar has ~8 controlled inputs (date pickers, multi-selects, range sliders). React Hook Form handles these with minimal re-renders — form state stays local until submission.
+- Zod schemas validate filter inputs (date format, valid state codes, numeric ranges) before queries are dispatched.
+- `@hookform/resolvers` bridges RHF and Zod in one line: `resolver: zodResolver(FilterSchema)`.
+- RHF v7.72.1 explicitly supports React 19 (verified April 2026).
+
+---
+
+### 7. PDF Export — html2canvas-pro + jsPDF
+
+**Install:** `npm install html2canvas-pro@^2.0.2 jspdf@^4.2.1`
+
+**Replaces / Adds:** No PDF export capability currently exists.
+
+**Why html2canvas-pro + jsPDF over alternatives:**
+
+Option A — `@react-pdf/renderer`: requires rewriting the entire dashboard layout using `<View>/<Text>/<Image>` primitives. Rebuilding 6 dashboard pages in react-pdf's component model is a multi-week effort. Wrong tradeoff for a POC.
+
+Option B — `react-to-pdf` wrapper: thin wrapper around html2canvas + jsPDF. Adds abstraction with no benefit over the direct approach; less control over canvas scaling and page breaks.
+
+Option C — Server-side WeasyPrint: adds an API endpoint, a Jinja2 HTML template, headless rendering, and S3 storage for what is a "print this screen" button. Massive over-engineering for a POC.
+
+**Chosen approach:** `html2canvas-pro` (actively maintained fork of html2canvas, v2.0.2 published 2026-03-14) captures the rendered dashboard DOM as a canvas. `jsPDF` v4.x (latest stable, v4.2.1, published 2026-03-18; v4.0 fixed a path traversal security issue) embeds the canvas image into a PDF and triggers browser download.
+
+**Limitations accepted for POC:**
+- PDF output is a rasterized image (not searchable text). Acceptable for a snapshot export.
+- Tailwind CSS 4's JIT-generated classes render correctly because html2canvas reads computed styles from the DOM, not class names.
+- Charts (Recharts SVG) render correctly into canvas — SVG-to-canvas conversion is handled natively.
+
+**Pattern:**
+```typescript
+import html2canvas from 'html2canvas-pro'
+import jsPDF from 'jspdf'
+
+async function exportDashboardPDF(ref: React.RefObject<HTMLDivElement>) {
+  const canvas = await html2canvas(ref.current!, { scale: 2, useCORS: true })
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: 'a4' })
+  pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdf.internal.pageSize.width, 0)
+  pdf.save(`portfolio-dashboard-${new Date().toISOString().slice(0, 10)}.pdf`)
+}
+```
+
+**Covers:** "Export PDF" button on dashboard header — captures visible dashboard panels as a multi-page PDF.
+
+---
+
+### 8. CSV Export — Native Browser API (no library)
+
+**Replaces / Adds:** No library needed.
+
+**Why no library:**
+- CSV export from a filtered TanStack Table is 10 lines of vanilla TypeScript: serialize rows to comma-delimited strings, create a `Blob`, trigger `URL.createObjectURL` download. No library justified.
+- `papaparse` (v5.5.3, last published 1 year ago) adds dependency weight for functionality that is trivially implemented inline. Skip it.
+
+**Pattern:**
+```typescript
+function exportCSV(rows: LoanRow[], columns: string[], filename: string) {
+  const header = columns.join(',')
+  const body = rows.map(r => columns.map(c => JSON.stringify(r[c] ?? '')).join(',')).join('\n')
+  const blob = new Blob([`${header}\n${body}`], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click()
+  URL.revokeObjectURL(url)
+}
+```
+
+---
+
+## Backend Additions
+
+### 9. Analytics Query Layer — SQLAlchemy Core expressions (already installed)
+
+**No new library needed.**
+
+The existing backend uses SQLAlchemy 2.0 (ORM + Core both available). All KPI aggregations (WAC, WAM, UPB, LTV, DSCR, delinquency buckets, maturity profile) are SQL aggregate queries expressible with SQLAlchemy Core `func.avg()`, `func.sum()`, `case()`, and `select()`. Pandas (already installed) handles any post-query reshaping for interest rate sensitivity analysis.
+
+**New FastAPI routers to add:**
+
+| Router | Path | What |
+|--------|------|------|
+| `dashboard.py` | `GET /api/v1/dashboard/kpis` | UPB, WAC, WAM, LTV, DSCR, active count, delinquency summary |
+| `dashboard.py` | `GET /api/v1/dashboard/composition` | Property type breakdown, maturity buckets, vintage counts |
+| `dashboard.py` | `GET /api/v1/dashboard/geo` | UPB and loan count grouped by state |
+| `dashboard.py` | `GET /api/v1/dashboard/credit` | LTV/DSCR histogram buckets, watchlist loans |
+| `dashboard.py` | `GET /api/v1/dashboard/cashflow` | Monthly P&I actual vs projected time series |
+| `dashboard.py` | `GET /api/v1/dashboard/sensitivity` | Rate shock scenarios (+/-100/200/300 bps on payment) |
+| `loans.py` | `GET /api/v1/loans` | Paginated, filtered, sorted loan table |
+| `loans.py` | `GET /api/v1/loans/{id}` | Single loan detail card |
+
+**Filter parameter pattern** (all endpoints accept as query params):
+```
+?as_of=2026-04-01&property_types=office,retail&states=NY,CA&risk_ratings=3,4&rate_type=fixed
+```
+
+**Interest rate sensitivity:** Use pandas already installed — build amortization schedules at each rate shock, compute payment delta. No additional library needed.
+
+---
+
+### 10. Database Seeding — Faker + custom seed script (Python, dev-only)
+
+**Install (dev-only):** Add to a `requirements-dev.txt` or seed script only:
+```
+faker==33.x
+```
+
+**Why Faker:**
+- Faker generates realistic synthetic RE loan data: property addresses, borrower names, origination dates, loan amounts, property types, states, risk ratings.
+- The seed script runs once via `python scripts/seed_re_loans.py` to populate 500–2,000 `re_loan` rows with statistically plausible values (LTV 50–90%, DSCR 0.8–2.0, rates 5–9%, states weighted by population).
+- Do NOT use lorem ipsum for financial data — the dashboard needs numerically realistic distributions for KPI cards to be non-trivial.
+
+**Faker latest version:** 33.x (check PyPI at seed time; Faker has no breaking changes for basic providers).
+
+**Install:** `pip install faker` — dev only, add to `requirements-dev.txt`, not `requirements.txt`.
+
+---
+
+## Data / Schema Additions
+
+### New Table: `re_loans`
+
+**Strategy:** Flat table, lightly normalized. Foreign key to `property_type_lookup` and `risk_rating_lookup` only. For a POC with 500–2,000 loans, a flat table with indexed columns is faster to query and simpler to seed than a normalized relational schema.
 
 ```sql
--- Monetary amounts: NUMERIC(18,6) — never FLOAT or DOUBLE PRECISION
--- Dates: DATE (not TIMESTAMP) for loan dates, maturity dates
--- IDs: UUID (gen_random_uuid()) — not serial integers, for external shareability
--- Audit: created_at / updated_at TIMESTAMPTZ on every table
--- Soft deletes: deleted_at TIMESTAMPTZ (never hard delete financial records)
-
-CREATE TABLE loan_runs (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    run_date        DATE NOT NULL,
-    uploaded_by     TEXT NOT NULL,  -- Cognito user sub
-    status          TEXT NOT NULL CHECK (status IN ('PENDING','PROCESSING','COMPLETE','FAILED')),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at      TIMESTAMPTZ
+CREATE TABLE re_loans (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    loan_number         TEXT NOT NULL UNIQUE,           -- external reference
+    borrower_name       TEXT NOT NULL,
+    property_type       TEXT NOT NULL,                  -- 'office','retail','multifamily','industrial','hotel','land'
+    property_state      CHAR(2) NOT NULL,               -- FIPS state abbreviation
+    property_msa        TEXT,                           -- MSA name, nullable
+    origination_date    DATE NOT NULL,
+    maturity_date       DATE NOT NULL,
+    original_balance    NUMERIC(18,6) NOT NULL,
+    current_upb         NUMERIC(18,6) NOT NULL,         -- unpaid principal balance
+    interest_rate       NUMERIC(9,6) NOT NULL,          -- annual rate, e.g., 0.0625 for 6.25%
+    rate_type           TEXT NOT NULL CHECK (rate_type IN ('fixed','floating')),
+    spread_bps          SMALLINT,                       -- over index, null if fixed
+    index_rate          TEXT,                           -- 'SOFR','Prime', null if fixed
+    ltv                 NUMERIC(9,6),                   -- loan-to-value at origination
+    dscr                NUMERIC(9,6),                   -- debt service coverage ratio
+    risk_rating         SMALLINT CHECK (risk_rating BETWEEN 1 AND 10),
+    prior_risk_rating   SMALLINT CHECK (prior_risk_rating BETWEEN 1 AND 10),  -- for migration matrix
+    delinquency_days    SMALLINT NOT NULL DEFAULT 0,    -- days past due
+    is_watchlist        BOOLEAN NOT NULL DEFAULT FALSE,
+    noi                 NUMERIC(18,6),                  -- net operating income (annual)
+    appraised_value     NUMERIC(18,6),
+    occupancy_pct       NUMERIC(5,4),                   -- 0.0–1.0
+    vintage_year        SMALLINT NOT NULL,              -- year of origination
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE loans (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    run_id          UUID NOT NULL REFERENCES loan_runs(id),
-    loan_id_external TEXT NOT NULL,  -- ID from the uploaded tape
-    original_balance NUMERIC(18,6) NOT NULL,
-    interest_rate   NUMERIC(9,6) NOT NULL,
-    ltv             NUMERIC(9,6),
-    fico_score      SMALLINT,
-    property_state  CHAR(2),
-    is_suitable     BOOLEAN,
-    rejection_reasons JSONB,
-    counterparty    TEXT CHECK (counterparty IN ('prime', 'SFY')),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE cashflows (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    loan_id         UUID NOT NULL REFERENCES loans(id),
-    period_number   SMALLINT NOT NULL,
-    payment_date    DATE NOT NULL,
-    principal       NUMERIC(18,6) NOT NULL,
-    interest        NUMERIC(18,6) NOT NULL,
-    total_payment   NUMERIC(18,6) NOT NULL
-);
-
-CREATE TABLE wire_instructions (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    run_id          UUID NOT NULL REFERENCES loan_runs(id),
-    counterparty    TEXT NOT NULL,
-    pdf_s3_key      TEXT,
-    email_sent_at   TIMESTAMPTZ,
-    email_recipients JSONB,  -- array of strings
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+-- Indexes for common filter axes
+CREATE INDEX idx_re_loans_state ON re_loans (property_state);
+CREATE INDEX idx_re_loans_property_type ON re_loans (property_type);
+CREATE INDEX idx_re_loans_risk_rating ON re_loans (risk_rating);
+CREATE INDEX idx_re_loans_maturity ON re_loans (maturity_date);
+CREATE INDEX idx_re_loans_watchlist ON re_loans (is_watchlist) WHERE is_watchlist = TRUE;
 ```
 
-Key schema rules:
-- NUMERIC(18,6) for all monetary values — never FLOAT/DOUBLE.
-- UUID primary keys everywhere — avoids integer ID enumeration.
-- JSONB for flexible fields (rejection reasons, cashflow arrays) where schema may evolve.
-- Soft deletes (deleted_at) — financial records are never hard deleted for audit purposes.
+**Add via Alembic** (already installed): `alembic revision --autogenerate -m "add_re_loans_table"`.
 
-### Migrations
+**Financial precision:** All monetary and rate columns use `NUMERIC` — never `FLOAT`. Consistent with existing codebase conventions.
 
-**Use: drizzle-kit (Node.js) for schema migrations**
-
-- Migrations committed to git. Applied via CI/CD (GitHub Actions) before deployment.
-- Do NOT use `db push` in production — always generate and apply explicit migration files.
+**Migration matrix support:** `prior_risk_rating` column stores the rating as of the prior period. The migration matrix endpoint groups by `(prior_risk_rating, risk_rating)` and counts transitions. No separate table needed for a POC.
 
 ---
 
-## Layer 7: Infrastructure (AWS / Terraform)
+## Role-Based View Stub
 
-### Compute
+**No new library needed.** Use the existing auth context.
 
-| Service | Use |
-|---------|-----|
-| **ECS Fargate** | Node.js API container + Python FastAPI container as a sidecar task |
-| **ECR** | Container registry for both images |
-| **ALB** | Application Load Balancer — routes to ECS service, terminates TLS |
-| **CloudFront + S3** | React static frontend hosting |
+The existing `AuthContext.tsx` exposes the current user's role. Add a `role` field to the user schema:
+```typescript
+type UserRole = 'pm' | 'advisor'
+```
 
-Rationale for ECS Fargate over EC2:
-- No server management. Fargate scales the task definition.
-- The Node.js + Python sidecar pattern runs both containers in the same ECS task, enabling `localhost` communication without a service mesh.
-- Do NOT use Lambda for the Python processing step. Lambda has a 15-minute timeout and memory limits that are challenging for batch processing 1,000 loans with WeasyPrint (which requires system fonts and GTK libraries).
+PM role sees full portfolio. Advisor role sees only loans where `borrower_name` matches their assigned book (or a static config mapping in the interim). Implement as a filter applied server-side in the FastAPI `GET /api/v1/loans` endpoint via a `book_filter` dependency.
 
-### Storage
-
-| Service | Use |
-|---------|-----|
-| **RDS PostgreSQL 16** | Primary database, Multi-AZ for production |
-| **RDS Proxy** | Connection pooling (replaces PgBouncer) |
-| **S3** | Uploaded loan tape files, generated PDFs |
-| **Secrets Manager** | DB credentials, SES SMTP credentials |
-
-### CI/CD
-
-**Use: GitHub Actions**
-
-- `test` → `build` → `push to ECR` → `terraform apply` → `ecs update-service`
-- Drizzle migrations run as a one-off ECS task before the new service version comes up.
+No RBAC library (Casbin, OPA) is needed for two roles. Do NOT add one.
 
 ---
 
-## What NOT to Use (Decision Log)
+## What NOT to Add
 
 | Rejected | Reason |
 |----------|--------|
-| Next.js | SSR not needed for internal tool. Adds complexity (server components, hydration) without benefit. |
-| Redux Toolkit | Overkill for this data flow. TanStack Query handles server state; Zustand handles UI state. |
-| MUI / Ant Design | Opinionated design systems conflict with financial dashboard aesthetics; large bundle. |
-| Celery + Redis | Premature for single-team, sequential job submission. Add if concurrency becomes a requirement. |
-| child_process.spawn | Fragile for long-running Python jobs. FastAPI microservice is cleaner and independently restartable. |
-| Prisma | Rust query engine binary complicates ECS deployment; connection pooling has known issues. |
-| Lambda (Python) | 15-min timeout and memory constraints conflict with WeasyPrint system font requirements. |
-| pdfkit / wkhtmltopdf | Abandoned project, old WebKit engine, modern CSS rendering bugs. |
-| ReportLab | Requires programmatic PDF layout (x,y coordinates). Unmaintainable when layout changes. |
-| Puppeteer for PDF | Introduces Node.js/Chromium into the Python service. Wrong layer. |
-| SendGrid / Mailgun | Financial wire instruction PDFs should not transit third-party email servers. Use SES. |
-| float / DOUBLE for money | IEEE 754 floating point causes rounding errors in financial calculations. Use NUMERIC/Decimal. |
-| xlrd | Does not support .xlsx format (Excel 2007+). |
-| pandas (primary parser) | Heavy startup cost; use openpyxl for parsing, pandas only if matrix math is needed. |
-| Auth0 | Third-party SaaS outside AWS perimeter for an internal financial tool. Use Cognito. |
-| serial integers as PKs | Enumerable; prefer UUIDs for financial record IDs. |
+| `nivo` charts | 300KB heavier than Recharts; composable API advantage not needed for standard chart types required here |
+| `Victory` charts | Less maintained; fewer financial dashboard examples; no advantage over Recharts for this use case |
+| `Chart.js` / `react-chartjs-2` | Canvas-based — makes drill-down click-to-filter harder; SVG (Recharts) integrates more naturally with React event system |
+| `react-simple-maps` (original) | Last meaningful update 2022; known React 19 incompatibility |
+| `@vnedyalk0v/react19-simple-maps` | Single-maintainer fork; adds abstraction over d3-geo with no POC benefit; 80-line direct component is safer |
+| `@react-pdf/renderer` | Requires rebuilding all dashboard UI in PDF primitives — wrong effort/benefit ratio for a POC snapshot export |
+| `papaparse` | CSV export is 10 lines of native browser API; no library justified |
+| `redux` / Redux Toolkit | Two roles and a filter sidebar do not need a global event bus. Zustand handles this |
+| `react-query-devtools` (prod build) | Dev-only; exclude from production bundle |
+| `Celery + Redis` | Analytics queries are read-only aggregates, not background jobs. FastAPI + SQLAlchemy handles them synchronously |
+| `Elasticsearch` | Full-text search across 2,000 loans is fast in Postgres with `ilike` and GIN indexes; no search engine needed at this scale |
+| `Grafana` / BI tools | This is a custom-branded dashboard inside the existing app, not a BI embed. Grafana adds a separate service and iframe complexity |
+| `SQLModel` | SQLAlchemy 2.0 (already installed) is sufficient; SQLModel adds a thin wrapper with no benefit when SQLAlchemy ORM is already the pattern |
+| `Faker` in production image | Seed script is dev-only; add to `requirements-dev.txt`, never to `requirements.txt` |
+| `D3` (full bundle) | Only `d3-geo` sub-package is needed. Full D3 import adds ~500KB unnecessarily |
+| Rate-sensitivity API library | pandas (already installed) is sufficient to compute payment deltas across rate scenarios |
+| `react-select` | Filter sidebar multi-selects are implementable with Radix UI `Select` (shadcn) + `react-hook-form` — no additional select library needed |
 
 ---
 
-## Complete Dependency Manifest
+## Complete New Dependency Manifest
 
-### Frontend (package.json)
+### Frontend additions to `package.json`
 
 ```json
 {
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.0.0",
-    "@tanstack/react-query": "^5.62.0",
-    "@tanstack/react-table": "^8.20.0",
-    "@tanstack/react-virtual": "^3.10.0",
-    "zustand": "^5.0.0",
-    "react-hook-form": "^7.54.0",
+    "recharts": "^3.8.1",
+    "d3-geo": "^3.1.0",
+    "topojson-client": "^3.1.0",
+    "@tanstack/react-query": "^5.96.0",
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.0",
+    "zustand": "^5.0.12",
+    "react-hook-form": "^7.72.1",
     "zod": "^3.24.0",
-    "react-dropzone": "^14.3.0",
-    "tailwindcss": "^3.4.0",
-    "@radix-ui/react-dialog": "^1.1.0",
-    "@radix-ui/react-progress": "^1.1.0",
-    "@radix-ui/react-toast": "^1.2.0",
-    "@radix-ui/react-table": "^1.0.0"
+    "@hookform/resolvers": "^3.10.0",
+    "html2canvas-pro": "^2.0.2",
+    "jspdf": "^4.2.1"
   },
   "devDependencies": {
-    "vite": "^6.0.0",
-    "@vitejs/plugin-react": "^4.3.0",
-    "typescript": "^5.7.0",
-    "vitest": "^2.0.0",
-    "@testing-library/react": "^16.0.0"
+    "@types/d3-geo": "^3.1.0",
+    "@types/topojson-client": "^3.1.0"
   }
 }
 ```
 
-### Backend Node.js (package.json)
+### Backend additions to `requirements.txt`
 
-```json
-{
-  "dependencies": {
-    "express": "^5.0.0",
-    "multer": "^2.0.0",
-    "drizzle-orm": "^0.38.0",
-    "pg": "^8.13.0",
-    "aws-sdk": "^3.0.0",
-    "zod": "^3.24.0",
-    "jsonwebtoken": "^9.0.0",
-    "jwks-rsa": "^3.1.0",
-    "express-jwt": "^8.4.0",
-    "axios": "^1.7.0",
-    "uuid": "^11.0.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.7.0",
-    "drizzle-kit": "^0.28.0",
-    "vitest": "^2.0.0"
-  }
-}
-```
+No new production Python libraries required. All KPI, aggregation, sensitivity, and seeding logic is covered by already-installed packages (SQLAlchemy, pandas, numpy, FastAPI, pydantic).
 
-### Python (requirements.txt)
+### Dev-only Python (new `requirements-dev.txt` if it doesn't exist)
 
 ```
-fastapi==0.115.6
-uvicorn[standard]==0.32.1
-pydantic==2.10.3
-openpyxl==3.1.5
-numpy-financial==1.0.0
-numpy==2.2.0
-weasyprint==62.3
-jinja2==3.1.5
-psycopg[binary]==3.2.3
-boto3==1.35.86
-python-multipart==0.0.20
+faker>=33.0.0
 ```
 
 ---
 
-## Architecture Diagram (Text)
+## Architecture Impact
 
-```
-[Ops User Browser]
-       |
-       | HTTPS
-       v
-[CloudFront + S3]  ──── React 19 SPA (Vite build)
-       |
-       | API calls (JWT in header)
-       v
-[ALB]
-       |
-       v
-[ECS Fargate Task]
-  ├── [Node.js Express 5 API :3000]
-  │       ├── multer (file upload)
-  │       ├── express-jwt (Cognito auth)
-  │       ├── drizzle-orm → RDS PostgreSQL
-  │       ├── axios → Python FastAPI :8000
-  │       └── AWS SDK → S3, SES
-  │
-  └── [Python FastAPI :8000]  ← sidecar container
-          ├── openpyxl (parse xlsx)
-          ├── pydantic (validate loans)
-          ├── business rules (plain Python)
-          ├── numpy-financial (cashflows)
-          ├── weasyprint + jinja2 (PDF)
-          ├── boto3 → S3 (store PDFs)
-          ├── boto3 → SES (send emails)
-          └── psycopg3 → RDS PostgreSQL (write results)
+No structural changes to the existing FastAPI / React / Docker setup:
 
-[RDS PostgreSQL 16]  ← via RDS Proxy
-[S3]                 ← loan tapes + generated PDFs
-[Cognito]            ← auth
-[SES]               ← email delivery
-[Secrets Manager]   ← credentials
-```
+- New FastAPI routers go in `backend/api/routes/dashboard.py` and `backend/api/routes/loans.py`.
+- New Alembic migration adds `re_loans` table.
+- New React pages go in `frontend/src/pages/Dashboard*.tsx` with shared components in `frontend/src/components/charts/` and `frontend/src/components/filters/`.
+- Global filter state lives in `frontend/src/stores/filterStore.ts` (Zustand).
+- `QueryClientProvider` wraps the app in `main.tsx` alongside the existing `AuthContext`.
+- Single Docker image unchanged — no new services.
 
 ---
 
-## Open Questions for Roadmap
+## Confidence Assessment
 
-1. **Concurrent job submissions:** If multiple ops users can submit runs simultaneously, add BullMQ + Redis for job queuing. Current design assumes sequential runs.
-2. **Audit trail requirements:** Are loan processing decisions subject to regulatory audit? If yes, add an `audit_events` table and event sourcing for every status transition.
-3. **PDF template ownership:** Who owns/updates wire instruction PDF templates? If business users need to edit templates without code deploys, consider storing Jinja2 templates in S3 or DB rather than the filesystem.
-4. **Counterparty configuration:** Are prime/SFY routing rules static (hardcoded Python) or do they change? If they change, add a `counterparty_rules` table with admin UI.
-5. **Email recipients:** Are recipients per-counterparty static config or user-entered per run? Affects the confirm step UI and the wire_instructions schema.
+| Area | Confidence | Source |
+|------|------------|--------|
+| Recharts v3 React 19 compat | HIGH | npm registry (v3.8.1), GitHub issues confirm v3 resolves React 19 peer dep |
+| TanStack Query v5 React 19 compat | HIGH | Official TanStack docs + npm (v5.96.2 April 2026) |
+| TanStack Table v8 React 19 compat | HIGH | Official TanStack docs confirm React 16–19 support |
+| Zustand v5 React 19 compat | HIGH | Zustand release notes explicitly list React 18-19 requirement |
+| d3-geo + topojson direct approach | HIGH | Stable D3 sub-packages, well-documented pattern |
+| html2canvas-pro + jsPDF v4 | MEDIUM | html2canvas-pro is an actively maintained fork; jsPDF v4 confirmed on npm. CSS rendering fidelity with Tailwind 4 not independently verified — test early |
+| react-hook-form v7 React 19 | HIGH | npm (v7.72.1 April 2026), confirmed by LogRocket article on RHF + React 19 |
+| Faker for seeding | HIGH | Standard dev tool; version not critical |
 
 ---
 
-*Research complete. All library versions reflect current stable releases as of Q1 2026.*
+*Research complete. All versions verified via npm registry and GitHub releases as of 2026-04-08.*
