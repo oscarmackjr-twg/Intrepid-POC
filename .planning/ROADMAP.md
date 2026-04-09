@@ -326,8 +326,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
-- [ ] 17-02-PLAN.md — Seed script + integration tests for realistic CRE portfolio data (DATA-03, DATA-04)
+- [ ] 19-01-PLAN.md — Install Zustand, TypeScript types, filter store, useReLoanFilters hook (FILTER-01, FILTER-02, FILTER-03, FILTER-04)
+- [ ] 19-02-PLAN.md — ReDashboard page, filter sidebar component, route + nav link wiring (FILTER-01, FILTER-02, FILTER-03, FILTER-04)
 **UI hint**: yes
 
 ### Phase 20: Executive Summary Page
