@@ -11,11 +11,16 @@ import FileManager from './pages/FileManager'
 import ProgramRuns from './pages/ProgramRuns'
 import HolidayMaintenance from './pages/HolidayMaintenance'
 import ReDashboard from './pages/ReDashboard'
+import ReExecutiveSummaryPage from './pages/ReExecutiveSummaryPage'
 import CashFlow from './pages/CashFlow'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 
 const queryClient = new QueryClient()
+
+function ReStubPage() {
+  return <p className="text-[#94a3b8] text-sm mt-8">Coming in a future phase.</p>
+}
 
 function App() {
   return (
@@ -41,7 +46,13 @@ function App() {
           <Route path="cashflow" element={<CashFlow />} />
           <Route path="program-runs" element={<ProgramRuns />} />
           <Route path="holidays" element={<HolidayMaintenance />} />
-          <Route path="re-dashboard" element={<ReDashboard />} />
+          <Route path="re-dashboard" element={<ReDashboard />}>
+            <Route index element={<ReExecutiveSummaryPage />} />
+            <Route path="portfolio" element={<ReStubPage />} />
+            <Route path="credit" element={<ReStubPage />} />
+            <Route path="cashflow" element={<ReStubPage />} />
+            <Route path="origination" element={<ReStubPage />} />
+          </Route>
         </Route>
       </Routes>
     </AuthProvider>
