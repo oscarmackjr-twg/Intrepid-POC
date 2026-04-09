@@ -131,6 +131,7 @@ export interface LoanSummary {
   origination_date: string | null
   days_past_due: number | null
   delinquency_status: string | null
+  prior_risk_rating: string | null
 }
 
 export interface LoanListResponse {
@@ -264,4 +265,34 @@ export interface SensitivityResponse {
   base_wac: number
   total_upb: number
   scenarios: SensitivityScenario[]
+}
+
+// ---------------------------------------------------------------------------
+// Delinquency waterfall endpoint — CREDIT-04
+// ---------------------------------------------------------------------------
+
+export interface DelinquencyBucket {
+  bucket: string
+  loan_count: number
+  total_upb: number
+}
+
+export interface DelinquencyWaterfallResponse {
+  buckets: DelinquencyBucket[]
+}
+
+// ---------------------------------------------------------------------------
+// Risk rating migration endpoint — CREDIT-05
+// ---------------------------------------------------------------------------
+
+export interface MigrationCell {
+  prior_rating: string
+  current_rating: string
+  loan_count: number
+  total_upb: number
+}
+
+export interface RiskRatingMigrationResponse {
+  cells: MigrationCell[]
+  ratings: string[]
 }
