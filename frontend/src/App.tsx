@@ -12,6 +12,7 @@ import ProgramRuns from './pages/ProgramRuns'
 import HolidayMaintenance from './pages/HolidayMaintenance'
 import ReDashboard from './pages/ReDashboard'
 import ReExecutiveSummaryPage from './pages/ReExecutiveSummaryPage'
+import RePortfolioPage from './pages/RePortfolioPage'
 import CashFlow from './pages/CashFlow'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
@@ -48,7 +49,7 @@ function App() {
           <Route path="holidays" element={<HolidayMaintenance />} />
           <Route path="re-dashboard" element={<ReDashboard />}>
             <Route index element={<ReExecutiveSummaryPage />} />
-            <Route path="portfolio" element={<ReStubPage />} />
+            <Route path="portfolio" element={<RePortfolioPage />} />
             <Route path="credit" element={<ReStubPage />} />
             <Route path="cashflow" element={<ReStubPage />} />
             <Route path="origination" element={<ReStubPage />} />
