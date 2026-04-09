@@ -339,11 +339,10 @@ Plans:
   2. Applying a property type filter from the sidebar updates all KPI card values without page reload
   3. Filtering to a combination that returns zero matching loans shows a visible no-data state on each card â not zeros or blank space
   4. A KPI card in a loading state shows a visible loading indicator â not a flash of empty content
-**Plans**: 2 plans
+**Plans**: 1 plan
 
 Plans:
-- [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
-- [ ] 17-02-PLAN.md — Seed script + integration tests for realistic CRE portfolio data (DATA-03, DATA-04)
+- [ ] 20-01-PLAN.md — Install TanStack Query, KPI card component + formatting, wire ReDashboard grid with loading/no-data/click states (EXEC-01, EXEC-02, UX-01)
 **UI hint**: yes
 
 ### Phase 21: Portfolio Composition Page
