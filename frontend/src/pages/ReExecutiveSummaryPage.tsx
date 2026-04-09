@@ -25,8 +25,6 @@ export default function ReExecutiveSummaryPage() {
   const { data, isLoading, isError } = useKPIs()
   const [highlightedDelinquency, setHighlightedDelinquency] = useState<string | null>(null)
 
-  const isNoData = !isLoading && data !== undefined && data.active_loan_count === 0
-
   return (
     <>
       {isError && (
@@ -37,7 +35,7 @@ export default function ReExecutiveSummaryPage() {
         {KPI_CARDS.map(({ key, label, format }) => {
           const isDelinquency = key.startsWith('delinquent_')
           const rawValue = data ? data[key] : null
-          const displayValue = isNoData ? '\u2013' : format(rawValue as number | null)
+          const displayValue = format(rawValue as number | null)
 
           return (
             <KPICard
@@ -45,7 +43,7 @@ export default function ReExecutiveSummaryPage() {
               label={label}
               value={displayValue}
               isLoading={isLoading}
-              isNoData={isNoData || (!isLoading && rawValue === null)}
+              isNoData={!isLoading && rawValue === null}
               isClickable={isDelinquency}
               isHighlighted={highlightedDelinquency === key}
               onClick={isDelinquency ? () => {
