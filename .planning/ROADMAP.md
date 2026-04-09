@@ -270,8 +270,9 @@ Plans:
 - [x] **Phase 17: Data Foundation** - re_loans + re_loan_cashflows schema locked, Alembic migrations applied, seed script populates 500+ loans
 - [ ] **Phase 18: Core API Layer** - All 11 /api/re/* endpoints return correct data with filter param support
 - [x] **Phase 19: Filter Hook + TypeScript Foundation** - Filter sidebar, URL param sync, Zustand store, and TanStack Query keys wired before any chart component is built (completed 2026-04-09)
-- [x] **Phase 20: Executive Summary Page** - KPI cards populated from real seeded data; chart click-to-filter wired (completed 2026-04-09)
-- [ ] **Phase 21: Portfolio Composition Page** - Property type chart, geo map/bar fallback, loan size histogram, maturity profile, top-10 table, concentration limits; click-to-filter wired
+- [x] **Phase 20: Executive Summary Page** - KPI cards populated from real seeded data; chart click-to-filter wired
+ (completed 2026-04-09)
+- [x] **Phase 21: Portfolio Composition Page** - Property type chart, geo map/bar fallback, loan size histogram, maturity profile, top-10 table, concentration limits; click-to-filter wired (completed 2026-04-09)
 - [ ] **Phase 22: Credit Quality Page** - LTV/DSCR histograms, watchlist table, delinquency waterfall, migration matrix, rate sensitivity; click-to-filter wired
 - [ ] **Phase 23: Cash Flow & Performance Page** - P&I line chart, NOI trend, yield analysis, CPR, loss/recovery; click-to-filter wired
 - [ ] **Phase 24: Origination Pipeline + Market Context** - Origination volume, payoffs, pipeline funnel, vintage analysis, market context stub panel; click-to-filter wired
@@ -358,9 +359,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 21-01-PLAN.md — Install Recharts, refactor ReDashboard into layout shell with tab strip and Outlet, extract KPI cards to ReExecutiveSummaryPage, wire nested routes in App.tsx
-- [ ] 21-02-PLAN.md — Create RePortfolioPage with ChartCard wrapper, property type donut, top states horizontal bar, loan size histogram, maturity profile stacked bar (COMP-01, COMP-02, COMP-03, COMP-04, UX-01)
-- [ ] 21-03-PLAN.md — Add TopExposuresTable and ConcentrationLimits components to RePortfolioPage (COMP-05, COMP-06)
+- [x] 21-01-PLAN.md — Install Recharts, refactor ReDashboard into layout shell with tab strip and Outlet, extract KPI cards to ReExecutiveSummaryPage, wire nested routes in App.tsx
+- [x] 21-02-PLAN.md — Create RePortfolioPage with ChartCard wrapper, property type donut, top states horizontal bar, loan size histogram, maturity profile stacked bar (COMP-01, COMP-02, COMP-03, COMP-04, UX-01)
+- [x] 21-03-PLAN.md — Add TopExposuresTable and ConcentrationLimits components to RePortfolioPage (COMP-05, COMP-06)
 **UI hint**: yes
 
 ### Phase 22: Credit Quality Page
@@ -374,11 +375,12 @@ Plans:
   4. The delinquency waterfall displays loan flow from current to 30, 60, 90, and default buckets
   5. The risk rating migration matrix shows movement between current and prior period ratings using the two seeded as_of_date snapshots
   6. The interest rate sensitivity table shows portfolio impact under +/â100, 200, and 300 bps scenarios
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
-- [ ] 17-02-PLAN.md — Seed script + integration tests for realistic CRE portfolio data (DATA-03, DATA-04)
+- [ ] 22-01-PLAN.md — Backend: new delinquency-waterfall + risk-rating-migration endpoints, LoanSummary prior_risk_rating fix, integration tests (CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05)
+- [ ] 22-02-PLAN.md — Frontend: ReCreditQualityPage with 6 panels (LTV/DSCR histograms, watchlist, waterfall, migration matrix, sensitivity table), route wiring (CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05, CREDIT-06, UX-01)
+- [ ] 22-03-PLAN.md — Verification: full test suite + human visual verification of all 6 panels (CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05, CREDIT-06, UX-01)
 **UI hint**: yes
 
 ### Phase 23: Cash Flow & Performance Page
@@ -471,7 +473,7 @@ Phases execute sequentially: 17 â 18 â 19 â 20 â 21 â 2
 | 18. Core API Layer | 1/2 | In Progress|  |
 | 19. Filter Hook + TypeScript Foundation | 2/2 | Complete   | 2026-04-09 |
 | 20. Executive Summary Page | 1/1 | Complete   | 2026-04-09 |
-| 21. Portfolio Composition Page | 0/TBD | Not started | - |
+| 21. Portfolio Composition Page | 3/3 | Complete   | 2026-04-09 |
 | 22. Credit Quality Page | 0/TBD | Not started | - |
 | 23. Cash Flow & Performance Page | 0/TBD | Not started | - |
 | 24. Origination Pipeline + Market Context | 0/TBD | Not started | - |
