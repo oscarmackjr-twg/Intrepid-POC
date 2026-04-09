@@ -48,7 +48,8 @@ def re_loan_fixtures(test_db_session, sample_sales_team):
             property_type="Multifamily",
             state="NY",
             msa="New York-Newark",
-            risk_rating="A",
+            risk_rating="1",
+            prior_risk_rating="1",
             rate_type="Fixed",
             origination_date=date(2022, 1, 15),
             maturity_date=date(2032, 1, 15),
@@ -71,7 +72,8 @@ def re_loan_fixtures(test_db_session, sample_sales_team):
             property_type="Office",
             state="CA",
             msa="Los Angeles",
-            risk_rating="B",
+            risk_rating="2",
+            prior_risk_rating="2",
             rate_type="Floating",
             origination_date=date(2021, 6, 1),
             maturity_date=date(2031, 6, 1),
@@ -94,7 +96,8 @@ def re_loan_fixtures(test_db_session, sample_sales_team):
             property_type="Retail",
             state="TX",
             msa="Dallas",
-            risk_rating="C",
+            risk_rating="3",
+            prior_risk_rating="3",
             rate_type="Fixed",
             origination_date=date(2023, 3, 10),
             maturity_date=date(2028, 3, 10),
@@ -117,7 +120,8 @@ def re_loan_fixtures(test_db_session, sample_sales_team):
             property_type="Multifamily",
             state="FL",
             msa="Miami",
-            risk_rating="A",
+            risk_rating="1",
+            prior_risk_rating="1",
             rate_type="Fixed",
             origination_date=date(2020, 9, 20),
             maturity_date=date(2030, 9, 20),
@@ -140,7 +144,8 @@ def re_loan_fixtures(test_db_session, sample_sales_team):
             property_type="Industrial",
             state="NY",
             msa="New York-Newark",
-            risk_rating="B",
+            risk_rating="2",
+            prior_risk_rating="2",
             rate_type="Floating",
             origination_date=date(2023, 11, 5),
             maturity_date=date(2031, 11, 5),
@@ -148,6 +153,56 @@ def re_loan_fixtures(test_db_session, sample_sales_team):
             delinquency_status="current",
             pipeline_stage="active",
             vintage_year=2023,
+        ),
+        # Loan 6: 60-bucket delinquent loan for delinquency waterfall test (CREDIT-04)
+        RELoan(
+            loan_number="RE-006",
+            borrower_name="Borrower Zeta",
+            sales_team_id=None,
+            as_of_date=as_of,
+            upb=Decimal("1000000.00"),
+            original_balance=Decimal("1100000.00"),
+            interest_rate=Decimal("0.070"),
+            wam_months=120,
+            ltv=Decimal("0.80"),
+            dscr=Decimal("1.0"),
+            property_type="Office",
+            state="NY",
+            msa="New York-Newark",
+            risk_rating="4",
+            prior_risk_rating="3",
+            rate_type="Fixed",
+            origination_date=date(2022, 6, 1),
+            maturity_date=date(2027, 6, 1),
+            days_past_due=65,
+            delinquency_status="60dpd",
+            pipeline_stage="active",
+            vintage_year=2022,
+        ),
+        # Loan 7: default-bucket loan for delinquency waterfall test (CREDIT-04)
+        RELoan(
+            loan_number="RE-007",
+            borrower_name="Borrower Eta",
+            sales_team_id=None,
+            as_of_date=as_of,
+            upb=Decimal("500000.00"),
+            original_balance=Decimal("600000.00"),
+            interest_rate=Decimal("0.080"),
+            wam_months=60,
+            ltv=Decimal("0.90"),
+            dscr=Decimal("0.80"),
+            property_type="Retail",
+            state="TX",
+            msa="Dallas",
+            risk_rating="5",
+            prior_risk_rating="4",
+            rate_type="Fixed",
+            origination_date=date(2021, 3, 1),
+            maturity_date=date(2026, 3, 1),
+            days_past_due=200,
+            delinquency_status="default",
+            pipeline_stage="active",
+            vintage_year=2021,
         ),
     ]
 
@@ -185,7 +240,7 @@ def test_kpis(client, re_loan_fixtures, auth_headers_admin):
     data = response.json()
     assert Decimal(str(data["total_upb"])) > 0
     assert data["wac"] is not None
-    assert data["active_loan_count"] == 5
+    assert data["active_loan_count"] == 7
     assert data["portfolio_yield"] is not None
 
 
@@ -243,10 +298,10 @@ def test_maturity_profile(client, re_loan_fixtures, auth_headers_admin):
 
 def test_sales_team_scoping_kpis(client, re_loan_fixtures, auth_headers_sales, auth_headers_admin):
     """API-11 (partial): sales_team JWT scopes KPI active_loan_count to team's loans only."""
-    # Admin sees all 5 loans
+    # Admin sees all 7 loans
     admin_resp = client.get("/api/re/kpis", headers=auth_headers_admin)
     assert admin_resp.status_code == 200
-    assert admin_resp.json()["active_loan_count"] == 5
+    assert admin_resp.json()["active_loan_count"] == 7
 
     # Sales user sees only loans assigned to their team (loans 1, 2, 5 = 3 loans)
     sales_resp = client.get("/api/re/kpis", headers=auth_headers_sales)
@@ -434,8 +489,8 @@ def test_sales_team_scope_loans_list(client, re_loan_fixtures, auth_headers_sale
     sales_resp = client.get("/api/re/loans", headers=auth_headers_sales)
     assert admin_resp.status_code == 200
     assert sales_resp.status_code == 200
-    # Admin sees all 5; sales user sees only 3 (loans 1, 2, 5)
-    assert admin_resp.json()["total"] == 5
+    # Admin sees all 7; sales user sees only 3 (loans 1, 2, 5)
+    assert admin_resp.json()["total"] == 7
     assert sales_resp.json()["total"] == 3
 
 
@@ -470,3 +525,105 @@ def test_unauthenticated_rejected(client, re_loan_fixtures):
     """API-11: Unauthenticated request to any /api/re/* endpoint returns 401."""
     response = client.get("/api/re/kpis")
     assert response.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# CREDIT-04 — Delinquency waterfall
+# ---------------------------------------------------------------------------
+
+
+def test_delinquency_waterfall(client, re_loan_fixtures, auth_headers_admin):
+    """CREDIT-04: Delinquency waterfall returns ordered exclusive buckets."""
+    response = client.get("/api/re/delinquency-waterfall", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert "buckets" in data
+    buckets = data["buckets"]
+    assert len(buckets) >= 1
+    # Verify structure
+    for b in buckets:
+        assert "bucket" in b
+        assert "loan_count" in b
+        assert "total_upb" in b
+    # Verify ordering
+    bucket_names = [b["bucket"] for b in buckets]
+    expected_order = ["current", "30", "60", "90", "default"]
+    assert bucket_names == [n for n in expected_order if n in bucket_names]
+    # At least current bucket has loans
+    current_bucket = next((b for b in buckets if b["bucket"] == "current"), None)
+    assert current_bucket is not None
+    assert current_bucket["loan_count"] > 0
+
+
+# ---------------------------------------------------------------------------
+# CREDIT-05 — Risk rating migration
+# ---------------------------------------------------------------------------
+
+
+def test_risk_rating_migration(client, re_loan_fixtures, auth_headers_admin):
+    """CREDIT-05: Migration matrix returns cells with prior/current rating pairs."""
+    response = client.get("/api/re/risk-rating-migration", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert "cells" in data
+    assert "ratings" in data
+    assert isinstance(data["ratings"], list)
+    assert len(data["ratings"]) >= 1
+    for cell in data["cells"]:
+        assert "prior_rating" in cell
+        assert "current_rating" in cell
+        assert "loan_count" in cell
+        assert "total_upb" in cell
+    # Total loan_count across cells should match count of loans with prior_risk_rating set
+    total_migrated = sum(c["loan_count"] for c in data["cells"])
+    assert total_migrated >= 1
+
+
+# ---------------------------------------------------------------------------
+# CREDIT-03 — LoanSummary includes prior_risk_rating
+# ---------------------------------------------------------------------------
+
+
+def test_loans_list_has_prior_risk_rating(client, re_loan_fixtures, auth_headers_admin):
+    """CREDIT-03: LoanSummary items include prior_risk_rating for watchlist trend arrows."""
+    response = client.get("/api/re/loans", headers=auth_headers_admin)
+    assert response.status_code == 200
+    items = response.json()["items"]
+    assert len(items) >= 1
+    # Every item must have the key (even if null)
+    for item in items:
+        assert "prior_risk_rating" in item
+
+
+# ---------------------------------------------------------------------------
+# CREDIT-01 — LTV distribution color bands
+# ---------------------------------------------------------------------------
+
+
+def test_distributions_ltv_color_bands(client, re_loan_fixtures, auth_headers_admin):
+    """CREDIT-01: LTV histogram buckets each have a color field with valid value."""
+    response = client.get("/api/re/distributions", headers=auth_headers_admin)
+    assert response.status_code == 200
+    ltv_hist = response.json()["ltv_histogram"]
+    assert len(ltv_hist) >= 1
+    valid_colors = {"green", "yellow", "red", "grey"}
+    for bucket in ltv_hist:
+        assert "color" in bucket
+        assert bucket["color"] in valid_colors
+
+
+# ---------------------------------------------------------------------------
+# CREDIT-02 — DSCR distribution color bands
+# ---------------------------------------------------------------------------
+
+
+def test_distributions_dscr_color_bands(client, re_loan_fixtures, auth_headers_admin):
+    """CREDIT-02: DSCR histogram buckets each have a color field with valid value."""
+    response = client.get("/api/re/distributions", headers=auth_headers_admin)
+    assert response.status_code == 200
+    dscr_hist = response.json()["dscr_histogram"]
+    assert len(dscr_hist) >= 1
+    valid_colors = {"green", "yellow", "red", "grey"}
+    for bucket in dscr_hist:
+        assert "color" in bucket
+        assert bucket["color"] in valid_colors
