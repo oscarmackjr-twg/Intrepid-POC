@@ -14,6 +14,7 @@ import {
 } from 'recharts'
 import { useReLoanFilters } from '../hooks/useReLoanFilters'
 import { ChartCard } from '../components/re/ChartCard'
+import { TopExposuresTable } from '../components/re/TopExposuresTable'
 import type { ConcentrationItem, ConcentrationResponse, DistributionsResponse, MaturityProfileResponse } from '../types/re'
 
 // TWG brand palette for pie chart slices (per D-12, D-25)
@@ -151,8 +152,15 @@ export default function RePortfolioPage() {
         </ResponsiveContainer>
       </ChartCard>
 
-      {/* Panel 5: Top-10 Exposures table — full width — Plan 03 */}
-      <ChartCard title="Top-10 Exposures" isLoading={false} isEmpty={true} colSpan="full" />
+      {/* Panel 5: Top-10 Exposures table — full width (per D-11, D-16, D-17, D-18) */}
+      <ChartCard
+        title="Top-10 Exposures"
+        isLoading={concentration.isLoading}
+        isEmpty={!concentration.data?.top_10_exposures?.length}
+        colSpan="full"
+      >
+        <TopExposuresTable exposures={concentration.data?.top_10_exposures ?? []} />
+      </ChartCard>
 
       {/* Panel 6: Concentration Limits — full width — Plan 03 */}
       <ChartCard title="Concentration Limits" isLoading={false} isEmpty={true} colSpan="full" />
