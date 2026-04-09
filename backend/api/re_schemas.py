@@ -211,6 +211,7 @@ class LoanSummary(BaseModel):
     property_type: Optional[str]
     state: Optional[str]
     risk_rating: Optional[str]
+    prior_risk_rating: Optional[str] = None
     maturity_date: Optional[date]
     origination_date: Optional[date]
     days_past_due: Optional[int]
@@ -418,3 +419,51 @@ class SensitivityResponse(BaseModel):
     base_wac: Decimal
     total_upb: Decimal
     scenarios: list[SensitivityScenario]
+
+
+# ---------------------------------------------------------------------------
+# Delinquency waterfall endpoint — CREDIT-04
+# ---------------------------------------------------------------------------
+
+
+class DelinquencyBucket(BaseModel):
+    """Single delinquency bucket for waterfall display."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    bucket: str
+    loan_count: int
+    total_upb: Decimal
+
+
+class DelinquencyWaterfallResponse(BaseModel):
+    """Delinquency waterfall response — CREDIT-04."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    buckets: list[DelinquencyBucket]
+
+
+# ---------------------------------------------------------------------------
+# Risk rating migration endpoint — CREDIT-05
+# ---------------------------------------------------------------------------
+
+
+class MigrationCell(BaseModel):
+    """Single cell in the risk rating migration matrix."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    prior_rating: str
+    current_rating: str
+    loan_count: int
+    total_upb: Decimal
+
+
+class RiskRatingMigrationResponse(BaseModel):
+    """Risk rating migration matrix response — CREDIT-05."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    cells: list[MigrationCell]
+    ratings: list[str]

@@ -37,6 +37,8 @@ from api.re_schemas import (
     OriginationPipelineResponse,
     MarketContextResponse,
     SensitivityResponse,
+    DelinquencyWaterfallResponse,
+    RiskRatingMigrationResponse,
     get_filter_params,
 )
 from auth.audit import log_data_access
@@ -901,3 +903,110 @@ def get_sensitivity(
         )
 
     return SensitivityResponse(base_wac=base_wac, total_upb=total_upb, scenarios=scenarios)
+
+
+# ---------------------------------------------------------------------------
+# CREDIT-04 — GET /api/re/delinquency-waterfall
+# ---------------------------------------------------------------------------
+
+
+@router.get("/delinquency-waterfall", response_model=DelinquencyWaterfallResponse)
+def get_delinquency_waterfall(
+    params: FilterParams = Depends(get_filter_params),
+    current_user: User = Depends(require_sales_team_access()),
+    db: Session = Depends(get_db),
+) -> DelinquencyWaterfallResponse:
+    """Delinquency waterfall: exclusive DPD buckets ordered current->30->60->90->default (CREDIT-04)."""
+    from sqlalchemy import case
+    from api.re_schemas import DelinquencyBucket
+
+    log_data_access(current_user, "re_delinquency_waterfall")
+
+    filters = build_re_filters(db, params, current_user)
+
+    bucket_expr = case(
+        (RELoan.days_past_due == 0, "current"),
+        (RELoan.days_past_due < 60, "30"),
+        (RELoan.days_past_due < 90, "60"),
+        (RELoan.days_past_due < 180, "90"),
+        else_="default",
+    )
+    rows = (
+        db.query(
+            bucket_expr.label("bucket"),
+            func.count(RELoan.id).label("loan_count"),
+            func.sum(RELoan.upb).label("total_upb"),
+        )
+        .filter(*filters)
+        .group_by(bucket_expr)
+        .all()
+    )
+
+    ORDER = {"current": 0, "30": 1, "60": 2, "90": 3, "default": 4}
+    buckets = sorted(
+        [
+            DelinquencyBucket(
+                bucket=r.bucket,
+                loan_count=r.loan_count,
+                total_upb=Decimal(str(r.total_upb)) if r.total_upb else Decimal("0"),
+            )
+            for r in rows
+        ],
+        key=lambda b: ORDER.get(b.bucket, 99),
+    )
+    return DelinquencyWaterfallResponse(buckets=buckets)
+
+
+# ---------------------------------------------------------------------------
+# CREDIT-05 — GET /api/re/risk-rating-migration
+# ---------------------------------------------------------------------------
+
+
+@router.get("/risk-rating-migration", response_model=RiskRatingMigrationResponse)
+def get_risk_rating_migration(
+    params: FilterParams = Depends(get_filter_params),
+    current_user: User = Depends(require_sales_team_access()),
+    db: Session = Depends(get_db),
+) -> RiskRatingMigrationResponse:
+    """Risk rating migration matrix: prior vs current rating grouped counts (CREDIT-05)."""
+    from api.re_schemas import MigrationCell
+
+    log_data_access(current_user, "re_risk_rating_migration")
+
+    filters = build_re_filters(db, params, current_user)
+
+    rows = (
+        db.query(
+            RELoan.prior_risk_rating,
+            RELoan.risk_rating,
+            func.count(RELoan.id).label("loan_count"),
+            func.sum(RELoan.upb).label("total_upb"),
+        )
+        .filter(*filters)
+        .filter(RELoan.prior_risk_rating.isnot(None))
+        .filter(RELoan.risk_rating.isnot(None))
+        .group_by(RELoan.prior_risk_rating, RELoan.risk_rating)
+        .all()
+    )
+
+    cells = [
+        MigrationCell(
+            prior_rating=r[0],
+            current_rating=r[1],
+            loan_count=r[2],
+            total_upb=Decimal(str(r[3])) if r[3] else Decimal("0"),
+        )
+        for r in rows
+    ]
+
+    # Derive ordered distinct ratings from actual data (not hardcoded 1-5)
+    all_ratings: set[str] = set()
+    for c in cells:
+        all_ratings.add(c.prior_rating)
+        all_ratings.add(c.current_rating)
+    try:
+        ratings = sorted(all_ratings, key=lambda x: int(x))
+    except ValueError:
+        ratings = sorted(all_ratings)
+
+    return RiskRatingMigrationResponse(cells=cells, ratings=ratings)
