@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 from decimal import Decimal
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from faker import Faker
 from sqlalchemy.orm import Session
 from db.connection import SessionLocal

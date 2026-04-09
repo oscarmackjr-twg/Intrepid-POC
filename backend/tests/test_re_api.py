@@ -333,7 +333,6 @@ def test_loan_detail_out_of_scope_returns_404(client, re_loan_fixtures, auth_hea
     # Find their IDs via admin
     # We know from fixture: RE-003 and RE-004 have sales_team_id=None
     # Get all loan IDs via admin to find one outside scope
-    from db.models import RELoan as _RELoan
     # Use the fixture list — loans index 2 (RE-003) has sales_team_id=None
     # Get the ID from the fixture directly
     loan_no_team = re_loan_fixtures[2]  # RE-003, sales_team_id=None

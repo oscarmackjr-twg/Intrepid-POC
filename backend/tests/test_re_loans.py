@@ -1,6 +1,5 @@
 """Tests for RE loan data foundation (Phase 17: DATA-01 through DATA-04)."""
 
-import pytest
 from decimal import Decimal
 from datetime import date
 from sqlalchemy import Numeric as SANumeric

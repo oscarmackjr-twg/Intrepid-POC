@@ -355,7 +355,7 @@ def get_distributions(
 ) -> DistributionsResponse:
     """Credit quality distribution histograms with CREDIT-01/02 color bands."""
     from api.re_schemas import HistogramBucket
-    from sqlalchemy import case, cast, String as SaString
+    from sqlalchemy import case
 
     log_data_access(current_user, "re_distributions")
 
@@ -509,8 +509,6 @@ def get_loans(
     Sort whitelist prevents arbitrary column access (T-18-03).
     page_size bounded to prevent memory exhaustion (T-18-04).
     """
-    from fastapi import Query as _Q
-
     log_data_access(current_user, "re_loans_list")
 
     # Validate sort_by against whitelist (T-18-03)
