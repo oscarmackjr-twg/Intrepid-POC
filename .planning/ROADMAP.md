@@ -270,7 +270,7 @@ Plans:
 - [x] **Phase 17: Data Foundation** - re_loans + re_loan_cashflows schema locked, Alembic migrations applied, seed script populates 500+ loans
 - [ ] **Phase 18: Core API Layer** - All 11 /api/re/* endpoints return correct data with filter param support
 - [x] **Phase 19: Filter Hook + TypeScript Foundation** - Filter sidebar, URL param sync, Zustand store, and TanStack Query keys wired before any chart component is built (completed 2026-04-09)
-- [ ] **Phase 20: Executive Summary Page** - KPI cards populated from real seeded data; chart click-to-filter wired
+- [x] **Phase 20: Executive Summary Page** - KPI cards populated from real seeded data; chart click-to-filter wired (completed 2026-04-09)
 - [ ] **Phase 21: Portfolio Composition Page** - Property type chart, geo map/bar fallback, loan size histogram, maturity profile, top-10 table, concentration limits; click-to-filter wired
 - [ ] **Phase 22: Credit Quality Page** - LTV/DSCR histograms, watchlist table, delinquency waterfall, migration matrix, rate sensitivity; click-to-filter wired
 - [ ] **Phase 23: Cash Flow & Performance Page** - P&I line chart, NOI trend, yield analysis, CPR, loss/recovery; click-to-filter wired
@@ -342,7 +342,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 20-01-PLAN.md — Install TanStack Query, KPI card component + formatting, wire ReDashboard grid with loading/no-data/click states (EXEC-01, EXEC-02, UX-01)
+- [x] 20-01-PLAN.md — Install TanStack Query, KPI card component + formatting, wire ReDashboard grid with loading/no-data/click states (EXEC-01, EXEC-02, UX-01)
 **UI hint**: yes
 
 ### Phase 21: Portfolio Composition Page
@@ -469,7 +469,7 @@ Phases execute sequentially: 17 â 18 â 19 â 20 â 21 â 2
 | 17. Data Foundation | 0/2 | Not started | - |
 | 18. Core API Layer | 1/2 | In Progress|  |
 | 19. Filter Hook + TypeScript Foundation | 2/2 | Complete   | 2026-04-09 |
-| 20. Executive Summary Page | 0/TBD | Not started | - |
+| 20. Executive Summary Page | 1/1 | Complete   | 2026-04-09 |
 | 21. Portfolio Composition Page | 0/TBD | Not started | - |
 | 22. Credit Quality Page | 0/TBD | Not started | - |
 | 23. Cash Flow & Performance Page | 0/TBD | Not started | - |
