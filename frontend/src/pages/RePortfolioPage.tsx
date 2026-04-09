@@ -15,6 +15,7 @@ import {
 import { useReLoanFilters } from '../hooks/useReLoanFilters'
 import { ChartCard } from '../components/re/ChartCard'
 import { TopExposuresTable } from '../components/re/TopExposuresTable'
+import { ConcentrationLimits } from '../components/re/ConcentrationLimits'
 import type { ConcentrationItem, ConcentrationResponse, DistributionsResponse, MaturityProfileResponse } from '../types/re'
 
 // TWG brand palette for pie chart slices (per D-12, D-25)
@@ -162,8 +163,15 @@ export default function RePortfolioPage() {
         <TopExposuresTable exposures={concentration.data?.top_10_exposures ?? []} />
       </ChartCard>
 
-      {/* Panel 6: Concentration Limits — full width — Plan 03 */}
-      <ChartCard title="Concentration Limits" isLoading={false} isEmpty={true} colSpan="full" />
+      {/* Panel 6: Concentration Limits — full width (per D-11, D-19, D-20, D-21) */}
+      <ChartCard
+        title="Concentration Limits"
+        isLoading={concentration.isLoading}
+        isEmpty={!concentration.data?.concentration_limits?.length}
+        colSpan="full"
+      >
+        <ConcentrationLimits limits={concentration.data?.concentration_limits ?? []} />
+      </ChartCard>
 
     </div>
   )
