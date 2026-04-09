@@ -24,15 +24,14 @@ const PIE_COLORS = ['#1a3868', '#2563eb', '#0ea5e9', '#7c3aed', '#db2777', '#d97
 export default function RePortfolioPage() {
   const { filters, setFilter } = useReLoanFilters()
 
-  // Strip null/empty values before sending as query params (same pattern as useKPIs)
-  const params = Object.fromEntries(
-    Object.entries(filters).filter(([, v]) => v !== null && v !== '')
-  )
-
   // Three TanStack Query calls (per D-22)
+  // params is derived inside each queryFn to avoid stale closure when filters change asynchronously
   const concentration = useQuery({
     queryKey: ['re-concentration', filters],
     queryFn: async () => {
+      const params = Object.fromEntries(
+        Object.entries(filters).filter(([, v]) => v !== null && v !== '')
+      )
       const { data } = await axios.get<ConcentrationResponse>('/api/re/concentration', { params })
       return data
     },
@@ -41,6 +40,9 @@ export default function RePortfolioPage() {
   const distributions = useQuery({
     queryKey: ['re-distributions', filters],
     queryFn: async () => {
+      const params = Object.fromEntries(
+        Object.entries(filters).filter(([, v]) => v !== null && v !== '')
+      )
       const { data } = await axios.get<DistributionsResponse>('/api/re/distributions', { params })
       return data
     },
@@ -49,6 +51,9 @@ export default function RePortfolioPage() {
   const maturity = useQuery({
     queryKey: ['re-maturity-profile', filters],
     queryFn: async () => {
+      const params = Object.fromEntries(
+        Object.entries(filters).filter(([, v]) => v !== null && v !== '')
+      )
       const { data } = await axios.get<MaturityProfileResponse>('/api/re/maturity-profile', { params })
       return data
     },
