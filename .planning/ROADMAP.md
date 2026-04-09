@@ -355,11 +355,12 @@ Plans:
   3. The top-10 exposures table shows the 10 largest loans by UPB with LTV, DSCR, property type, and location columns
   4. Clicking a pie slice or histogram bar applies that dimension as a filter â confirmed by URL param change and updated KPI cards
   5. Concentration limit indicators are visible and show proximity to policy limits for borrower, geography, and property type concentrations
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
-- [ ] 17-02-PLAN.md — Seed script + integration tests for realistic CRE portfolio data (DATA-03, DATA-04)
+- [ ] 21-01-PLAN.md — Install Recharts, refactor ReDashboard into layout shell with tab strip and Outlet, extract KPI cards to ReExecutiveSummaryPage, wire nested routes in App.tsx
+- [ ] 21-02-PLAN.md — Create RePortfolioPage with ChartCard wrapper, property type donut, top states horizontal bar, loan size histogram, maturity profile stacked bar (COMP-01, COMP-02, COMP-03, COMP-04, UX-01)
+- [ ] 21-03-PLAN.md — Add TopExposuresTable and ConcentrationLimits components to RePortfolioPage (COMP-05, COMP-06)
 **UI hint**: yes
 
 ### Phase 22: Credit Quality Page
