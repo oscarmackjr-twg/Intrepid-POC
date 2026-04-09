@@ -9,6 +9,7 @@ import RejectedLoans from './pages/RejectedLoans'
 import FileManager from './pages/FileManager'
 import ProgramRuns from './pages/ProgramRuns'
 import HolidayMaintenance from './pages/HolidayMaintenance'
+import ReDashboard from './pages/ReDashboard'
 import CashFlow from './pages/CashFlow'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
@@ -36,6 +37,7 @@ function App() {
           <Route path="cashflow" element={<CashFlow />} />
           <Route path="program-runs" element={<ProgramRuns />} />
           <Route path="holidays" element={<HolidayMaintenance />} />
+          <Route path="re-dashboard" element={<ReDashboard />} />
         </Route>
       </Routes>
     </AuthProvider>
