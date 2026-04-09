@@ -111,9 +111,7 @@ def test_re_loan_cashflows_fk():
     assert fks[0].column.table.name == "re_loans", (
         f"FK references table '{fks[0].column.table.name}', expected 're_loans'"
     )
-    assert fks[0].column.name == "id", (
-        f"FK references column '{fks[0].column.name}', expected 'id'"
-    )
+    assert fks[0].column.name == "id", f"FK references column '{fks[0].column.name}', expected 'id'"
 
 
 # ---------------------------------------------------------------------------
@@ -143,11 +141,7 @@ def test_re_loan_insert_and_query(test_db_session):
 
     assert loan.id is not None, "loan.id should be set after flush"
 
-    queried = (
-        test_db_session.query(RELoan)
-        .filter(RELoan.loan_number == "TEST-00001")
-        .first()
-    )
+    queried = test_db_session.query(RELoan).filter(RELoan.loan_number == "TEST-00001").first()
     assert queried is not None
     assert queried.property_type == "multifamily"
     assert queried.state == "NY"
@@ -202,26 +196,34 @@ def test_re_loan_cashflow_relationship(test_db_session):
 
     # Add 12 monthly cashflows
     period_dates = [
-        date(2024, 10, 1), date(2024, 11, 1), date(2024, 12, 1),
-        date(2025, 1, 1),  date(2025, 2, 1),  date(2025, 3, 1),
-        date(2025, 4, 1),  date(2025, 5, 1),  date(2025, 6, 1),
-        date(2025, 7, 1),  date(2025, 8, 1),  date(2025, 9, 1),
+        date(2024, 10, 1),
+        date(2024, 11, 1),
+        date(2024, 12, 1),
+        date(2025, 1, 1),
+        date(2025, 2, 1),
+        date(2025, 3, 1),
+        date(2025, 4, 1),
+        date(2025, 5, 1),
+        date(2025, 6, 1),
+        date(2025, 7, 1),
+        date(2025, 8, 1),
+        date(2025, 9, 1),
     ]
     for pd_date in period_dates:
-        test_db_session.add(RELoanCashflow(
-            loan_id=loan.id,
-            period_date=pd_date,
-            scheduled_principal=Decimal("5555.555556"),
-            actual_principal=Decimal("5500.000000"),
-            scheduled_interest=Decimal("9166.666667"),
-            actual_interest=Decimal("9166.666667"),
-            noi=Decimal("30000.000000"),
-        ))
+        test_db_session.add(
+            RELoanCashflow(
+                loan_id=loan.id,
+                period_date=pd_date,
+                scheduled_principal=Decimal("5555.555556"),
+                actual_principal=Decimal("5500.000000"),
+                scheduled_interest=Decimal("9166.666667"),
+                actual_interest=Decimal("9166.666667"),
+                noi=Decimal("30000.000000"),
+            )
+        )
     test_db_session.flush()
 
     # Verify relationship via ORM
     test_db_session.expire(loan)
     reloaded = test_db_session.query(RELoan).filter(RELoan.id == loan.id).first()
-    assert len(reloaded.cashflows) == 12, (
-        f"Expected 12 cashflows, found {len(reloaded.cashflows)}"
-    )
+    assert len(reloaded.cashflows) == 12, f"Expected 12 cashflows, found {len(reloaded.cashflows)}"

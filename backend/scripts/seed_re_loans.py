@@ -90,6 +90,7 @@ STATE_WEIGHTS = [w / _total_sw for w in STATE_WEIGHTS_RAW]
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def to_dec(val, places: int = 6) -> Decimal:
     """Convert numpy float to Decimal with specified decimal places."""
     return Decimal(str(round(float(val), places)))
@@ -110,6 +111,7 @@ def generate_delinquency():
 # ---------------------------------------------------------------------------
 # T0 loan generation
 # ---------------------------------------------------------------------------
+
 
 def generate_t0_loans() -> list[RELoan]:
     """Generate N_LOANS T0 snapshot loans."""
@@ -170,6 +172,7 @@ def generate_t0_loans() -> list[RELoan]:
 # T1 loan generation
 # ---------------------------------------------------------------------------
 
+
 def generate_t1_loans(t0_loans: list[RELoan]) -> list[RELoan]:
     """Generate T1 snapshot — same loan population, slight adjustments."""
     t1_loans = []
@@ -225,15 +228,24 @@ def generate_t1_loans(t0_loans: list[RELoan]) -> list[RELoan]:
 # Cashflow generation (T0 loans only)
 # ---------------------------------------------------------------------------
 
+
 def generate_cashflows(t0_loans: list[RELoan]) -> list[RELoanCashflow]:
     """Generate 12 monthly cashflow records (Oct 2024 - Sep 2025) per T0 loan."""
     cashflows = []
     # Monthly period dates: first of each month from Oct 2024 to Sep 2025
     period_dates = [
-        date(2024, 10, 1), date(2024, 11, 1), date(2024, 12, 1),
-        date(2025, 1, 1),  date(2025, 2, 1),  date(2025, 3, 1),
-        date(2025, 4, 1),  date(2025, 5, 1),  date(2025, 6, 1),
-        date(2025, 7, 1),  date(2025, 8, 1),  date(2025, 9, 1),
+        date(2024, 10, 1),
+        date(2024, 11, 1),
+        date(2024, 12, 1),
+        date(2025, 1, 1),
+        date(2025, 2, 1),
+        date(2025, 3, 1),
+        date(2025, 4, 1),
+        date(2025, 5, 1),
+        date(2025, 6, 1),
+        date(2025, 7, 1),
+        date(2025, 8, 1),
+        date(2025, 9, 1),
     ]
 
     for loan in t0_loans:
@@ -252,21 +264,24 @@ def generate_cashflows(t0_loans: list[RELoan]) -> list[RELoanCashflow]:
             # NOI: proportional to UPB (~4-8% annual yield / 12 months)
             noi = upb_float * float(rng.uniform(0.04, 0.08)) / 12.0
 
-            cashflows.append(RELoanCashflow(
-                loan_id=loan.id,
-                period_date=period_date,
-                scheduled_principal=to_dec(sched_principal),
-                actual_principal=to_dec(actual_principal),
-                scheduled_interest=to_dec(sched_interest),
-                actual_interest=to_dec(actual_interest),
-                noi=to_dec(noi),
-            ))
+            cashflows.append(
+                RELoanCashflow(
+                    loan_id=loan.id,
+                    period_date=period_date,
+                    scheduled_principal=to_dec(sched_principal),
+                    actual_principal=to_dec(actual_principal),
+                    scheduled_interest=to_dec(sched_interest),
+                    actual_interest=to_dec(actual_interest),
+                    noi=to_dec(noi),
+                )
+            )
     return cashflows
 
 
 # ---------------------------------------------------------------------------
 # Main seed function
 # ---------------------------------------------------------------------------
+
 
 def seed_re_loans() -> None:
     """Seed re_loans and re_loan_cashflows. Idempotent — safe to re-run."""
@@ -291,10 +306,7 @@ def seed_re_loans() -> None:
         db.add_all(cashflows)
 
         db.commit()
-        print(
-            f"Seeded {len(t0_loans)} T0 loans, {len(t1_loans)} T1 loans, "
-            f"{len(cashflows)} cashflow records"
-        )
+        print(f"Seeded {len(t0_loans)} T0 loans, {len(t1_loans)} T1 loans, {len(cashflows)} cashflow records")
     finally:
         db.close()
 

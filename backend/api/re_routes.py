@@ -137,35 +137,23 @@ def get_kpis(
 
     filters = build_re_filters(db, params, current_user)
 
-    result = db.query(
-        func.sum(RELoan.upb).label("total_upb"),
-        func.count(RELoan.id).label("active_loan_count"),
-        (
-            func.sum(RELoan.interest_rate * RELoan.upb)
-            / func.nullif(func.sum(RELoan.upb), 0)
-        ).label("wac"),
-        (
-            func.sum(cast(RELoan.wam_months, SaNumeric(10, 6)) * RELoan.upb)
-            / func.nullif(func.sum(RELoan.upb), 0)
-        ).label("wam"),
-        (
-            func.sum(RELoan.ltv * RELoan.upb)
-            / func.nullif(func.sum(RELoan.upb), 0)
-        ).label("wa_ltv"),
-        (
-            func.sum(RELoan.dscr * RELoan.upb)
-            / func.nullif(func.sum(RELoan.upb), 0)
-        ).label("wa_dscr"),
-        func.sum(
-            case((RELoan.days_past_due >= 30, RELoan.upb), else_=0)
-        ).label("delinquent_30_upb"),
-        func.sum(
-            case((RELoan.days_past_due >= 60, RELoan.upb), else_=0)
-        ).label("delinquent_60_upb"),
-        func.sum(
-            case((RELoan.days_past_due >= 90, RELoan.upb), else_=0)
-        ).label("delinquent_90_upb"),
-    ).filter(*filters).one()
+    result = (
+        db.query(
+            func.sum(RELoan.upb).label("total_upb"),
+            func.count(RELoan.id).label("active_loan_count"),
+            (func.sum(RELoan.interest_rate * RELoan.upb) / func.nullif(func.sum(RELoan.upb), 0)).label("wac"),
+            (
+                func.sum(cast(RELoan.wam_months, SaNumeric(10, 6)) * RELoan.upb) / func.nullif(func.sum(RELoan.upb), 0)
+            ).label("wam"),
+            (func.sum(RELoan.ltv * RELoan.upb) / func.nullif(func.sum(RELoan.upb), 0)).label("wa_ltv"),
+            (func.sum(RELoan.dscr * RELoan.upb) / func.nullif(func.sum(RELoan.upb), 0)).label("wa_dscr"),
+            func.sum(case((RELoan.days_past_due >= 30, RELoan.upb), else_=0)).label("delinquent_30_upb"),
+            func.sum(case((RELoan.days_past_due >= 60, RELoan.upb), else_=0)).label("delinquent_60_upb"),
+            func.sum(case((RELoan.days_past_due >= 90, RELoan.upb), else_=0)).label("delinquent_90_upb"),
+        )
+        .filter(*filters)
+        .one()
+    )
 
     if result.active_loan_count == 0 or result.total_upb is None:
         return KPIResponse(
@@ -256,13 +244,7 @@ def get_concentration(
     msa_breakdown = _breakdown(RELoan.msa)
 
     # Top-10 exposures
-    top_loans = (
-        db.query(RELoan)
-        .filter(*filters)
-        .order_by(RELoan.upb.desc())
-        .limit(10)
-        .all()
-    )
+    top_loans = db.query(RELoan).filter(*filters).order_by(RELoan.upb.desc()).limit(10).all()
     top_exposures = [
         TopExposure(
             loan_number=loan.loan_number,
@@ -524,9 +506,7 @@ def get_loans(
     # Apply sort
     if sort_by is not None:
         order_col = getattr(RELoan, sort_by, RELoan.id)
-        base_query = base_query.order_by(
-            order_col.desc() if sort_dir == "desc" else order_col.asc()
-        )
+        base_query = base_query.order_by(order_col.desc() if sort_dir == "desc" else order_col.asc())
     else:
         base_query = base_query.order_by(RELoan.id.asc())
 
@@ -569,13 +549,17 @@ def get_loan_detail(
         raise HTTPException(status_code=404, detail="Loan not found")
 
     # Aggregate payment history from linked cashflows
-    cf_row = db.query(
-        func.sum(RELoanCashflow.scheduled_principal),
-        func.sum(RELoanCashflow.actual_principal),
-        func.sum(RELoanCashflow.scheduled_interest),
-        func.sum(RELoanCashflow.actual_interest),
-        func.count(RELoanCashflow.id),
-    ).filter(RELoanCashflow.loan_id == loan_id).one()
+    cf_row = (
+        db.query(
+            func.sum(RELoanCashflow.scheduled_principal),
+            func.sum(RELoanCashflow.actual_principal),
+            func.sum(RELoanCashflow.scheduled_interest),
+            func.sum(RELoanCashflow.actual_interest),
+            func.count(RELoanCashflow.id),
+        )
+        .filter(RELoanCashflow.loan_id == loan_id)
+        .one()
+    )
 
     def _d(val) -> Optional[Decimal]:
         return Decimal(str(val)) if val is not None else None
@@ -877,13 +861,14 @@ def get_sensitivity(
 
     filters = build_re_filters(db, params, current_user)
 
-    result = db.query(
-        (
-            func.sum(RELoan.interest_rate * RELoan.upb)
-            / func.nullif(func.sum(RELoan.upb), 0)
-        ).label("base_wac"),
-        func.sum(RELoan.upb).label("total_upb"),
-    ).filter(*filters).one()
+    result = (
+        db.query(
+            (func.sum(RELoan.interest_rate * RELoan.upb) / func.nullif(func.sum(RELoan.upb), 0)).label("base_wac"),
+            func.sum(RELoan.upb).label("total_upb"),
+        )
+        .filter(*filters)
+        .one()
+    )
 
     base_wac_raw = result.base_wac
     total_upb_raw = result.total_upb

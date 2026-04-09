@@ -28,6 +28,7 @@ pd.options.display.max_rows = 500
 # Allocation function (importable for unit tests)
 # ---------------------------------------------------------------------------
 
+
 def allocate_sg(buy_df, grouped_sum, p=0.325, s=0.5):
     """Allocate loans between SG and CIBC lenders.
 

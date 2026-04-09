@@ -17,10 +17,12 @@ class TestAllocateSg:
 
     def test_default_ratios_sfy(self):
         """SFY tags get 50% allocation by default (s=0.5)."""
-        buy_df = _make_buy_df([
-            {"tags": "SFYstandard", "Orig. Balance": 100_000},
-            {"tags": "SFYstandard", "Orig. Balance": 100_000},
-        ])
+        buy_df = _make_buy_df(
+            [
+                {"tags": "SFYstandard", "Orig. Balance": 100_000},
+                {"tags": "SFYstandard", "Orig. Balance": 100_000},
+            ]
+        )
         grouped_sum = buy_df.groupby("tags")["Orig. Balance"].sum()
         result = allocate_sg(buy_df, grouped_sum)
         sg_total = result[result["final"] == "sg"]["Orig. Balance"].sum()
@@ -29,12 +31,14 @@ class TestAllocateSg:
 
     def test_default_ratios_prime(self):
         """PRIME tags get 32.5% allocation by default (p=0.325)."""
-        buy_df = _make_buy_df([
-            {"tags": "PRIMEstandard", "Orig. Balance": 100_000},
-            {"tags": "PRIMEstandard", "Orig. Balance": 100_000},
-            {"tags": "PRIMEstandard", "Orig. Balance": 100_000},
-            {"tags": "PRIMEstandard", "Orig. Balance": 100_000},
-        ])
+        buy_df = _make_buy_df(
+            [
+                {"tags": "PRIMEstandard", "Orig. Balance": 100_000},
+                {"tags": "PRIMEstandard", "Orig. Balance": 100_000},
+                {"tags": "PRIMEstandard", "Orig. Balance": 100_000},
+                {"tags": "PRIMEstandard", "Orig. Balance": 100_000},
+            ]
+        )
         grouped_sum = buy_df.groupby("tags")["Orig. Balance"].sum()
         result = allocate_sg(buy_df, grouped_sum)
         sg_count = (result["final"] == "sg").sum()
@@ -47,40 +51,48 @@ class TestAllocateSg:
 
     def test_dynamic_dict_sfy_prefix(self):
         """Tags starting with SFY use s ratio."""
-        buy_df = _make_buy_df([
-            {"tags": "SFYepni", "Orig. Balance": 50_000},
-            {"tags": "SFYwpdi", "Orig. Balance": 50_000},
-        ])
+        buy_df = _make_buy_df(
+            [
+                {"tags": "SFYepni", "Orig. Balance": 50_000},
+                {"tags": "SFYwpdi", "Orig. Balance": 50_000},
+            ]
+        )
         grouped_sum = buy_df.groupby("tags")["Orig. Balance"].sum()
         result = allocate_sg(buy_df, grouped_sum, s=1.0)  # 100% to SG
         assert all(result["final"] == "sg")
 
     def test_dynamic_dict_prime_prefix(self):
         """Tags starting with PRIME use p ratio."""
-        buy_df = _make_buy_df([
-            {"tags": "PRIMEhybrid", "Orig. Balance": 50_000},
-            {"tags": "PRIMEninp", "Orig. Balance": 50_000},
-        ])
+        buy_df = _make_buy_df(
+            [
+                {"tags": "PRIMEhybrid", "Orig. Balance": 50_000},
+                {"tags": "PRIMEninp", "Orig. Balance": 50_000},
+            ]
+        )
         grouped_sum = buy_df.groupby("tags")["Orig. Balance"].sum()
         result = allocate_sg(buy_df, grouped_sum, p=1.0)  # 100% to SG
         assert all(result["final"] == "sg")
 
     def test_bd_suffix_always_cibc(self):
         """_bd-suffixed tags always get 0 allocation — all go to CIBC."""
-        buy_df = _make_buy_df([
-            {"tags": "SFYstandard_bd", "Orig. Balance": 50_000},
-            {"tags": "SFYwpdi_bd", "Orig. Balance": 50_000},
-        ])
+        buy_df = _make_buy_df(
+            [
+                {"tags": "SFYstandard_bd", "Orig. Balance": 50_000},
+                {"tags": "SFYwpdi_bd", "Orig. Balance": 50_000},
+            ]
+        )
         grouped_sum = buy_df.groupby("tags")["Orig. Balance"].sum()
         result = allocate_sg(buy_df, grouped_sum, s=1.0)  # even at 100%, _bd stays CIBC
         assert all(result["final"] == "cibc")
 
     def test_unknown_tag_no_keyerror(self):
         """Tags in buy_df but absent from grouped_sum do not raise KeyError."""
-        buy_df = _make_buy_df([
-            {"tags": "SFYstandard", "Orig. Balance": 50_000},
-            {"tags": "UNKNOWNtype", "Orig. Balance": 50_000},
-        ])
+        buy_df = _make_buy_df(
+            [
+                {"tags": "SFYstandard", "Orig. Balance": 50_000},
+                {"tags": "UNKNOWNtype", "Orig. Balance": 50_000},
+            ]
+        )
         # grouped_sum only has SFYstandard (UNKNOWNtype has 0 balance in groupby)
         grouped_sum = pd.Series({"SFYstandard": 50_000})
         result = allocate_sg(buy_df, grouped_sum, s=1.0)
@@ -92,11 +104,13 @@ class TestAllocateSg:
 
     def test_budget_exhaustion(self):
         """Once SG budget is exhausted for a tag, remaining loans go to CIBC."""
-        buy_df = _make_buy_df([
-            {"tags": "SFYstandard", "Orig. Balance": 60_000},
-            {"tags": "SFYstandard", "Orig. Balance": 60_000},
-            {"tags": "SFYstandard", "Orig. Balance": 60_000},
-        ])
+        buy_df = _make_buy_df(
+            [
+                {"tags": "SFYstandard", "Orig. Balance": 60_000},
+                {"tags": "SFYstandard", "Orig. Balance": 60_000},
+                {"tags": "SFYstandard", "Orig. Balance": 60_000},
+            ]
+        )
         grouped_sum = buy_df.groupby("tags")["Orig. Balance"].sum()
         # s=0.5 => budget = 90k. Allocation assigns sg while budget > 0:
         # loan 1 (60k): budget=90k > 0 -> sg, budget=30k
