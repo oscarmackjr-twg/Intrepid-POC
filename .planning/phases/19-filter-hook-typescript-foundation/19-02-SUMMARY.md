@@ -33,10 +33,9 @@ decisions:
   - "[D-14] Route uses path=re-dashboard (no leading slash) — child route pattern"
   - "[D-15] RE Dashboard nav link placed after File Manager, before admin-only block — visible to all authenticated users"
 metrics:
-  duration: "~10 minutes"
-  completed: "2026-04-09T02:12:56Z"
-  tasks_completed: 2
-  tasks_pending_verification: 1
+  duration: "~15 minutes"
+  completed: "2026-04-09T02:30:00Z"
+  tasks_completed: 3
   files_created: 2
   files_modified: 2
 ---
@@ -51,12 +50,7 @@ metrics:
 |------|------|--------|-------|
 | 1 | Create ReDashboard page and ReDashboardFilterSidebar component | 27eb8d5 | frontend/src/pages/ReDashboard.tsx, frontend/src/components/re/ReDashboardFilterSidebar.tsx |
 | 2 | Wire route in App.tsx and nav link in Layout.tsx | c8c2671 | frontend/src/App.tsx, frontend/src/components/Layout.tsx |
-
-## Tasks Pending Human Verification
-
-| Task | Name | Status |
-|------|------|--------|
-| 3 | Verify filter sidebar renders and functions correctly | Awaiting human verification |
+| 3 | Verify filter sidebar renders and functions correctly | human-approved | N/A (visual/functional verification) |
 
 ## What Was Built
 
@@ -102,7 +96,7 @@ Default export `ReDashboard` page:
 2. `grep "re-dashboard" frontend/src/App.tsx` — matches route definition
 3. `grep "RE Dashboard" frontend/src/components/Layout.tsx` — matches nav link
 4. `grep "ReDashboardFilterSidebar" frontend/src/pages/ReDashboard.tsx` — confirms wiring
-5. Human-verify checkpoint (Task 3) — PENDING
+5. Human-verify checkpoint (Task 3) — APPROVED: all 9 filter controls visible, URL sync works on selection, Clear all resets URL params and all controls, three-column layout correct, nav link highlights when active
 
 ## Deviations from Plan
 
@@ -124,4 +118,5 @@ None — no new network endpoints, auth paths, or schema changes introduced. Fil
 - FOUND: RE Dashboard nav link in frontend/src/components/Layout.tsx
 - FOUND commit 27eb8d5 (Task 1)
 - FOUND commit c8c2671 (Task 2)
+- Task 3: human-approved (all 9 controls, URL sync, Clear all, nav active state)
 - TypeScript: npx tsc --noEmit exits 0
