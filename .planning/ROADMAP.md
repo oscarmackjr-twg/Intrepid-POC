@@ -119,7 +119,7 @@ Phases execute sequentially: 1 â 2 â 3 â 4 â 5
 | 12. Unit Testing Build Out | 3/3 | Complete   | 2026-03-22 |
 | 13. Final Documentation Cleanup | 3/3 | Complete    | 2026-03-22 |
 | 14. Alembic Migration & Seed Automation | 0/2 | Pending | |
-| 15. Integrate Updated Tagging Logic | 1/2 | In Progress|  |
+| 15. Integrate Updated Tagging Logic | 2/2 | Complete   | 2026-04-09 |
 
 ### Phase 6: Final Funding & Cashflow Integration
 
@@ -240,11 +240,11 @@ Plans:
 **Goal:** Update tagging.py allocation ratios (p=0.325, s=0.5), extract allocation logic into a testable function, replace hardcoded 12-key SG dict with a dynamic loop over grouped_sum keys, fix KeyError guard with .get(), add unit tests, run regression tests and re-baseline golden files, and update developer reference docs.
 **Requirements**: TAG-01, TAG-02, TAG-03, TAG-04, TAG-05, TAG-06
 **Depends on:** Phase 14
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 15-01-PLAN.md â Extract allocate_sg function, update ratios (p=0.325, s=0.5), dynamic SG dict loop, KeyError guard, unit tests (TAG-01, TAG-02, TAG-03, TAG-04, TAG-05)
-- [ ] 15-02-PLAN.md â Run regression tests, re-baseline golden files, update developer reference docs and tests README (TAG-06)
+- [x] 15-02-PLAN.md â Run regression tests, re-baseline golden files, update developer reference docs and tests README (TAG-06)
 
 ### Phase 16: Linting
 
@@ -310,7 +310,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 18-01-PLAN.md — Foundation + aggregation endpoints: re_schemas.py, FilterParams, build_re_filters, KPIs, concentration, distributions, maturity-profile (API-01, API-02, API-03, API-04, API-11)
+- [x] 18-01-PLAN.md — Foundation + aggregation endpoints: re_schemas.py, FilterParams, build_re_filters, KPIs, concentration, distributions, maturity-profile (API-01, API-02, API-03, API-04, API-11)
 - [ ] 18-02-PLAN.md — Loans + remaining endpoints: paginated loans, loan detail, cashflow-performance, origination-pipeline, market-context, sensitivity, scoping tests, Swagger verification (API-05, API-06, API-07, API-08, API-09, API-10, API-11)
 
 
@@ -468,7 +468,7 @@ Phases execute sequentially: 17 â 18 â 19 â 20 â 21 â 2
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 17. Data Foundation | 0/2 | Not started | - |
-| 18. Core API Layer | 0/TBD | Not started | - |
+| 18. Core API Layer | 1/2 | In Progress|  |
 | 19. Filter Hook + TypeScript Foundation | 0/TBD | Not started | - |
 | 20. Executive Summary Page | 0/TBD | Not started | - |
 | 21. Portfolio Composition Page | 0/TBD | Not started | - |
