@@ -93,8 +93,8 @@ export default function RePortfolioPage() {
               onClick={(entry) => { if (entry && 'category' in entry) setFilter('property_type', (entry as unknown as ConcentrationItem).category) }}
               style={{ cursor: 'pointer' }}
             >
-              {(concentration.data?.property_type ?? []).map((_, i) => (
-                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+              {(concentration.data?.property_type ?? []).map((item, i) => (
+                <Cell key={item.category} fill={PIE_COLORS[i % PIE_COLORS.length]} />
               ))}
             </Pie>
             <Tooltip />
