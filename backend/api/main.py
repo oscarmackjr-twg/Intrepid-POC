@@ -19,6 +19,7 @@ from config.settings import settings
 from api.routes import router as api_router
 from api.files import router as files_router
 from api.program_run_jobs import router as program_run_jobs_router
+from api.re_routes import router as re_router
 from cashflow.routes import router as cashflow_router
 from auth.routes import router as auth_router
 from auth.limiter import limiter
@@ -55,6 +56,9 @@ class CSPMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: StarletteRequest, call_next):
         response = await call_next(request)
+        # Skip CSP for Swagger/ReDoc UI — they load assets from cdn.jsdelivr.net
+        if request.url.path in ("/docs", "/redoc", "/openapi.json"):
+            return response
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self'; "
@@ -114,6 +118,7 @@ app.include_router(api_router)
 app.include_router(files_router)
 app.include_router(cashflow_router)
 app.include_router(program_run_jobs_router)
+app.include_router(re_router)
 
 # Serve frontend static files when present (e.g. in Docker / production build)
 _static_dir = Path(__file__).resolve().parent.parent / "static"
