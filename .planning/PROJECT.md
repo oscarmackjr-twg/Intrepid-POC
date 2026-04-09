@@ -8,21 +8,17 @@ An internal operations dashboard for processing loan purchase opportunities. The
 
 Ops can take a loan tape from email to executed wire instructions in a single, auditable workflow — replacing ad hoc scripts with a controlled, visible process.
 
-## Current Milestone: v2.0 Real Estate Loan Dashboard POC
+## Current Milestone: v1.0 Local to Cloud
 
-**Goal:** Build a comprehensive RE loan portfolio dashboard POC inside the existing React + FastAPI platform, powered by a seeded Postgres dataset.
+**Goal:** Take the codebase from nothing-runs to a reproducible local dev environment, production Docker image, and fully deployed AWS staging environment with CI/CD.
 
 **Target features:**
-- Executive Summary page — KPI cards (UPB, WAC, WAM, LTV, DSCR, active loans, delinquency buckets, yield/spread)
-- Portfolio Composition — property type pie chart, US geo heatmap by state/MSA, loan size histogram, maturity profile, top-10 exposures table, concentration limit indicators
-- Credit Quality & Risk — LTV/DSCR color-band histograms, watchlist table with risk ratings + trend arrows, delinquency waterfall, risk rating migration matrix, interest rate sensitivity
-- Cash Flow & Performance — P&I actual vs projected, NOI trends, yield analysis, CPR tracking, loss/recovery tracking
-- Origination Pipeline — new origination volume by month, payoffs/paydowns, pipeline funnel, vintage analysis
-- Market Context — stubbed static values (10Y Treasury, SOFR, cap rates, vacancy rates) with real-feed hook markers
-- Global filter sidebar — date/as-of, property type, geography, loan size, risk rating, vintage, borrower, rate type
-- Drill-down interactivity — chart segment click filters dashboard; loan row click opens detail card
-- Export — PDF dashboard snapshot, CSV export of any filtered table
-- Role-based view stub — PM (full portfolio) vs advisor (their book only)
+- Local dev environment: FastAPI + Postgres + React running with proper .env config
+- Docker Compose for local dev (single-command startup, hot reload, volumes)
+- Production Dockerfile: single container image (React built-in) ready for ECS
+- AWS infrastructure via Terraform: ECS Fargate, RDS, ALB, S3, ECR, SES, VPC, IAM
+- CI/CD pipeline: GitHub Actions → ECR → ECS rolling deploy, migrations on deploy
+- Staging environment: live URL, email override enforced, end-to-end smoke test
 
 ## Requirements
 
@@ -99,22 +95,4 @@ Ops can take a loan tape from email to executed wire instructions in a single, a
 | Decimal arithmetic throughout | Float accumulates error across 1,000 loans | — Pending (verify in existing code) |
 
 ---
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
-
----
-*Last updated: 2026-04-08 — Milestone v2.0 started (Real Estate Loan Dashboard POC)*
+*Last updated: 2026-03-25 — Phase 16 complete (Linting: ESLint v9 flat config for frontend, ruff clean for backend, husky+lint-staged pre-commit hooks, ESLint blocking CI gate in security-quality-gate job)*

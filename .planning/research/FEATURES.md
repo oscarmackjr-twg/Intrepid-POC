@@ -1,359 +1,333 @@
-# Feature Landscape: RE Loan Portfolio Dashboard POC
+# Features Research: Loan Purchase Operations Platform
 
-**Domain:** Commercial Real Estate (CRE) loan portfolio monitoring — internal ops dashboard POC
-**Researched:** 2026-04-08
-**Confidence:** MEDIUM-HIGH (domain patterns well-established; React/charting choices verified against current docs)
-
----
-
-## Context: What This Is and Is Not
-
-This is a **POC** — a seeded-data demonstration added to an existing React 19 + FastAPI + PostgreSQL app. The goal is to show stakeholders what CRE portfolio monitoring can look like, not to build a production-grade portfolio management system. That distinction drives every category decision below.
-
-**Existing charting infrastructure:** None. The frontend has React 19 + Tailwind CSS + react-router-dom, no chart library installed. Adding one is required.
-
-**Recommended chart library: Recharts 2.x** — 3.6M+ weekly downloads, built for React (not adapted from jQuery/Canvas), composable API, covers every chart type needed (bar, line, pie, area, funnel). Works with Tailwind. D3 is too low-level for a POC timeline. Nivo adds bundle weight without proportionate POC value.
-
-**Recommended geo map: react-simple-maps** — thin wrapper around d3-geo + topojson, declarative React API, handles US state choropleth out of the box. No Mapbox/Google Maps license needed. Add `us-atlas` for TopoJSON data and `d3-scale` for color scales.
-
-**Recommended PDF export: html2canvas + jsPDF** — rasterize-and-embed approach. Fast to implement; layout fidelity is sufficient for a POC snapshot. The clean alternative (`@react-pdf/renderer`) requires rewriting layouts as PDF components — high effort for marginal POC benefit.
+**Research type:** Project Research — Features dimension
+**Date:** 2026-03-04
+**Question:** What features do internal loan purchase operations platforms need? What's table stakes vs differentiating?
 
 ---
 
-## Feature Category Definitions (for this POC)
+## Summary
 
-- **Table Stakes:** Missing this = the demo fails to communicate the product concept. Must build.
-- **Differentiator:** Builds POC credibility beyond a static mockup. Build selectively — high signal-to-effort ratio.
-- **Anti-Feature (POC):** Looks valuable but costs 3-5x more than the POC benefit justifies. Defer explicitly with a documented reason.
+This platform wraps an existing Python loan processing engine in a controlled, auditable web UI. The Ops team downloads loan tape files from email, uploads them, triggers each processing phase manually, reviews outputs, and receives wire instruction PDFs. The workflow runs approximately twice per week at ~1,000 loans per run, serving two counterparties: prime and SFY.
 
----
-
-## Area 1: Executive Summary — KPI Cards
-
-### Table Stakes
-
-- **Total UPB** — single large formatted currency number. The anchoring number for every other metric.
-- **Active loan count** — count of non-default, non-paid-off loans. Shows portfolio scope.
-- **WAC (weighted average coupon)** — `SUM(rate * balance) / SUM(balance)`. Displayed as `X.XX%`. Must use `NUMERIC` arithmetic in Postgres or Python, never float.
-- **WA LTV** — `SUM(ltv * balance) / SUM(balance)`. Displayed as `XX.X%`.
-- **WA DSCR** — `SUM(dscr * balance) / SUM(balance)`. Displayed as `X.XXx`. Industry standard threshold references: >1.25x is healthy, <1.0x is distressed.
-- **Delinquency buckets** — 30/60/90+ DPD as three sub-cells on a single card. Color: 30-day=yellow, 60-day=orange, 90+=red. Show both count and UPB per bucket.
-
-### Differentiators
-
-- **WAM (weighted average maturity)** — `SUM(months_to_maturity * balance) / SUM(balance)` displayed as `X.X yrs`. Requires `maturity_date` in seed. High credibility signal for a fixed-income audience.
-- **Portfolio yield vs benchmark spread** — gross yield minus a static SOFR stub (hardcoded; e.g., 5.33%). Display: `Spread to SOFR: +XXX bps`. Mark clearly as `[STUB]` in UI with an info icon explaining the live feed hook.
-- **KPI delta vs prior period** — small `+X.X% vs last quarter` label beneath each main number. Requires two time-point snapshots in seed data. High credibility: shows the tool tracks trends, not just a point-in-time.
-
-### Anti-Features (POC)
-
-- **Real-time KPI refresh / websocket updates** — POC uses seeded static data. Live feeds add weeks of infrastructure work for zero demo value.
-- **Regulatory capital ratios (RWA, CECL reserve %)** — institution-specific; impossible to seed meaningfully. Produces misleading numbers.
-
-**Complexity:** Low-Medium. All KPIs are SQL aggregate queries. The hard part is ensuring `NUMERIC` arithmetic (never `float`) and building a FastAPI endpoint that returns a single JSON object per the active filter state. React component is a CSS grid of styled cards.
-
-**Dependency:** KPI cards depend on the seed data schema. If seed has no `maturity_date`, WAM cannot be computed. Define seed schema before implementing this area.
+The codebase already implements the full processing pipeline, file management, and a multi-phase workflow UI. Feature decisions here focus on what must be complete for the workflow to be reliable vs. what would materially improve Ops efficiency beyond the current baseline.
 
 ---
 
-## Area 2: Portfolio Composition
+## Table Stakes — Must Have or the Workflow Breaks
 
-### Table Stakes
+Features in this category are non-negotiable. If any of them are absent or unreliable, Ops cannot complete the loan purchase workflow.
 
-- **Property type donut chart** — slices: multifamily, office, retail, industrial, mixed-use, hotel. Recharts `PieChart` with `innerRadius` for donut shape. Tooltip shows type + UPB + count. Click slice applies global property-type filter (Area 7).
-- **US state choropleth** — color by UPB concentration per state. `react-simple-maps` + `us-atlas` TopoJSON + `d3-scale` quantile color scale (light-to-dark blue). Hover tooltip: state + UPB + loan count. Click state applies geo filter (Area 7).
-- **Loan size histogram** — buckets: <$1M, $1-5M, $5-10M, $10-25M, $25M+; y-axis: loan count. Recharts `BarChart`. Communicates portfolio granularity.
-- **Maturity profile stacked bar** — x-axis: year (2025-2031); y-axis: UPB maturing; stacked by property type. Recharts `BarChart` with `stackId`. Shows refinancing wall / maturity concentration risk at a glance.
-- **Top-10 exposures table** — sortable by UPB. Columns: borrower, property type, state, UPB, LTV, DSCR, maturity date, risk rating. Row click opens loan detail slide-out (Area 7). This is the "show me the biggest bets" view.
+### File Ingestion
 
-### Differentiators
+**TS-1: Multi-file upload to managed input area**
+Ops downloads two spreadsheet files per run from email and must upload them to the platform. The platform must accept both files, store them in a named input directory (`files_required/`), and make them available to the Python pipeline. Already implemented via the File Manager and S3/local storage abstraction.
 
-- **Concentration limit indicators** — for each property type, a horizontal bar showing actual % of portfolio vs a policy limit (e.g., "Office: 18% / limit: 25%"). Color: green below 80% of limit, yellow 80-100%, red over limit. Define limits in a config constant (not a DB table for POC). This single feature is the highest-credibility signal for a risk governance audience — it shows the tool has policy enforcement DNA.
-- **MSA drill-down from state** — clicking a state re-renders a second bar chart showing top MSAs within that state. Requires `msa` field on each seed loan. Medium complexity, high visual impact for a geo-heavy portfolio.
+**TS-2: Reference file management**
+The pipeline depends on stable reference files: `MASTER_SHEET.xlsx`, `MASTER_SHEET - Notes.xlsx`, `Underwriting_Grids_COMAP.xlsx`, and `current_assets.csv`. These must be manageable through the UI — viewable, replaceable, downloadable — without requiring server access. Already implemented.
 
-### Anti-Features (POC)
+**TS-3: File discovery by date convention**
+Input loan tape files follow a date-based naming convention. The platform must correctly discover the right files for a given run date (pdate, yesterday, last month-end) without requiring the Ops user to manually specify file paths. Already implemented via `file_discovery.py` and the `tday` parameter.
 
-- **Mapbox/Google Maps tile layers** — irrelevant for portfolio concentration; adds licensing cost and external API dependency.
-- **Loan-level lat/lng pin map** — 500 dots on a map communicates nothing useful; state-level choropleth is the correct level of abstraction for a portfolio view.
-- **Animated map zoom transitions** — CSS transitions are fine; D3 zoom is a weekend of effort for cosmetic benefit.
-
-**Complexity:** Medium. The geo map is the hardest piece in this section — `react-simple-maps` + TopoJSON + `d3-scale` quantile. Everything else is Recharts with straightforward data shapes. The concentration limit indicators require policy limit constants defined in a config file.
-
-**Dependency:** Requires seed fields: `property_type`, `state`, `msa`, `current_upb`, `maturity_date`, `ltv`, `dscr`, `risk_rating`, `borrower`. The map will not render without a state-level aggregation API endpoint returning `{ state: "CA", upb: 42000000, count: 18 }` per state.
+**Dependency:** TS-1 and TS-2 must be complete before TS-3 can function correctly. TS-3 must work correctly before any pipeline phase can run.
 
 ---
 
-## Area 3: Credit Quality
+### Processing Pipeline Visibility
 
-### Table Stakes
+**TS-4: Manual step-by-step trigger control**
+Ops must be able to manually trigger each pipeline phase (Pre-Funding, Tagging, Final Funding SG, Final Funding CIBC) from the UI. Steps must not run automatically or chain without user action. This is the core safety mechanism. Already implemented via Program Runs page.
 
-- **LTV distribution histogram** — buckets: <55%, 55-65%, 65-75%, 75-85%, >85%. Bar colors: green (<65%), yellow (65-75%), orange (75-85%), red (>85%). Recharts `BarChart` with per-bar `Cell` fill. Industry reference: average LTV across CRE market circa 2025 is ~63%; >75% triggers heightened monitoring.
-- **DSCR distribution histogram** — buckets: <0.9x, 0.9-1.0x, 1.0-1.25x, 1.25-1.5x, >1.5x. Colors: red (<1.0x), yellow (1.0-1.25x), green (>1.25x). Industry reference: 1.25x is standard minimum covenant; 1.35x is comfortable for well-located assets.
-- **Watchlist/criticized loans table** — columns: loan ID, borrower, property type, balance, risk rating (1-9 scale), trend arrow (▲/▼/—), watch reason, last review date. Sortable by balance or rating. Row click opens detail card (Area 7).
-- **Delinquency status bar** — horizontal stacked bar showing UPB split by status: Current, 30 DPD, 60 DPD, 90+ DPD, Default. Simpler and clearer than a funnel. Recharts `BarChart` with `layout="vertical"` and `stackId`.
+**TS-5: Real-time run status with phase-level progress**
+When a pipeline run is in progress, Ops must see the current phase (e.g., "Running CoMAP checks", "Saving to database") updated in near-real-time (polling). When a run fails, the last phase reached must be surfaced so the Ops team can diagnose the problem. Already implemented: `last_phase` field, polling on Dashboard and Program Runs.
 
-### Differentiators
+**TS-6: Run completion and failure feedback**
+A completed run must surface: total loans processed, total balance, exception count, and status (completed / failed / cancelled). A failed run must surface the error message. Currently implemented. Note: error messages are stored in the `errors` JSON array on the run record, which doubles as the log output panel.
 
-- **Risk rating migration matrix** — an NxN grid (rows = prior period rating, columns = current rating). Cell values show count of loans that moved. Diagonal = stable, below diagonal = upgrade (green), above = downgrade (red). Implement as a plain HTML `<table>` with Tailwind background colors per cell. Do not use a charting library hack — a table is more readable and takes less time to build. Requires two rating snapshots in seed data. This is the most sophisticated credit risk feature in the POC; it signals "this tool understands credit portfolio management."
-- **Interest rate sensitivity stub table** — static 3×4 table: rows are scenarios (+100bps, +200bps, +300bps), columns are DSCR impact per property type bucket. Values computed offline at seed time and stored as a JSON constant. Display only. No live model. Label clearly as `[SCENARIO STUB]`.
+**TS-7: Sequential job enforcement**
+Only one pipeline run may execute at a time. A second run must be blocked with a clear message if one is already running. Already implemented via the 409 conflict response and the `RUNNING` status check.
 
-### Anti-Features (POC)
+**TS-8: Run cancellation**
+Ops must be able to cancel a running pipeline run from the UI. The system must gracefully stop execution and set the run to CANCELLED so a new run can be started. Already implemented.
 
-- **Per-loan live stress testing** — requires a cashflow model per loan at N rate scenarios. Weeks of backend work.
-- **External credit rating (Moody's, S&P) integration** — paid API, not available for an internal POC.
-- **Probability of default (PD) model output** — no model exists; presenting random numbers as PD scores would actively mislead stakeholders.
-
-**Complexity:** Medium-High. The two histograms are simple. The migration matrix is the hardest feature in this section — the seed must have `risk_rating` and `risk_rating_prior` per loan, and the API must return a pre-aggregated N×N grid. The interest rate sensitivity table is purely static display.
-
-**Dependency:** Requires seed fields: `risk_rating`, `risk_rating_prior`, `dpd`, `watch_reason`, `last_review_date`. The migration matrix only works if the seed is deliberately designed with rating changes across loans (e.g., 15% of loans have a different `risk_rating_prior`).
+**Dependency:** TS-5 and TS-6 depend on TS-4 (runs must be triggerable before status matters). TS-7 depends on having persistent run state (database).
 
 ---
 
-## Area 4: Cash Flow & Performance
+### Suitability and Rules Processing
 
-### Table Stakes
+**TS-9: Purchase price check**
+Every loan in the tape must be checked for purchase price validity. Mismatches must be flagged and exported as `purchase_price_mismatch.xlsx`. Already implemented.
 
-- **Monthly P&I actual vs projected line chart** — dual line: actual (solid blue), projected (dashed gray) over 12 trailing months. Recharts `LineChart` with two `Line` components. Y-axis in $M. This directly leverages the existing cashflow computation infrastructure and is the strongest continuity point between the existing app and the new dashboard.
-- **Yield analysis row** — four inline numbers: gross yield, net yield (gross minus servicing spread), spread to SOFR, spread to 10Y Treasury. Static SOFR (5.33%) and Treasury (4.22%) stubs. Label with `[STUB]` and an info icon: "Live feed would pull from FRED API." This is intentional stub design, not a limitation to hide.
+**TS-10: Underwriting grid checks (SFY, Prime, Notes)**
+Loans must be evaluated against underwriting grids for all three program types. Flagged loans must be exported as `flagged_loans.xlsx` and `notes_flagged_loans.xlsx`. Already implemented.
 
-### Differentiators
+**TS-11: CoMAP grid validation**
+Each loan's program must exist in the applicable CoMAP grid (Prime, SFY, Notes). Loans not in any CoMAP grid must be flagged and exported as `comap_not_passed.xlsx`. Already implemented.
 
-- **CPR trend chart** — 12-month trailing Conditional Prepayment Rate as a bar chart. CPR formula: `CPR = 1 - (1 - SMM)^12` where `SMM = prepayment_in_month / beginning_balance`. Shows portfolio runoff speed. Requires monthly cashflow records with `prepayment_amount` and `beginning_upb` per loan per month in seed. If seed cannot support this computation, stub with flat CPR line and label it.
-- **NOI trend chart** — quarterly aggregate NOI as a bar chart over 6 quarters. If seed does not have property-level income statements, derive as `DSCR × debt_service` per loan per period. This approximation is acceptable for POC and is clearly labeled.
-- **Loss/recovery table** — columns: loan ID, disposition date, original balance, recovered amount, loss severity %. Requires a handful of "resolved" seed loans with `status = liquidated`. Simple table, no chart needed. Shows the tool tracks credit losses, not just performing loans.
+**TS-12: Eligibility checks per counterparty**
+Portfolio-level eligibility checks must run against both the prime and SFY counterparty criteria and produce a pass/fail result for each check. Results must be shown on the run detail page. Already implemented.
 
-### Anti-Features (POC)
+**TS-13: Loan disposition classification**
+Each loan must be classified as `to_purchase`, `projected`, or `rejected`, with a canonical rejection criteria key attached to each rejected loan. This is required for downstream reporting and audit. Already implemented.
 
-- **Narrative variance commentary auto-generation** — requires LLM integration, out of scope.
-- **Duration/convexity analytics** — requires full cashflow model per loan at multiple rate scenarios. Deeply complex mortgage math.
-- **Per-loan IRR computation** — requires full cashflow history per loan; overcomplicates seed.
-- **Actual vs projected variance alerts / breach notifications** — alerting infrastructure is out of scope for a POC.
-
-**Complexity:** Low-Medium for the P&I chart (if seed has monthly cashflow records). Medium for CPR (formula + monthly data). The yield row is arithmetic. The loss table is simple display. The cashflow area is the most data-intensive and has the strongest dependency on seed schema design.
-
-**Dependency:** Requires seed tables with time-series cashflow records (not just one row per loan): `loan_id`, `period` (month), `scheduled_principal`, `scheduled_interest`, `actual_principal`, `actual_interest`, `prepayment_amount`, `beginning_upb`. This is the single most important seed schema decision after the core loan table.
+**Dependency:** TS-9, TS-10, TS-11 all run against the same `buy_df` and must complete before TS-13. TS-12 runs against the combined `final_df_all`. All depend on TS-3 (file discovery) working correctly.
 
 ---
 
-## Area 5: Origination Pipeline
+### Counterparty Management
 
-### Table Stakes
+**TS-14: Dual-counterparty tagging (prime / SFY)**
+Loans are tagged to one or both counterparties (prime, SFY) based on loan program and eligibility. The tagging step must run as an explicit, Ops-controlled phase after Pre-Funding. Already implemented via the Tagging phase and `tagging_runner.py`.
 
-- **Origination volume bar chart** — monthly bars for trailing 12 months: UPB originated per month. Recharts `BarChart`. Requires `origination_date` on each seed loan.
-- **Payoffs/paydowns bar chart** — monthly payoff UPB vs scheduled paydown UPB, side-by-side bars. Shows portfolio runoff. Requires the monthly cashflow records from Area 4.
-
-### Differentiators
-
-- **Pipeline funnel** — four stages: Underwriting → Approved → In Closing → Funded. Shows count and UPB at each stage. Requires seed loans with `pipeline_status` for in-progress (not yet funded) loans. Recharts `FunnelChart` (available in recharts@2.x). Include at least 5-10 "in pipeline" seed loans or the funnel is a flat bar.
-- **Vintage analysis** — x-axis: origination year; stacked bars by property type; bars colored by current risk rating quartile (green/yellow/red). Shows credit quality by cohort. Requires `origination_year` and `risk_rating` per loan. High analytical value for a portfolio risk audience.
-
-### Anti-Features (POC)
-
-- **Integration with the existing loan purchase pipeline** — the existing pipeline (suitability check, counterparty tagging, wire instructions) is for loan *purchase* evaluation against counterparty criteria, not CRE origination workflow. These are different business processes. Do not conflate them. The dashboard POC is a separate reporting layer.
-- **Borrower communication log / loan application tracking** — CRM functionality, entirely out of scope.
-- **Automated underwriting model scores** — no model exists in this codebase.
-
-**Complexity:** Low. This is the simplest section if seed has `origination_date`, `current_upb`, `pipeline_status`, and `origination_year`. All charts are straightforward bar/funnel. Vintage analysis adds one grouping dimension but is still a single Recharts BarChart.
-
-**Dependency:** The payoffs/paydowns chart shares the monthly cashflow records with Area 4. The pipeline funnel requires deliberately seeding 5-10 pre-funded pipeline loans.
+**TS-15: Per-counterparty output generation**
+Final Funding outputs must be generated separately for SG (prime) and CIBC counterparties. These are distinct pipeline phases, each producing separate output files. Already implemented as Final Funding SG and Final Funding CIBC phases.
 
 ---
 
-## Area 6: Market Context (Stub Panel)
+### Output and Document Generation
 
-### Table Stakes
+**TS-16: Exception report exports (Excel)**
+The pipeline must produce downloadable Excel files for each exception category (flagged loans, purchase price mismatch, CoMAP not passed, notes flagged loans, special asset prime, special asset SFY). These are the primary deliverables from Pre-Funding. Already implemented as notebook replacement outputs.
 
-- **Static rate display panel** — four labeled values with visible `[STUB]` badge: 10Y Treasury yield (4.22%), SOFR (5.33%), CRE cap rates by property type (multifamily: 5.5%, office: 7.8%, retail: 7.2%, industrial: 5.8%), vacancy rates (office: 18.2%, multifamily: 6.1%). Values returned from a `/api/market-context` endpoint reading from a seed JSON or a config constant. Not from a live feed.
-- **Live feed hook markers** — each value in the API layer has a `# TODO: replace with live feed - [source: FRED, CoStar, etc.]` comment. In the UI, each value shows a small `(i)` tooltip explaining it is a static stub. This communicates architecture intent to stakeholders; it is not cosmetic.
+**TS-17: Eligibility summary export**
+An eligibility checks summary must be exported as both JSON (`eligibility_checks.json`) and Excel (`eligibility_checks_summary.xlsx`) and made available for download from the run detail page. Already implemented.
 
-### Differentiators
+**TS-18: Output file browsing and download**
+All output files produced by any pipeline phase must be browsable and downloadable from the UI, organized by phase and run. Already implemented via the Program Runs output file manager and run archive.
 
-- **FRED API commented stub** — a commented-out `requests.get("https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&...")` in the market context service file. Shows stakeholders exactly where real data would come from and how little plumbing it takes. Zero development effort for the comment; high demo credibility.
-
-### Anti-Features (POC)
-
-- **Live rate fetch from any external API** — introduces network dependency, API key management, CORS handling, and potential rate limiting in a demo environment. Not worth it for static-data POC.
-- **CRE index feeds (Green Street, CoStar, CBRE)** — paid data, no free API, contractually complex.
-
-**Complexity:** Very Low. Single FastAPI endpoint returning a JSON object of static values. React component is a small panel of labeled numbers. Total effort: 2-4 hours. Build this first as a low-risk confidence win.
-
-**Dependency:** None. Fully independent. Can be built at any time.
+**Dependency:** TS-16 and TS-17 depend on TS-9 through TS-12 completing successfully. TS-18 is a UI wrapper around the storage abstraction (S3 or local).
 
 ---
 
-## Area 7: Interactivity — Global Filter Sidebar + Drill-Down
+### Wire Instruction and Document Delivery
 
-### Table Stakes
+**TS-19: Wire instruction PDF generation**
+Final Funding phases (SG and CIBC) must produce wire instruction PDFs as outputs. These are the end product of the full workflow. Implemented via the bundled `final_funding_sg.py` and `final_funding_cibc.py` scripts, which run as sub-processes.
 
-- **Global filter sidebar** — persistent left panel, collapsible. Filter controls: as-of date (quarter/date picker), property type (multi-select checkboxes), state (searchable dropdown or multi-select), loan size range (min/max inputs), risk rating (multi-select 1-9), rate type (fixed/floating/hybrid). Store filter state in URL query params (preferred over React context alone) — shareable links, survives page refresh.
-- **API-driven filtering** — on filter change, all dashboard data re-fetches from API with filter params included. The API handles aggregation; React does not filter already-loaded data client-side. This is non-negotiable. Client-side filtering creates invisible inconsistencies when a filter affects a computed aggregate (e.g., WAC changes when property type changes).
-- **Chart segment click → filter** — clicking a pie slice or bar segment applies that dimension as a global filter. Recharts `onClick` prop passes the clicked value to filter state. Example: clicking "Office" in the property type donut sets `property_type=office` and all charts re-fetch.
-- **Loan row click → detail slide-out** — clicking any loan in any table opens a right-side slide-out panel (not a new route). Slide-out shows: loan ID, borrower, property type, address, balance, rate, LTV, DSCR, maturity date, risk rating, DPD status, origination date. Implemented as an absolutely-positioned aside with a close button. No routing change.
+**TS-20: PDF delivery to counterparties**
+Generated PDFs must be emailed to the appropriate counterparty (SG or CIBC). This step is currently outside the dashboard — PDFs are downloaded from the output file manager and emailed manually, which is the established process.
 
-### Differentiators
-
-- **Active filter chips** — when filters are active, show removable chips above the dashboard ("Property Type: Office ×  |  State: CA ×"). Each chip has an × to remove that filter. Standard UX pattern, high usability signal, moderate effort (~4 hours).
-- **Filter presets** — "Watchlist View", "Office Exposure", "High LTV" saved to `localStorage`. Low backend cost, demonstrates the tool is designed for repeated use.
-
-### Anti-Features (POC)
-
-- **Server-side cursor pagination on every table** — a seeded dataset of 200-500 loans does not require cursor pagination. Client-side sort on a fully fetched result set is correct at this scale. Premature optimization that adds complexity to every table component and API endpoint.
-- **Client-side cross-filter without API round-trip** — appears to simplify but breaks aggregate consistency. Always re-fetch on filter change.
-- **Drag-and-drop widget reordering / personalized dashboard layouts** — out of scope for POC.
-- **Real-time filter debounce with instant chart updates** — 300ms debounce before API call is sufficient. Sub-100ms live filtering requires client-side data which violates the aggregation consistency requirement above.
-
-**Complexity:** High. This is the architecturally heaviest feature in the entire POC. The filter state must flow from the sidebar to every data-fetching hook. Recommended pattern:
-
-1. A `PortfolioFilterContext` (React context) holding the current filter state object.
-2. A `usePortfolioData(endpoint, filters)` custom hook that builds the query string from filter state, fires on filter change, and returns `{ data, loading, error }`.
-3. All API endpoints accept a consistent set of query parameters: `property_type`, `state`, `size_min`, `size_max`, `risk_rating`, `rate_type`, `as_of`.
-4. The FastAPI layer translates these params into SQLAlchemy filter clauses.
-
-**Build this first.** Every chart and table in every other area depends on this. Bolting it on after the fact causes rewrites across the entire codebase.
-
-**Dependency:** This is the foundation layer. All other feature areas depend on it.
+**Dependency:** TS-19 depends on TS-14 and TS-15 completing first. TS-20 is a manual step that depends on TS-19 producing correct files.
 
 ---
 
-## Area 8: Export — PDF Snapshot + CSV
+### Audit Trail
 
-### Table Stakes
+**TS-21: Immutable run history with timestamps**
+Every pipeline run must be recorded with: run ID, triggering user, start/end timestamps, phase reached, status, loan counts, balances, and exception counts. Records must persist and be queryable. Already implemented in `pipeline_runs` table.
 
-- **CSV export per table** — "Download CSV" button on each data table (top-10 exposures, watchlist, delinquency, loss/recovery). Pure frontend: take the table's current data array, construct a CSV string, trigger a `Blob` download. No backend involvement. ~20 lines of TypeScript per table. Zero complexity.
-- **PDF dashboard snapshot** — "Export Dashboard" button triggers `html2canvas` to rasterize the dashboard viewport, then `jsPDF` to embed as a PDF page. Produces a bitmap PDF (not vector text). Acceptable for POC snapshot. Caveat: label clearly as "Dashboard Snapshot" not "Report."
+**TS-22: Per-loan exception records**
+Each exception (purchase price mismatch, underwriting flag, CoMAP fail) must be persisted at the loan level with: loan number, exception type, category, severity, message, and rejection criteria key. Already implemented in `loan_exceptions` table.
 
-### Differentiators
+**TS-23: Per-loan fact records with disposition**
+Each processed loan must be persisted with its key attributes and final disposition (`to_purchase`, `projected`, `rejected`) plus the canonical rejection criteria if rejected. Already implemented in `loan_facts` table.
 
-- **Section-scoped PDF export** — user selects which sections to include (checkboxes: "Executive Summary", "Credit Quality", etc.). Implemented by rasterizing specific named DOM refs in sequence. Medium effort, useful for presenting to different audiences.
+**TS-24: Input and output file archiving per run**
+Input files and output reports must be archived under a per-run key (`archive/{run_id}/input`, `archive/{run_id}/output`) so any run can be reconstructed. Already implemented in `archive_run.py`.
 
-### Anti-Features (POC)
-
-- **Server-side PDF generation (WeasyPrint / pdfkit from FastAPI)** — produces vector PDFs with correct fonts, but requires a new FastAPI endpoint, a headless rendering environment, and significant CSS porting work. Disproportionate to POC needs.
-- **Scheduled PDF email delivery** — SES is slated for v1.1 of the existing product but not for this dashboard POC.
-- **Excel export with embedded charts** — `openpyxl` with chart embedding is complex; CSV covers the data need.
-
-**Complexity:** Low-Medium. CSV is trivially simple. PDF export has a known pitfall: `html2canvas` does not render CSS custom properties (Tailwind variables) reliably, and elements outside the viewport are clipped. Mitigation: render a dedicated print-view component into a hidden `div` and rasterize that, not the live DOM. This adds ~3-4 hours but produces a consistent output.
-
-**Dependency:** PDF export depends on all dashboard sections existing. Build CSV export incrementally as each table is built; build PDF export last.
+**TS-25: Exception browsing and export**
+Exceptions must be browsable in the UI with filters by run, type, severity, and rejection criteria. They must be exportable to CSV or Excel. Already implemented.
 
 ---
 
-## Area 9: Role Stub — PM vs Advisor
+### Authentication and Access Control
 
-### Table Stakes
+**TS-26: Username/password authentication with JWT**
+All UI access must require authentication. Sessions must be managed via JWT tokens. Already implemented with bcrypt hashing, role-based access, and session expiry handling.
 
-- **Role field on session** — `role` field on the JWT payload: `"pm"` (full portfolio view) or `"advisor"` (their book only). Seed creates two users with different roles. No admin UI needed for POC.
-- **Advisor book filter** — when `role == "advisor"`, all API calls automatically append a `borrower_group_id` filter matching the advisor's assigned loans. Enforced server-side in the FastAPI `get_current_user` dependency. The filter is invisible to the advisor (they cannot override it). The PM sees the full portfolio by default.
-- **UI label differentiation** — advisor sees "Your Book" in the dashboard header; PM sees "Full Portfolio." A small badge or subtitle, not a full page redesign.
-
-### Differentiators
-
-- **PM "view as advisor" toggle** — a PM can switch into an advisor's view to see what they see. Useful for demonstrating access control in a demo. Implemented as a UI state override that appends the selected advisor's `borrower_group_id` to API calls. ~4 hours.
-
-### Anti-Features (POC)
-
-- **Full RBAC system with permissions matrix and admin management UI** — two hardcoded roles in seed data is sufficient for a POC. A permissions management UI is a significant product in itself.
-- **Postgres row-level security (RLS) for advisor isolation** — correct architecture for production, but RLS setup for a seeded POC adds a full day of infrastructure work. Use application-layer filtering (FastAPI appends the filter based on session role). Document explicitly that production would use RLS.
-- **Audit logging of data access per role** — valuable compliance feature, deferred to production.
-
-**Complexity:** Low. The mechanism is: `get_current_user` dependency returns `{ role, borrower_group_id }`. Every portfolio endpoint checks role and appends filter if advisor. React shows/hides the "view as advisor" toggle based on role. Seed needs 2 users and a `borrower_group_id` on each loan (or a join table loans↔advisor_groups). Total: 4-6 hours.
-
-**Dependency:** Depends on the global filter context (Area 7) being built first. The advisor filter is just another filter that is automatically applied and immutable for advisor sessions.
+**TS-27: Role-based access (Admin, Analyst, Sales Team)**
+Admins see and can manage all runs. Analysts see all runs. Sales team users see only their team's runs. Admin-only routes (cancel-all, clear-history, holiday management) must be protected. Already implemented.
 
 ---
 
-## Feature Dependencies (Build Order)
+### Business Date Management
+
+**TS-28: Holiday calendar for posting date calculation**
+The pipeline posting date (pdate) is the next Tuesday that is a US business day. If that Tuesday is a US holiday, the system must advance to the following business day. The holiday calendar must be admin-manageable and cover US, UK, India, and Singapore calendars. Already implemented.
+
+---
+
+## Differentiators — Improves Ops Efficiency, Not Workflow-Breaking if Absent
+
+Features in this category reduce manual effort, catch errors earlier, or improve the quality of the run experience. They are high value but the workflow can complete without them.
+
+### Ingestion and Pre-Run
+
+**D-1: Pre-flight file validation before run starts**
+Before triggering a run, surface a checklist of which required files are present in `files_required/` and which are missing. Currently, a missing file causes the pipeline to fail mid-run with a Python error. A pre-flight check surfaces this immediately, saving time and preventing wasted runs. Not currently implemented.
+
+*Dependency: Requires knowing the expected file manifest for the current run date, which depends on the `file_discovery` logic.*
+
+**D-2: File format and column validation on upload**
+When a loan tape is uploaded, immediately validate that expected columns are present (e.g., `SELLER Loan #`, `Orig. Balance`, `Platform`). Surface column mismatches as warnings before the run starts. Not currently implemented.
+
+**D-3: Duplicate file detection**
+Warn Ops if a file with the same name already exists in the input area and would be overwritten. Prevents accidental replacement of reference files with tape files. Not currently implemented.
+
+---
+
+### Processing Pipeline Visibility
+
+**D-4: Estimated run duration indicator**
+Based on historical run durations stored in the database (elapsed time between `started_at` and `completed_at`), show an estimated time remaining during an active run. Reduces anxiety during the 5-15 minute processing window. Not currently implemented.
+
+**D-5: Per-phase timing breakdown**
+Record and display how long each pipeline phase took (reference data load, normalize, underwriting, CoMAP, eligibility, export). Identifies which phase is slow when runs take longer than expected. Not currently implemented.
+
+**D-6: Structured log panel during run**
+The current `errors` JSON array doubles as the log output, which is surfaced as a flat list. A structured, scrollable, real-time log panel on the run detail page — showing messages like "Loaded 1,043 loans", "CoMAP checks: 3 loans not in grid" — would give Ops meaningful progress without navigating to CloudWatch. Partially implemented (log messages appended to `run.errors`), but not displayed in real-time on the run detail page.
+
+---
+
+### Exception and Rejection Review
+
+**D-7: Run-over-run exception delta**
+When viewing a completed run, show how the exception count and composition changed relative to the previous run (e.g., "+12 CoMAP failures, -3 purchase price mismatches"). Helps Ops quickly assess whether the new tape introduced new problems. Not currently implemented.
+
+**D-8: Exception drill-down with loan attributes**
+On the exceptions page, allow Ops to expand a row and see the key loan attributes (FICO, DTI, balance, program, state) alongside the rejection reason — without needing to cross-reference the Excel download. Currently, `loan_data` is stored as JSON on each exception record but is not surfaced in the UI. Partially implemented (data is stored); UI drill-down not built.
+
+**D-9: Exception acknowledge and note**
+Allow Ops to mark an exception as "reviewed" with a free-text note (e.g., "Discussed with counterparty — OK to proceed"). Provides a lightweight exception management layer without requiring a full exception workflow. Not currently implemented.
+
+---
+
+### Counterparty and Run Management
+
+**D-10: Run comparison view (side-by-side runs)**
+Display two runs side by side: total loans, balance, exception counts, eligibility check results. Useful when Ops wants to confirm that re-running with corrected files produced the expected improvement. Not currently implemented.
+
+**D-11: IRR target override per run**
+The IRR target defaults to 8.05% but is parameterizable. Surfacing this as an explicit, labeled field in the run start form (rather than accepting the default silently) ensures Ops is aware when a non-default target is used. Currently implemented in the API as `irr_target` but the Dashboard UI uses the default without displaying it prominently.
+
+**D-12: Run notes / memo field**
+Allow Ops to attach a free-text memo to a completed run (e.g., "93rd buy, corrected SFY file"). Makes the run history table useful as a lightweight log of what happened on each run day. Not currently implemented.
+
+---
+
+### Cashflow Calculation
+
+**D-13: Cashflow job status polling with progress bar**
+The cashflow computation (current assets, SG, CIBC modes) can be long-running. The current UI polls job status every 5 seconds and shows a progress percentage. Surfacing a more meaningful progress message (e.g., "Processing loan 450 of 1,043") would improve the experience. Partially implemented; `progress_message` field exists but content depends on the compute layer populating it.
+
+**D-14: Cashflow parameter validation before job submission**
+Before submitting a cashflow job, validate that the referenced input files (prime workbook, SFY workbook, master sheet) exist in the inputs area. Currently, a missing file causes the job to fail after it starts. Not currently implemented.
+
+**D-15: Cashflow output summary in UI**
+After a cashflow job completes, show a summary of key computed values (e.g., aggregate IRR, total balance, number of loans modeled) in the UI before the user downloads the full output file. Currently, output is only available as file download. Not currently implemented.
+
+---
+
+### Document Generation and Delivery
+
+**D-16: In-UI PDF preview of wire instructions**
+Allow Ops to preview the generated wire instruction PDF in the browser before downloading and emailing it. Catches formatting issues or wrong counterparty data before the document is sent. Not currently implemented.
+
+**D-17: Email delivery tracking**
+Record when a wire instruction PDF was downloaded and by whom, providing a lightweight record that the document was retrieved for sending. Not currently implemented (download events are not logged beyond the HTTP response).
+
+**D-18: Templated wire instruction generation**
+Allow the wire instruction template (counterparty name, bank details, amounts) to be managed via an admin UI rather than hardcoded in the Python script. Makes it possible to update counterparty banking details without a code deployment. Not currently implemented.
+
+---
+
+### Reporting and Analytics
+
+**D-19: Run history analytics dashboard**
+Aggregate metrics across all completed runs: loans processed per week, exception rate trend, average processing time. Useful for reporting to management and identifying patterns (e.g., consistent CoMAP failures on Tuesdays). Not currently implemented.
+
+**D-20: Rejected loan trend by criteria**
+Show a chart or table of the most common rejection criteria over the last N runs, grouped by exception type. Helps Ops identify systemic tape quality issues with the seller. Not currently implemented.
+
+**D-21: Balance-weighted exception summary**
+In addition to loan count, show the aggregate original balance of rejected loans per exception type. A high-balance rejection is more operationally significant than many small-balance rejections. Not currently implemented.
+
+---
+
+## Anti-Features — Deliberately Out of Scope for v1
+
+These features are technically possible but should not be built in v1. Building them would add scope risk without proportional value for an internal tool at this scale and frequency.
+
+**AF-1: Automated email ingestion**
+Automatically watching an email inbox, parsing loan tape attachments, and triggering runs without Ops action. The manual download-and-upload step is a deliberate control point. Automating it removes Ops judgment about which tape to process and when. Explicitly excluded per project scope.
+
+**AF-2: Direct banking API integration for wire execution**
+Connecting to banking APIs (e.g., SWIFT, ACH) to execute wires programmatically. The current PDF + email process is the established counterparty workflow. An API integration would require counterparty buy-in, compliance review, and security controls well beyond v1 scope.
+
+**AF-3: Counterparty portal / external user access**
+A separate login for counterparty (SG, CIBC) users to view their eligible loans, download documents, or receive notifications. This is an internal ops tool only. External access would require a fundamentally different security posture, data filtering, and UX.
+
+**AF-4: Mobile-optimized UI**
+The dashboard is used by Ops at desktops during normal business hours. Responsive mobile design adds layout complexity for no practical gain.
+
+**AF-5: Automated run scheduling**
+Scheduling runs to trigger automatically at a set time on run days. The manual trigger is intentional — Ops must confirm files are ready and review any late-arriving corrections before processing. Automation would require pre-flight checks (AF-1 territory) and could process stale or incorrect files.
+
+**AF-6: Machine learning-based suitability scoring**
+Replacing or augmenting the rule-based suitability engine with ML models. The rules-based engine is the business logic that has been validated against counterparty agreements. Changing it requires counterparty negotiation, not an engineering decision.
+
+**AF-7: Bulk exception override / manual approval workflow**
+A formal workflow where exceptions can be escalated, assigned, approved, or overridden by multiple parties with sign-off tracking. For a two-person ops team running twice per week, a formal exception management workflow adds overhead without commensurate value. D-9 (acknowledge + note) is sufficient for v1.
+
+**AF-8: Multi-currency support**
+All loans are denominated in USD. Multi-currency adds data model complexity across the cashflow, eligibility, and wire instruction layers for a non-existent use case.
+
+**AF-9: Real-time loan tape streaming**
+Processing loans as they stream in rather than as a batch file upload. The workflow is inherently batch — a loan tape arrives once per run as a complete file. Streaming is architecturally inappropriate for this use case.
+
+---
+
+## Feature Dependencies Summary
 
 ```
-1. Seed Data Schema (defines what every other area can compute)
-   |
-   ├── Area 6: Market Context stub  ← independent, build first for confidence
-   ├── Area 9: Role stub            ← validates auth model early, low effort
-   |
-   └── Area 7: Global Filter Context + API param convention
-         |      (MUST exist before any chart is built)
-         |
-         ├── Area 1: Executive Summary KPI cards
-         ├── Area 2: Portfolio Composition charts
-         |     └── Geo map (after installing react-simple-maps + us-atlas)
-         ├── Area 3: Credit Quality
-         |     └── Migration matrix (requires two-period seed data)
-         ├── Area 4: Cash Flow & Performance
-         |     └── CPR chart (requires monthly cashflow records in seed)
-         ├── Area 5: Origination Pipeline
-         |
-         └── Area 8: Export
-               ├── CSV (add per table as each table is built)
-               └── PDF snapshot (build last, after all sections exist)
+File Ingestion (TS-1, TS-2)
+    └── File Discovery (TS-3)
+            └── Pipeline Execution (TS-4, TS-5, TS-6, TS-7, TS-8)
+                    ├── Rules Processing (TS-9, TS-10, TS-11)
+                    │       └── Loan Disposition (TS-13)
+                    ├── Eligibility Checks (TS-12)
+                    └── Output Generation (TS-16, TS-17)
+                            └── Output File Access (TS-18)
+
+Counterparty Tagging (TS-14)
+    └── Final Funding per Counterparty (TS-15)
+            └── Wire Instruction PDFs (TS-19)
+                    └── PDF Delivery [manual step] (TS-20)
+
+Run Execution (any run)
+    └── Audit Trail (TS-21, TS-22, TS-23, TS-24)
+
+Authentication (TS-26, TS-27) — gates all of the above
+
+Business Dates (TS-28) — gates run start (pdate calculation)
 ```
 
-**Critical path:** Seed schema → Filter context/API convention → KPI cards → one section at a time → Export last.
+**Differentiator dependencies worth noting:**
+- D-1 (pre-flight check) depends on TS-3 logic being extractable as a standalone validation step
+- D-4 (estimated duration) depends on having a sufficient history of completed runs with timestamps
+- D-7 (exception delta) depends on having at least two completed runs to compare
+- D-13 (cashflow progress) depends on the cashflow compute layer emitting progress signals
 
 ---
 
-## MVP Recommendation for POC
+## Implementation Priority
 
-**Must build (table stakes):**
-1. Seed schema (design this before writing any code — it unblocks everything)
-2. Global filter sidebar + filter context + API param convention (Area 7)
-3. Executive Summary KPI cards: UPB, count, WAC, LTV, DSCR, delinquency buckets (Area 1)
-4. Property type donut + US state choropleth + top-10 table (Area 2)
-5. LTV and DSCR histograms + watchlist table (Area 3)
-6. P&I actual vs projected chart + yield stub row (Area 4)
-7. Origination volume bar chart (Area 5)
-8. Market context stub panel (Area 6)
-9. Role stub: two users, advisor filter (Area 9)
-10. CSV export per table (Area 8)
+Given the project is greenfield wrapping an existing Python engine, the sequencing that minimizes risk is:
 
-**Build for differentiation (high credibility / moderate effort):**
-- Concentration limit indicators (Area 2) — highest credibility feature for a risk governance audience
-- Risk rating migration matrix (Area 3) — most sophisticated credit signal
-- WAM + delta vs prior period on KPI cards (Area 1)
-- Pipeline funnel (Area 5)
-- Filter chips display (Area 7)
-- PDF snapshot export (Area 8) — build last
-
-**Explicitly defer:**
-| Feature | Reason |
-|---------|--------|
-| Real-time data feeds | Entire point of stub markers is to flag where they'd go |
-| Per-loan stress testing / full cashflow model | Weeks of backend work; POC does not need live analytics |
-| Server-side PDF with WeasyPrint | Disproportionate effort; html2canvas screenshot is sufficient |
-| Postgres RLS for role isolation | Correct for production; application-layer filter is correct for POC |
-| Drag-and-drop dashboard layout | Out of scope for POC |
-| Cursor pagination | Seeded dataset is 200-500 loans; not needed |
-| NOI from property income statements | Derive from DSCR × debt_service as approximation |
+1. **TS-26, TS-27** (auth) — nothing else is accessible without this
+2. **TS-1, TS-2, TS-3** (file ingestion and discovery) — pipeline cannot run without inputs
+3. **TS-4 through TS-8** (pipeline control and visibility) — core workflow loop
+4. **TS-9 through TS-13** (rules processing) — suitability engine integration
+5. **TS-14, TS-15** (counterparty tagging and final funding) — second-phase workflow
+6. **TS-16 through TS-18** (output access) — deliverables
+7. **TS-19, TS-20** (wire instructions) — end product
+8. **TS-21 through TS-25** (audit trail) — compliance and traceability
+9. **TS-28** (holiday calendar) — date calculation correctness
+10. **D-1, D-2** (pre-flight validation) — highest-value differentiators; prevent wasted runs
+11. **D-6, D-8** (log panel, exception drill-down) — operational visibility improvements
 
 ---
 
-## POC vs Production Architecture Distinctions
-
-| Feature | POC Approach | Production Approach |
-|---------|-------------|---------------------|
-| Market rates | Static constants / seed JSON | FRED API / Bloomberg / data vendor |
-| Interest rate sensitivity | Pre-computed stub table | Per-loan cashflow model at N rate scenarios |
-| PDF export | html2canvas bitmap screenshot | Server-side WeasyPrint or dedicated PDF microservice |
-| Role/data isolation | Application-layer filter in FastAPI | Postgres RLS + proper RBAC with admin UI |
-| CPR computation | Formula on seed monthly data | Servicer data feed + reconciliation layer |
-| Data freshness | Seeded static dataset | Nightly ETL from servicer/custodian/CMBS trustee |
-| NOI aggregation | DSCR × debt_service approximation | Property operating statement ingestion |
-| Table pagination | Client-side sort on full fetch | Server-side cursor pagination + DB indexes |
-| Delinquency data | Seeded DPD field per loan | Servicer advancing / master servicer reporting |
-
----
-
-## Sources
-
-- [Built: Risk Management Dashboards for CRE Lenders](https://getbuilt.com/blog/risk-management-dashboards-lender/)
-- [CRED iQ: CRE Delinquency Trends Q1 2025](https://cred-iq.com/blog/2025/07/02/tracking-cre-delinquency-trends-insights-from-the-great-financial-crisis-to-q1-2025/)
-- [Agent Skills Finance: Loan Portfolio Monitoring](https://agentskills.finance/skills/managing-loan-portfolio-monitoring)
-- [Bryt Software: 9 Key Metrics for Loan Portfolio Analysis](https://www.brytsoftware.com/metrics-help-loan-portfolio-analysis-maximum-financial-gains/)
-- [LogRocket: Best React Chart Libraries 2025](https://blog.logrocket.com/best-react-chart-libraries-2025/)
-- [React Simple Maps Documentation](https://www.react-simple-maps.io/)
-- [React Simple Maps: US Choropleth Quantile Example](https://www.react-simple-maps.io/examples/usa-counties-choropleth-quantile/)
-- [Pencil & Paper: Filter UX Design Patterns](https://www.pencilandpaper.io/articles/ux-pattern-analysis-enterprise-filtering)
-- [Pencil & Paper: Dashboard UX Patterns](https://www.pencilandpaper.io/articles/ux-pattern-analysis-data-dashboards)
-- [FasterCapital: Loan Performance Dashboard](https://fastercapital.com/content/Loan-Performance-Reporting--How-to-Create-and-Analyze-Your-Loan-Performance-Dashboard.html)
-- [Nutrient: html2canvas + jsPDF in React](https://www.nutrient.io/blog/how-to-convert-html-to-pdf-using-react/)
-- [Biz2X: Loan Portfolio Analytics Framework](https://www.biz2x.com/loan-portfolio-monitoring/loan-portfolio-analytics-framework-data-quality-stress-testing/)
-- [Terry Dale Capital: DSCR & LTV Requirements 2025](https://terrydalecapital.com/learn/dscr-ltv-commercial-real-estate-2025)
+*Research completed: 2026-03-04*
+*Based on: codebase analysis of intrepid-poc (backend pipeline, API routes, frontend pages, data models), PROJECT.md context, and loan purchase operations workflow requirements*

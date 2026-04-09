@@ -11,7 +11,6 @@ from sqlalchemy import (
     ForeignKey,
     Text,
     JSON,
-    Numeric,
     Enum as SQLEnum,
 )
 from sqlalchemy.orm import relationship
@@ -227,67 +226,3 @@ class AuditLog(Base):
     resource = Column(String(500), nullable=True)
     outcome = Column(String(20), nullable=True)  # "success" | "failure"
     detail_json = Column(JSON, nullable=True)  # JSON (not JSONB) for SQLite compat in tests
-
-
-class RELoan(Base):
-    """RE loan portfolio data for dashboard analytics (v2.0)."""
-
-    __tablename__ = "re_loans"
-
-    id = Column(Integer, primary_key=True, index=True)
-    loan_number = Column(String(50), index=True, nullable=False)
-    borrower_name = Column(String(255))
-    sales_team_id = Column(Integer, ForeignKey("sales_teams.id"), nullable=True)
-    as_of_date = Column(Date, nullable=False, index=True)
-
-    # Financials - NUMERIC, never Float (per D-01 / PROJECT.md constraint)
-    upb = Column(Numeric(18, 6))
-    original_balance = Column(Numeric(18, 6))
-    interest_rate = Column(Numeric(10, 6))
-    wam_months = Column(Integer)
-    ltv = Column(Numeric(10, 6))
-    dscr = Column(Numeric(10, 6))
-
-    # Classification
-    property_type = Column(String(50), index=True)
-    state = Column(String(2), index=True)
-    msa = Column(String(100))
-    risk_rating = Column(String(10))
-    prior_risk_rating = Column(String(10))
-    rate_type = Column(String(20))
-
-    # Dates
-    origination_date = Column(Date)
-    maturity_date = Column(Date)
-
-    # Delinquency
-    days_past_due = Column(Integer, default=0)
-    delinquency_status = Column(String(20))
-
-    # Pipeline
-    pipeline_stage = Column(String(30))
-    vintage_year = Column(Integer)
-
-    # Audit
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    sales_team = relationship("SalesTeam")
-    cashflows = relationship("RELoanCashflow", back_populates="loan")
-
-
-class RELoanCashflow(Base):
-    """Monthly cashflow records for RE loans (v2.0)."""
-
-    __tablename__ = "re_loan_cashflows"
-
-    id = Column(Integer, primary_key=True, index=True)
-    loan_id = Column(Integer, ForeignKey("re_loans.id"), nullable=False)
-    period_date = Column(Date, nullable=False)
-    scheduled_principal = Column(Numeric(18, 6))
-    actual_principal = Column(Numeric(18, 6))
-    scheduled_interest = Column(Numeric(18, 6))
-    actual_interest = Column(Numeric(18, 6))
-    noi = Column(Numeric(18, 6))
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    loan = relationship("RELoan", back_populates="cashflows")

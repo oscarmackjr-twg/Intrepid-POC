@@ -1,34 +1,30 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Real Estate Loan Dashboard POC
-status: executing
-stopped_at: Phase 19 (Filter Hook + TypeScript Foundation) complete — verified 2026-04-08; ready for Phase 20 (Executive Summary Page)
-last_updated: "2026-04-09T02:30:00.000Z"
-last_activity: 2026-04-09 -- Phase 19 complete (ReDashboard page, filter sidebar, route, nav link)
+milestone: v1.0
+milestone_name: milestone
+status: Milestone complete
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-03-25T15:11:30.581Z"
 progress:
-  total_phases: 27
-  completed_phases: 19
-  total_plans: 55
-  completed_plans: 55
-  percent: 100
+  total_phases: 16
+  completed_phases: 14
+  total_plans: 49
+  completed_plans: 48
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-08)
+See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Ops can take a loan tape from email to executed wire instructions in one controlled, visible process — replacing ad hoc scripts
-**Current focus:** Phase 19 — filter-hook-typescript-foundation
+**Current focus:** Phase 16 — linting
 
 ## Current Position
 
-Phase: 19 (filter-hook-typescript-foundation) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 19
-Last activity: 2026-04-09 -- Phase 19 execution started
+Phase: 16
+Plan: Not started
 
 ## Performance Metrics
 
@@ -82,8 +78,6 @@ Last activity: 2026-04-09 -- Phase 19 execution started
 | Phase 15 P01 | 4 | 2 tasks | 2 files |
 | Phase 16 P01 | 15 | 2 tasks | 3 files |
 | Phase 16 P02 | 3 | 1 tasks | 2 files |
-| Phase 17-data-foundation P01 | 10 | 2 tasks | 4 files |
-| Phase 17-data-foundation P02 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -95,25 +89,6 @@ Last activity: 2026-04-09 -- Phase 19 execution started
 - Phase 11 added: Refing UI for Regression Testing
 - Phase 12 added: Unit Testing Build Out
 - Phase 15 added: Integrate updated tagging logic — update allocation ratios (p=0.325, s=0.5), replace hardcoded SG dict with dynamic loop, update unit tests, run regression tests, update developer reference docs
-- Phase 16 added: Linting
-- Milestone v2.0 started 2026-04-08: Phases 17–27 added (RE Loan Dashboard POC, 52 requirements mapped)
-- Phase 17 complete 2026-04-08: re_loans + re_loan_cashflows schema, migrations, seed, tests (DATA-01–DATA-04)
-
-### v2.0 Phase Map (Phases 17–27)
-
-| Phase | Name | Requirements |
-|-------|------|--------------|
-| 17 | Data Foundation | DATA-01, DATA-02, DATA-03, DATA-04 |
-| 18 | Core API Layer | API-01, API-02, API-03, API-04, API-05, API-06, API-07, API-08, API-09, API-10, API-11 |
-| 19 | Filter Hook + TypeScript Foundation | FILTER-01, FILTER-02, FILTER-03, FILTER-04 |
-| 20 | Executive Summary Page | EXEC-01, EXEC-02, UX-01 (partial) |
-| 21 | Portfolio Composition Page | COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, COMP-06, UX-01 (partial) |
-| 22 | Credit Quality Page | CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05, CREDIT-06, UX-01 (partial) |
-| 23 | Cash Flow & Performance Page | CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01 (partial) |
-| 24 | Origination Pipeline + Market Context | ORIGIN-01, ORIGIN-02, ORIGIN-03, ORIGIN-04, MARKET-01, MARKET-02, UX-01 (partial) |
-| 25 | Loan Detail Side-Panel | UX-02, UX-03 |
-| 26 | Export | EXPORT-01, EXPORT-02 |
-| 27 | Role Scope Validation | ROLES-01, ROLES-02, ROLES-03 |
 
 ### Decisions
 
@@ -199,16 +174,6 @@ Recent decisions affecting current work:
 - [Phase 16]: [16-01] Disable @typescript-eslint/no-explicit-any and react-hooks/set-state-in-effect at ESLint setup — pre-existing violations suppressed per D-03 (zero violations at setup point)
 - [Phase 16]: [16-01] ESLint v9 flat config uses tseslint.config() helper with react-hooks and react-refresh plugins only; no type-checked rules
 - [Phase 16]: prepare script uses cd .. && node frontend/node_modules/husky/bin.js for monorepo subdirectory layout — husky requires .git in cwd, frontend/ is the package dir
-- [v2.0 Roadmap]: re_loans uses flat table design (not LoanFact reuse) — separate Alembic migration chained off current head; all monetary cols NUMERIC(18,6), rate cols NUMERIC(10,6)
-- [v2.0 Roadmap]: UX-01 (chart click-to-filter) implemented per dashboard page phase (20-24), not a separate phase — each chart needs its own click handler wired at build time
-- [v2.0 Roadmap]: Geo heatmap (COMP-02) has explicit 3-day timebox; fallback to ranked bar chart if over budget — same API endpoint, no TopoJSON required
-- [v2.0 Roadmap]: sales_team_id scope injected server-side from JWT in build_filters() — never a user-facing query param; must audit existing JWT payload in Phase 18 planning
-- [v2.0 Roadmap]: PDF export (EXPORT-02) built last (Phase 26) after all sections stable; html2canvas-pro + jsPDF; isAnimationActive=false + 500ms delay + scale cap at 1.5 required
-- [v2.0 Roadmap]: faker>=33.0.0 added to requirements-dev.txt (not requirements.txt) for seed script
-- [Phase 17-data-foundation]: re_loans has 24 columns (plan body listed 24, plan success criteria text said "22" — implementation is 24, which is correct); both model and migration are consistent
-- [Phase 17-data-foundation]: seed_re_loans.py uses rng = np.random.default_rng(seed=42) and Faker.seed(42) — fully reproducible; idempotent via child-before-parent truncate
-- [Phase 17-data-foundation]: T1 loans share loan_number with T0 (same loan population, different snapshot date); cashflows linked to T0 loan IDs only (no duplication for T1)
-- [Phase 17-data-foundation]: Migration chain: 60a8a67090c8 -> efe3898fdf4b -> c56f6c6372a0 (re_loans) -> 119641453e41 (re_loan_cashflows)
 
 ### Pending Todos
 
@@ -223,6 +188,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-08T00:00:00.000Z
-Stopped at: Phase 17 (Data Foundation) complete — verified 2026-04-08; ready for Phase 18 (Core API Layer)
+Last session: 2026-03-25T15:06:16.217Z
+Stopped at: Completed 16-02-PLAN.md
 Resume file: None

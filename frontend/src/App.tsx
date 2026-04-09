@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -14,8 +15,11 @@ import CashFlow from './pages/CashFlow'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 
+const queryClient = new QueryClient()
+
 function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -41,6 +45,7 @@ function App() {
         </Route>
       </Routes>
     </AuthProvider>
+    </QueryClientProvider>
   )
 }
 
