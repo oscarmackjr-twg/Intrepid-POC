@@ -59,18 +59,21 @@ function getCellColor(prior: string, current: string): string {
   return Number(current) > Number(prior) ? 'bg-red-100' : 'bg-green-100'
 }
 
-function formatUPB(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`
-  return `$${value.toFixed(0)}`
+function formatUPB(value: number | string): string {
+  const v = Number(value)
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(0)}K`
+  return `$${v.toFixed(0)}`
 }
 
-function formatPct(value: number): string {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
+function formatPct(value: number | string): string {
+  const v = Number(value)
+  return `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
 }
 
-function formatRate(value: number): string {
-  return `${(value * 100).toFixed(3)}%`
+function formatRate(value: number | string): string {
+  const v = Number(value)
+  return `${(v * 100).toFixed(3)}%`
 }
 
 export default function ReCreditQualityPage() {
