@@ -47,7 +47,7 @@ Plans:
   2. The app is accessible at `localhost:8000` in the browser immediately after compose up
   3. The Postgres volume mount uses a relative or env-var path â no hardcoded Windows absolute paths in docker-compose.yml
   4. Alembic migrations run automatically on container start without manual intervention
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 02-01-PLAN.md â Overhaul docker-compose.yml: fix DB name, remove Windows path, add migrations entrypoint, add frontend service (DOCKER-01, DOCKER-02, DOCKER-04)
@@ -62,7 +62,7 @@ Plans:
   2. Secrets Manager contains entries for `DATABASE_URL` and `SECRET_KEY` readable by the ECS task role
   3. ECR repository is provisioned and a test `docker push` to it succeeds with valid AWS credentials
   4. RDS Postgres instance is running and reachable on its private endpoint from within the VPC
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 03-01-PLAN.md â Fix loan-engine naming remnants, create terraform.tfvars, destroy+apply infrastructure (INFRA-01)
@@ -292,7 +292,7 @@ Plans:
   3. `SELECT COUNT(*) FROM re_loan_cashflows` returns 12 records per loan (12 months of cashflow history for each seeded loan)
   4. Seeded data spans at least 5 property types, 20 states, 8 MSAs, and includes two distinct as_of_date snapshots
   5. `alembic upgrade head` runs to completion in CI without conflicts with the existing migration chain
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
@@ -308,7 +308,7 @@ Plans:
   3. GET /api/re/loans/{id} for a known seeded loan returns full detail including terms, collateral, and payment history summary
   4. A sales_team role JWT passed to any /api/re/* endpoint returns only loans matching that user's sales_team_id â not the full portfolio
   5. All endpoints respond under 500ms for the full seeded dataset with no active filters
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 18-01-PLAN.md — Foundation + aggregation endpoints: re_schemas.py, FilterParams, build_re_filters, KPIs, concentration, distributions, maturity-profile (API-01, API-02, API-03, API-04, API-11)
@@ -324,7 +324,7 @@ Plans:
   2. Selecting a property type filter updates the browser URL query params and the Zustand store simultaneously without page reload
   3. Clicking "Clear all filters" resets all URL params and store state to defaults in a single action
   4. Changing any filter causes all TanStack Query keys to invalidate â confirmed by watching network requests in browser DevTools
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 19-01-PLAN.md — Install Zustand, TypeScript types, filter store, useReLoanFilters hook (FILTER-01, FILTER-02, FILTER-03, FILTER-04)
@@ -393,11 +393,12 @@ Plans:
   3. The yield analysis section shows gross yield, net yield after losses, and spread to SOFR and Treasury
   4. The CPR trend line and loss/recovery tracking section (realized losses, recoveries, net loss rate) are both visible and populated
   5. Applying a filter from the sidebar updates all Cash Flow charts without page reload
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 23-01-PLAN.md — Frontend: ReCashFlowPage with 5 panels (P&I line chart, NOI trend, CPR trend, yield analysis, loss/recovery); route wiring in App.tsx (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01)
-- [ ] 23-02-PLAN.md — Verification: full test suite + human visual verification of all 5 panels (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
+- [ ] 23-01-PLAN.md — Backend TDD: contract tests for cashflow-performance and market-context response shapes; Decimal-as-string coercion contracts (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
+- [ ] 23-02-PLAN.md — Frontend: ReCashFlowPage with 5 panels (P&I line chart, NOI trend, CPR trend, yield analysis, loss/recovery); route wiring in App.tsx (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01)
+- [ ] 23-03-PLAN.md — Verification: full test suite + human visual verification of all 5 panels (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
 **UI hint**: yes
 
 ### Phase 24: Origination Pipeline + Market Context
@@ -410,7 +411,7 @@ Plans:
   3. The pipeline funnel shows stage counts for underwriting, approved, closing, and funded
   4. The vintage analysis section shows performance metrics grouped by origination year
   5. The Market Context panel shows 10Y Treasury and SOFR stub values with trend shapes and cap rates/vacancy rates by property type, each clearly labeled as indicative with live-feed hook markers in the code
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
@@ -425,7 +426,7 @@ Plans:
   1. Clicking a loan row in any table (top-10 exposures, watchlist, loan list) opens a slide-in side-panel showing full terms, collateral, borrower, payment history summary, and appraisal history
   2. The side-panel closes when the user clicks a close button or presses Escape â the underlying dashboard page remains in place with active filters unchanged
   3. Opening the side-panel does not trigger a page navigation or modify any URL query params
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
@@ -440,7 +441,7 @@ Plans:
   1. Each filterable table (top-10 exposures, watchlist, loan list, pipeline) has a "Download CSV" button that downloads a CSV file containing exactly the rows and columns currently visible with active filters applied
   2. A "Download PDF" button on each dashboard page triggers a rasterized PDF download labeled "Dashboard Snapshot" containing all visible charts and tables from that page
   3. The PDF export does not show blank charts â all Recharts visualizations are fully rendered in the captured output
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
@@ -456,7 +457,7 @@ Plans:
   2. Logging in as a sales_team user and visiting /re-dashboard shows only the loans assigned to that user's sales_team_id â confirmed by checking total UPB against the expected subset
   3. A sales_team user calling GET /api/re/loans directly (bypassing the UI) still receives only their scoped loans â server-side enforcement confirmed
   4. The RE dashboard nav link is visible in the sidebar for all authenticated users regardless of role
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
