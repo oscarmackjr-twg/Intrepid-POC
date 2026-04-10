@@ -14,6 +14,7 @@ import ReDashboard from './pages/ReDashboard'
 import ReExecutiveSummaryPage from './pages/ReExecutiveSummaryPage'
 import RePortfolioPage from './pages/RePortfolioPage'
 import ReCreditQualityPage from './pages/ReCreditQualityPage'
+import ReCashFlowPage from './pages/ReCashFlowPage'
 import CashFlow from './pages/CashFlow'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
@@ -52,7 +53,7 @@ function App() {
             <Route index element={<ReExecutiveSummaryPage />} />
             <Route path="portfolio" element={<RePortfolioPage />} />
             <Route path="credit" element={<ReCreditQualityPage />} />
-            <Route path="cashflow" element={<ReStubPage />} />
+            <Route path="cashflow" element={<ReCashFlowPage />} />
             <Route path="origination" element={<ReStubPage />} />
           </Route>
         </Route>
