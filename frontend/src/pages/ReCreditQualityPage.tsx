@@ -235,8 +235,8 @@ export default function ReCreditQualityPage() {
                     <td className="p-2 text-[#1a3868] font-medium">{loan.loan_number}</td>
                     <td className="p-2">{loan.borrower_name ?? '\u2014'}</td>
                     <td className="p-2 text-right">{loan.upb != null ? formatUPB(loan.upb) : '\u2014'}</td>
-                    <td className="p-2 text-right">{loan.ltv != null ? `${(loan.ltv * 100).toFixed(1)}%` : '\u2014'}</td>
-                    <td className="p-2 text-right">{loan.dscr != null ? `${loan.dscr.toFixed(2)}x` : '\u2014'}</td>
+                    <td className="p-2 text-right">{loan.ltv != null ? `${(Number(loan.ltv) * 100).toFixed(1)}%` : '\u2014'}</td>
+                    <td className="p-2 text-right">{loan.dscr != null ? `${Number(loan.dscr).toFixed(2)}x` : '\u2014'}</td>
                     <td className="p-2 text-center font-medium">{loan.risk_rating ?? '\u2014'}</td>
                     <td className={`p-2 text-center text-lg ${trend.color}`}>{trend.symbol}</td>
                     <td className="p-2 text-right">{loan.days_past_due ?? 0}</td>
