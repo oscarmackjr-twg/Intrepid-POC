@@ -1,15 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: In Progress
-stopped_at: Completed 21-03-PLAN.md
-last_updated: "2026-04-09T00:00:00.000Z"
+milestone: v2.0
+milestone_name: Real Estate Loan Dashboard POC
+status: Ready to execute
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-04-10T23:14:42.647Z"
 progress:
   total_phases: 27
   completed_phases: 21
-  total_plans: 52
-  completed_plans: 51
+  total_plans: 64
+  completed_plans: 62
+  percent: 97
 ---
 
 # Project State
@@ -19,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Ops can take a loan tape from email to executed wire instructions in one controlled, visible process — replacing ad hoc scripts
-**Current focus:** Phase 21 — portfolio-composition-page (complete)
+**Current focus:** Phase 22 — credit-quality-page
 
 ## Current Position
 
-Phase: 21
-Plan: Completed 21-03-PLAN.md
+Phase: 22 (credit-quality-page) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -78,6 +79,7 @@ Plan: Completed 21-03-PLAN.md
 | Phase 15 P01 | 4 | 2 tasks | 2 files |
 | Phase 16 P01 | 15 | 2 tasks | 3 files |
 | Phase 16 P02 | 3 | 1 tasks | 2 files |
+| Phase 22-credit-quality-page P03 | 30 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -174,6 +176,8 @@ Recent decisions affecting current work:
 - [Phase 16]: [16-01] Disable @typescript-eslint/no-explicit-any and react-hooks/set-state-in-effect at ESLint setup — pre-existing violations suppressed per D-03 (zero violations at setup point)
 - [Phase 16]: [16-01] ESLint v9 flat config uses tseslint.config() helper with react-hooks and react-refresh plugins only; no type-checked rules
 - [Phase 16]: prepare script uses cd .. && node frontend/node_modules/husky/bin.js for monorepo subdirectory layout — husky requires .git in cwd, frontend/ is the package dir
+- [Phase 22]: Decimal coercion applied at formatter boundary (formatUPB/formatPct/formatRate) via parseFloat(String(val)) — keeps fix in display layer
+- [Phase 22]: Watchlist cutoff uses letter-scale ratings (B, CCC) matching production data; property type sidebar filters normalize to lowercase
 
 ### Pending Todos
 
@@ -188,6 +192,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-25T15:06:16.217Z
-Stopped at: Completed 16-02-PLAN.md
+Last session: 2026-04-10T23:14:42.639Z
+Stopped at: Completed 22-03-PLAN.md
 Resume file: None

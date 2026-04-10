@@ -153,12 +153,12 @@
 | COMP-04 | Phase 21 | Pending |
 | COMP-05 | Phase 21 | Pending |
 | COMP-06 | Phase 21 | Pending |
-| CREDIT-01 | Phase 22 | Pending |
-| CREDIT-02 | Phase 22 | Pending |
-| CREDIT-03 | Phase 22 | Pending |
-| CREDIT-04 | Phase 22 | Pending |
-| CREDIT-05 | Phase 22 | Pending |
-| CREDIT-06 | Phase 22 | Pending |
+| CREDIT-01 | Phase 22 | Complete |
+| CREDIT-02 | Phase 22 | Complete |
+| CREDIT-03 | Phase 22 | Complete |
+| CREDIT-04 | Phase 22 | Complete |
+| CREDIT-05 | Phase 22 | Complete |
+| CREDIT-06 | Phase 22 | Complete |
 | CASHFLOW-01 | Phase 23 | Pending |
 | CASHFLOW-02 | Phase 23 | Pending |
 | CASHFLOW-03 | Phase 23 | Pending |
@@ -170,7 +170,7 @@
 | ORIGIN-04 | Phase 24 | Pending |
 | MARKET-01 | Phase 24 | Pending |
 | MARKET-02 | Phase 24 | Pending |
-| UX-01 | Phases 20–24 | Pending |
+| UX-01 | Phases 20–24 | Complete |
 | UX-02 | Phase 25 | Pending |
 | UX-03 | Phase 25 | Pending |
 | EXPORT-01 | Phase 26 | Pending |

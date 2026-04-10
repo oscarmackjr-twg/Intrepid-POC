@@ -273,7 +273,7 @@ Plans:
 - [x] **Phase 20: Executive Summary Page** - KPI cards populated from real seeded data; chart click-to-filter wired
  (completed 2026-04-09)
 - [x] **Phase 21: Portfolio Composition Page** - Property type chart, geo map/bar fallback, loan size histogram, maturity profile, top-10 table, concentration limits; click-to-filter wired (completed 2026-04-09)
-- [ ] **Phase 22: Credit Quality Page** - LTV/DSCR histograms, watchlist table, delinquency waterfall, migration matrix, rate sensitivity; click-to-filter wired
+- [x] **Phase 22: Credit Quality Page** - LTV/DSCR histograms, watchlist table, delinquency waterfall, migration matrix, rate sensitivity; click-to-filter wired (completed 2026-04-10)
 - [ ] **Phase 23: Cash Flow & Performance Page** - P&I line chart, NOI trend, yield analysis, CPR, loss/recovery; click-to-filter wired
 - [ ] **Phase 24: Origination Pipeline + Market Context** - Origination volume, payoffs, pipeline funnel, vintage analysis, market context stub panel; click-to-filter wired
 - [ ] **Phase 25: Loan Detail Side-Panel** - Read-only loan detail slide-in panel, closes without page navigation
@@ -378,9 +378,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 22-01-PLAN.md — Backend: new delinquency-waterfall + risk-rating-migration endpoints, LoanSummary prior_risk_rating fix, integration tests (CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05)
-- [ ] 22-02-PLAN.md — Frontend: ReCreditQualityPage with 6 panels (LTV/DSCR histograms, watchlist, waterfall, migration matrix, sensitivity table), route wiring (CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05, CREDIT-06, UX-01)
-- [ ] 22-03-PLAN.md — Verification: full test suite + human visual verification of all 6 panels (CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05, CREDIT-06, UX-01)
+- [x] 22-01-PLAN.md — Backend: new delinquency-waterfall + risk-rating-migration endpoints, LoanSummary prior_risk_rating fix, integration tests (CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05)
+- [x] 22-02-PLAN.md — Frontend: ReCreditQualityPage with 6 panels (LTV/DSCR histograms, watchlist, waterfall, migration matrix, sensitivity table), route wiring (CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05, CREDIT-06, UX-01)
+- [x] 22-03-PLAN.md — Verification: full test suite + human visual verification of all 6 panels (CREDIT-01, CREDIT-02, CREDIT-03, CREDIT-04, CREDIT-05, CREDIT-06, UX-01)
 **UI hint**: yes
 
 ### Phase 23: Cash Flow & Performance Page
@@ -396,8 +396,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
-- [ ] 17-02-PLAN.md — Seed script + integration tests for realistic CRE portfolio data (DATA-03, DATA-04)
+- [ ] 23-01-PLAN.md — Frontend: ReCashFlowPage with 5 panels (P&I line chart, NOI trend, CPR trend, yield analysis, loss/recovery); route wiring in App.tsx (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01)
+- [ ] 23-02-PLAN.md — Verification: full test suite + human visual verification of all 5 panels (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
 **UI hint**: yes
 
 ### Phase 24: Origination Pipeline + Market Context
@@ -474,7 +474,7 @@ Phases execute sequentially: 17 â 18 â 19 â 20 â 21 â 2
 | 19. Filter Hook + TypeScript Foundation | 2/2 | Complete   | 2026-04-09 |
 | 20. Executive Summary Page | 1/1 | Complete   | 2026-04-09 |
 | 21. Portfolio Composition Page | 3/3 | Complete   | 2026-04-09 |
-| 22. Credit Quality Page | 0/TBD | Not started | - |
+| 22. Credit Quality Page | 3/3 | Complete   | 2026-04-10 |
 | 23. Cash Flow & Performance Page | 0/TBD | Not started | - |
 | 24. Origination Pipeline + Market Context | 0/TBD | Not started | - |
 | 25. Loan Detail Side-Panel | 0/TBD | Not started | - |
