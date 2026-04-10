@@ -49,13 +49,12 @@ export function ReDashboardFilterSidebar() {
             onChange={(e) => setFilter('property_type', e.target.value || null)}
           >
             <option value="">All</option>
-            <option value="Multifamily">Multifamily</option>
-            <option value="Office">Office</option>
-            <option value="Retail">Retail</option>
-            <option value="Industrial">Industrial</option>
-            <option value="Mixed-Use">Mixed-Use</option>
-            <option value="Hotel">Hotel</option>
-            <option value="Land">Land</option>
+            <option value="multifamily">Multifamily</option>
+            <option value="office">Office</option>
+            <option value="retail">Retail</option>
+            <option value="industrial">Industrial</option>
+            <option value="mixed-use">Mixed-Use</option>
+            <option value="hospitality">Hospitality</option>
           </select>
         </div>
 
@@ -132,11 +131,13 @@ export function ReDashboardFilterSidebar() {
             onChange={(e) => setFilter('risk_rating', e.target.value || null)}
           >
             <option value="">All</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
+            <option value="AAA">AAA</option>
+            <option value="AA">AA</option>
+            <option value="A">A</option>
+            <option value="BBB">BBB</option>
+            <option value="BB">BB</option>
+            <option value="B">B</option>
+            <option value="CCC">CCC</option>
           </select>
         </div>
 

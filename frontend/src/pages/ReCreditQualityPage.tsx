@@ -142,9 +142,9 @@ export default function ReCreditQualityPage() {
     },
   })
 
-  // Derive watchlist from loans — risk_rating 4 or 5 (criticized)
+  // Derive watchlist from loans — B or CCC (criticized/classified, cutoff at B)
   const criticizedLoans = (watchlistLoans.data?.items ?? []).filter(
-    (l) => ['4', '5'].includes(l.risk_rating ?? '')
+    (l) => ['B', 'CCC'].includes(l.risk_rating ?? '')
   )
 
   // Build migration matrix lookup
