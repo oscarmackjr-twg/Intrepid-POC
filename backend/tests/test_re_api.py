@@ -418,6 +418,97 @@ def test_cashflow_performance(client, re_loan_fixtures, auth_headers_admin):
 
 
 # ---------------------------------------------------------------------------
+# CASHFLOW-01/02/03/04 — Cashflow performance contract (Phase 23)
+# ---------------------------------------------------------------------------
+
+
+def test_cashflow_performance_contract(client, re_loan_fixtures, auth_headers_admin):
+    """CASHFLOW-01/02/03/04: All fields the frontend depends on are present with correct types.
+
+    Decimal fields (scheduled_principal etc.) serialize as JSON strings from Pydantic.
+    Frontend wraps with Number() before arithmetic — this test locks in that contract.
+    """
+    response = client.get("/api/re/cashflow-performance", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+
+    # Response-level fields
+    assert "periods" in data
+    assert "net_loss_rate" in data  # may be null — key must exist
+    assert isinstance(data["periods"], list)
+    assert len(data["periods"]) > 0
+
+    # Period-level fields — all 8 required by frontend
+    period = data["periods"][0]
+    required_fields = [
+        "period_date",
+        "scheduled_principal",
+        "actual_principal",
+        "scheduled_interest",
+        "actual_interest",
+        "total_noi",
+        "gross_yield",
+        "cpr",
+    ]
+    for field in required_fields:
+        assert field in period, f"Period missing field: {field}"
+
+    # Decimal fields arrive as strings (Pydantic serialization) — frontend uses Number()
+    # If these fail, the frontend's Number(period.scheduled_principal) will also fail.
+    assert isinstance(period["scheduled_principal"], str), (
+        "scheduled_principal must serialize as string (Pydantic Decimal)"
+    )
+    assert isinstance(period["actual_principal"], str)
+    assert isinstance(period["scheduled_interest"], str)
+    assert isinstance(period["actual_interest"], str)
+    assert isinstance(period["total_noi"], str)
+
+    # Verify Decimal strings are parseable as float
+    assert float(period["scheduled_principal"]) >= 0
+    assert float(period["actual_principal"]) >= 0
+
+
+def test_cashflow_performance_no_loans_returns_empty(client, auth_headers_admin):
+    """CASHFLOW-01: With no loan fixtures, periods is empty and net_loss_rate is null."""
+    response = client.get("/api/re/cashflow-performance", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["periods"] == []
+    assert data["net_loss_rate"] is None
+
+
+def test_market_context_contract(client, re_loan_fixtures, auth_headers_admin):
+    """CASHFLOW-03: market-context returns numeric Decimal strings for SOFR and Treasury.
+
+    Frontend computes: sofrSpread = grossYield - Number(sofr.value)
+    This locks in that sofr.value and ten_year_treasury.value are parseable numeric strings.
+    """
+    response = client.get("/api/re/market-context", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "ten_year_treasury" in data
+    assert "sofr" in data
+
+    treasury = data["ten_year_treasury"]
+    sofr = data["sofr"]
+
+    # value field must exist and be a parseable numeric string
+    assert "value" in treasury
+    assert "value" in sofr
+    assert float(treasury["value"]) == pytest.approx(4.25, abs=0.01)
+    assert float(sofr["value"]) == pytest.approx(5.33, abs=0.01)
+
+    # Decimal serializes as string — frontend wraps with Number()
+    assert isinstance(treasury["value"], str), (
+        "ten_year_treasury.value must be a Decimal string"
+    )
+    assert isinstance(sofr["value"], str), (
+        "sofr.value must be a Decimal string"
+    )
+
+
+# ---------------------------------------------------------------------------
 # API-08 — Origination pipeline
 # ---------------------------------------------------------------------------
 
