@@ -121,3 +121,14 @@ None. The `npm install` in `frontend/` will automatically run the `prepare` scri
 ---
 *Phase: 16-linting*
 *Completed: 2026-03-25*
+
+## Self-Check: PASSED
+
+- FOUND: .husky/pre-commit
+- FOUND: lint-staged in .husky/pre-commit
+- FOUND: prepare script in frontend/package.json
+- FOUND: lint-staged config in frontend/package.json
+- FOUND: husky in devDependencies
+- FOUND: .planning/phases/16-linting/16-02-SUMMARY.md
+- FOUND commit: 98ad425 (feat(16-02): install husky + lint-staged with pre-commit hook)
+- FOUND commit: 8222439 (docs(16-02): complete husky lint-staged pre-commit hooks plan)

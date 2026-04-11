@@ -115,3 +115,13 @@ None — no external service configuration required.
 ---
 *Phase: 16-linting*
 *Completed: 2026-03-25*
+
+## Self-Check: PASSED
+
+- FOUND: frontend/eslint.config.js
+- FOUND: backend/tests/test_tagging_allocation.py (import pytest removed)
+- FOUND: .github/workflows/deploy-test.yml (ESLint step inserted)
+- FOUND: .planning/phases/16-linting/16-01-SUMMARY.md
+- FOUND commit a712dff: feat(16-01): create ESLint v9 flat config and fix ruff unused import
+- FOUND commit 10de876: feat(16-01): add ESLint as blocking CI gate in security-quality-gate job
+- FOUND commit ee97239: docs(16-01): complete ESLint config and ruff cleanup plan

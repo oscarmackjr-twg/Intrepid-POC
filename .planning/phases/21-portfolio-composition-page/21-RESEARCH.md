@@ -579,17 +579,19 @@ export default function RePortfolioPage() {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Loan size histogram: display-only or wired?**
    - What we know: `loan_size_min`/`loan_size_max` filters exist in `ReLoanFilters`. `loan_size_distribution` buckets have `bucket` string labels (e.g., "0-500K"), not numeric boundaries.
    - What's unclear: Whether bucket label strings can be reverse-parsed to set `loan_size_min`/`loan_size_max`. D-13 says "Claude's Discretion."
    - Recommendation: Display-only. Reverse-parsing bucket strings is fragile and introduces a contract between backend bucket labels and frontend parsing logic. A future phase can add proper loan-size range click behavior with cleaner data.
+   - RESOLVED: Display-only (D-13 Claude's Discretion — bars have no onClick handler).
 
 2. **ChartCard wrapper component — extract or inline?**
    - What we know: Six panels share identical card markup (`bg-white rounded-lg border border-gray-200 p-4`).
    - What's unclear: User preference for component granularity.
    - Recommendation: Extract `ChartCard.tsx`. Four-plus identical patterns justifies a shared wrapper; it makes the page component cleaner and skeleton/no-data states composable.
+   - RESOLVED: ChartCard extracted — see Plan 02 Task 1 (`frontend/src/components/re/ChartCard.tsx`).
 
 ---
 
