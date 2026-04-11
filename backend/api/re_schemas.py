@@ -5,10 +5,15 @@ All monetary and rate fields use Decimal (per D-10 / PROJECT.md constraint — n
 
 from datetime import date
 from decimal import Decimal
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import Query
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.functional_serializers import PlainSerializer
+
+# Decimal serialized as float in JSON (Pydantic v2 default is str, which breaks chart rendering).
+# Used for all monetary/rate response fields. Internal calculations still use Decimal.
+JsonDecimal = Annotated[Decimal, PlainSerializer(float, when_used="json")]
 
 
 # ---------------------------------------------------------------------------
@@ -25,8 +30,8 @@ class FilterParams(BaseModel):
     property_type: Optional[str] = None
     state: Optional[str] = None
     msa: Optional[str] = None
-    loan_size_min: Optional[Decimal] = None
-    loan_size_max: Optional[Decimal] = None
+    loan_size_min: Optional[JsonDecimal] = None
+    loan_size_max: Optional[JsonDecimal] = None
     risk_rating: Optional[str] = None
     vintage_year: Optional[int] = None
     borrower: Optional[str] = None
@@ -38,8 +43,8 @@ def get_filter_params(
     property_type: Optional[str] = Query(None, description="Property type filter (exact match)"),
     state: Optional[str] = Query(None, description="State 2-letter code (exact match)"),
     msa: Optional[str] = Query(None, description="MSA name (exact match)"),
-    loan_size_min: Optional[Decimal] = Query(None, description="Minimum UPB"),
-    loan_size_max: Optional[Decimal] = Query(None, description="Maximum UPB"),
+    loan_size_min: Optional[JsonDecimal] = Query(None, description="Minimum UPB"),
+    loan_size_max: Optional[JsonDecimal] = Query(None, description="Maximum UPB"),
     risk_rating: Optional[str] = Query(None, description="Risk rating (exact match)"),
     vintage_year: Optional[int] = Query(None, description="Vintage year (exact match)"),
     borrower: Optional[str] = Query(None, description="Borrower name (partial match, case-insensitive)"),
@@ -73,16 +78,16 @@ class KPIResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    total_upb: Decimal
-    wac: Optional[Decimal]
-    wam: Optional[Decimal]
-    wa_ltv: Optional[Decimal]
-    wa_dscr: Optional[Decimal]
+    total_upb: JsonDecimal
+    wac: Optional[JsonDecimal]
+    wam: Optional[JsonDecimal]
+    wa_ltv: Optional[JsonDecimal]
+    wa_dscr: Optional[JsonDecimal]
     active_loan_count: int
-    delinquent_30_upb: Decimal
-    delinquent_60_upb: Decimal
-    delinquent_90_upb: Decimal
-    portfolio_yield: Optional[Decimal]
+    delinquent_30_upb: JsonDecimal
+    delinquent_60_upb: JsonDecimal
+    delinquent_90_upb: JsonDecimal
+    portfolio_yield: Optional[JsonDecimal]
 
 
 # ---------------------------------------------------------------------------
@@ -97,8 +102,8 @@ class ConcentrationItem(BaseModel):
 
     category: str
     loan_count: int
-    total_upb: Decimal
-    pct_of_total: Decimal
+    total_upb: JsonDecimal
+    pct_of_total: JsonDecimal
 
 
 class TopExposure(BaseModel):
@@ -108,9 +113,9 @@ class TopExposure(BaseModel):
 
     loan_number: str
     borrower_name: str
-    upb: Decimal
-    ltv: Optional[Decimal]
-    dscr: Optional[Decimal]
+    upb: JsonDecimal
+    ltv: Optional[JsonDecimal]
+    dscr: Optional[JsonDecimal]
     property_type: str
     state: str
 
@@ -124,9 +129,9 @@ class ConcentrationLimit(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     category: str
-    current_pct: Decimal
-    limit_pct: Decimal
-    proximity: Decimal
+    current_pct: JsonDecimal
+    limit_pct: JsonDecimal
+    proximity: JsonDecimal
 
 
 class ConcentrationResponse(BaseModel):
@@ -153,7 +158,7 @@ class HistogramBucket(BaseModel):
 
     bucket: str
     loan_count: int
-    total_upb: Decimal
+    total_upb: JsonDecimal
     color: str
 
 
@@ -180,7 +185,7 @@ class MaturityPeriod(BaseModel):
     year: int
     quarter: int
     loan_count: int
-    total_upb: Decimal
+    total_upb: JsonDecimal
 
 
 class MaturityProfileResponse(BaseModel):
@@ -204,10 +209,10 @@ class LoanSummary(BaseModel):
     id: int
     loan_number: str
     borrower_name: Optional[str]
-    upb: Optional[Decimal]
-    interest_rate: Optional[Decimal]
-    ltv: Optional[Decimal]
-    dscr: Optional[Decimal]
+    upb: Optional[JsonDecimal]
+    interest_rate: Optional[JsonDecimal]
+    ltv: Optional[JsonDecimal]
+    dscr: Optional[JsonDecimal]
     property_type: Optional[str]
     state: Optional[str]
     risk_rating: Optional[str]
@@ -234,10 +239,10 @@ class PaymentHistorySummary(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    total_scheduled_principal: Optional[Decimal]
-    total_actual_principal: Optional[Decimal]
-    total_scheduled_interest: Optional[Decimal]
-    total_actual_interest: Optional[Decimal]
+    total_scheduled_principal: Optional[JsonDecimal]
+    total_actual_principal: Optional[JsonDecimal]
+    total_scheduled_interest: Optional[JsonDecimal]
+    total_actual_interest: Optional[JsonDecimal]
     periods: int
 
 
@@ -253,10 +258,10 @@ class LoanDetailResponse(BaseModel):
     id: int
     loan_number: str
     borrower_name: Optional[str]
-    upb: Optional[Decimal]
-    interest_rate: Optional[Decimal]
-    ltv: Optional[Decimal]
-    dscr: Optional[Decimal]
+    upb: Optional[JsonDecimal]
+    interest_rate: Optional[JsonDecimal]
+    ltv: Optional[JsonDecimal]
+    dscr: Optional[JsonDecimal]
     property_type: Optional[str]
     state: Optional[str]
     risk_rating: Optional[str]
@@ -267,7 +272,7 @@ class LoanDetailResponse(BaseModel):
 
     # Extended fields
     msa: Optional[str]
-    original_balance: Optional[Decimal]
+    original_balance: Optional[JsonDecimal]
     wam_months: Optional[int]
     rate_type: Optional[str]
     prior_risk_rating: Optional[str]
@@ -293,13 +298,13 @@ class CashflowPeriod(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     period_date: date
-    scheduled_principal: Decimal
-    actual_principal: Decimal
-    scheduled_interest: Decimal
-    actual_interest: Decimal
-    total_noi: Decimal
-    gross_yield: Optional[Decimal]
-    cpr: Optional[Decimal]
+    scheduled_principal: JsonDecimal
+    actual_principal: JsonDecimal
+    scheduled_interest: JsonDecimal
+    actual_interest: JsonDecimal
+    total_noi: JsonDecimal
+    gross_yield: Optional[JsonDecimal]
+    cpr: Optional[JsonDecimal]
 
 
 class CashflowPerformanceResponse(BaseModel):
@@ -308,7 +313,7 @@ class CashflowPerformanceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     periods: list[CashflowPeriod]
-    net_loss_rate: Optional[Decimal]
+    net_loss_rate: Optional[JsonDecimal]
 
 
 # ---------------------------------------------------------------------------
@@ -324,7 +329,7 @@ class OriginationMonth(BaseModel):
     year: int
     month: int
     loan_count: int
-    total_upb: Decimal
+    total_upb: JsonDecimal
 
 
 class PipelineFunnelStage(BaseModel):
@@ -334,7 +339,7 @@ class PipelineFunnelStage(BaseModel):
 
     stage: str
     loan_count: int
-    total_upb: Decimal
+    total_upb: JsonDecimal
 
 
 class VintageGroup(BaseModel):
@@ -344,9 +349,9 @@ class VintageGroup(BaseModel):
 
     vintage_year: int
     loan_count: int
-    total_upb: Decimal
-    avg_ltv: Optional[Decimal]
-    avg_dscr: Optional[Decimal]
+    total_upb: JsonDecimal
+    avg_ltv: Optional[JsonDecimal]
+    avg_dscr: Optional[JsonDecimal]
 
 
 class OriginationPipelineResponse(BaseModel):
@@ -369,7 +374,7 @@ class MarketRate(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    value: Decimal
+    value: JsonDecimal
     trend: str
     source: str
 
@@ -380,7 +385,7 @@ class CapRate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     property_type: str
-    value: Decimal
+    value: JsonDecimal
     source: str
 
 
@@ -406,9 +411,9 @@ class SensitivityScenario(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     bps_change: int
-    new_wac: Decimal
-    annual_interest_impact: Decimal
-    impact_pct: Decimal
+    new_wac: JsonDecimal
+    annual_interest_impact: JsonDecimal
+    impact_pct: JsonDecimal
 
 
 class SensitivityResponse(BaseModel):
@@ -416,8 +421,8 @@ class SensitivityResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    base_wac: Decimal
-    total_upb: Decimal
+    base_wac: JsonDecimal
+    total_upb: JsonDecimal
     scenarios: list[SensitivityScenario]
 
 
@@ -433,7 +438,7 @@ class DelinquencyBucket(BaseModel):
 
     bucket: str
     loan_count: int
-    total_upb: Decimal
+    total_upb: JsonDecimal
 
 
 class DelinquencyWaterfallResponse(BaseModel):
@@ -457,7 +462,7 @@ class MigrationCell(BaseModel):
     prior_rating: str
     current_rating: str
     loan_count: int
-    total_upb: Decimal
+    total_upb: JsonDecimal
 
 
 class RiskRatingMigrationResponse(BaseModel):
