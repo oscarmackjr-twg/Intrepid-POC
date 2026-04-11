@@ -81,14 +81,14 @@ export default function RePortfolioPage() {
         isLoading={concentration.isLoading}
         isEmpty={!concentration.data?.property_type?.length}
       >
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={320}>
           <PieChart>
             <Pie
               data={concentration.data?.property_type ?? []}
               dataKey="total_upb"
               nameKey="category"
               cx="50%"
-              cy="50%"
+              cy="45%"
               innerRadius={60}
               outerRadius={100}
               onClick={(entry) => { if (entry && 'category' in entry) setFilter('property_type', (entry as unknown as ConcentrationItem).category) }}
