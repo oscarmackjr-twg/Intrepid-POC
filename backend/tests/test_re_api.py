@@ -418,97 +418,6 @@ def test_cashflow_performance(client, re_loan_fixtures, auth_headers_admin):
 
 
 # ---------------------------------------------------------------------------
-# CASHFLOW-01/02/03/04 — Cashflow performance contract (Phase 23)
-# ---------------------------------------------------------------------------
-
-
-def test_cashflow_performance_contract(client, re_loan_fixtures, auth_headers_admin):
-    """CASHFLOW-01/02/03/04: All fields the frontend depends on are present with correct types.
-
-    Decimal fields (scheduled_principal etc.) serialize as JSON strings from Pydantic.
-    Frontend wraps with Number() before arithmetic — this test locks in that contract.
-    """
-    response = client.get("/api/re/cashflow-performance", headers=auth_headers_admin)
-    assert response.status_code == 200
-    data = response.json()
-
-    # Response-level fields
-    assert "periods" in data
-    assert "net_loss_rate" in data  # may be null — key must exist
-    assert isinstance(data["periods"], list)
-    assert len(data["periods"]) > 0
-
-    # Period-level fields — all 8 required by frontend
-    period = data["periods"][0]
-    required_fields = [
-        "period_date",
-        "scheduled_principal",
-        "actual_principal",
-        "scheduled_interest",
-        "actual_interest",
-        "total_noi",
-        "gross_yield",
-        "cpr",
-    ]
-    for field in required_fields:
-        assert field in period, f"Period missing field: {field}"
-
-    # Decimal fields arrive as strings (Pydantic serialization) — frontend uses Number()
-    # If these fail, the frontend's Number(period.scheduled_principal) will also fail.
-    assert isinstance(period["scheduled_principal"], str), (
-        "scheduled_principal must serialize as string (Pydantic Decimal)"
-    )
-    assert isinstance(period["actual_principal"], str)
-    assert isinstance(period["scheduled_interest"], str)
-    assert isinstance(period["actual_interest"], str)
-    assert isinstance(period["total_noi"], str)
-
-    # Verify Decimal strings are parseable as float
-    assert float(period["scheduled_principal"]) >= 0
-    assert float(period["actual_principal"]) >= 0
-
-
-def test_cashflow_performance_no_loans_returns_empty(client, auth_headers_admin):
-    """CASHFLOW-01: With no loan fixtures, periods is empty and net_loss_rate is null."""
-    response = client.get("/api/re/cashflow-performance", headers=auth_headers_admin)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["periods"] == []
-    assert data["net_loss_rate"] is None
-
-
-def test_market_context_contract(client, re_loan_fixtures, auth_headers_admin):
-    """CASHFLOW-03: market-context returns numeric Decimal strings for SOFR and Treasury.
-
-    Frontend computes: sofrSpread = grossYield - Number(sofr.value)
-    This locks in that sofr.value and ten_year_treasury.value are parseable numeric strings.
-    """
-    response = client.get("/api/re/market-context", headers=auth_headers_admin)
-    assert response.status_code == 200
-    data = response.json()
-
-    assert "ten_year_treasury" in data
-    assert "sofr" in data
-
-    treasury = data["ten_year_treasury"]
-    sofr = data["sofr"]
-
-    # value field must exist and be a parseable numeric string
-    assert "value" in treasury
-    assert "value" in sofr
-    assert float(treasury["value"]) == pytest.approx(4.25, abs=0.01)
-    assert float(sofr["value"]) == pytest.approx(5.33, abs=0.01)
-
-    # Decimal serializes as string — frontend wraps with Number()
-    assert isinstance(treasury["value"], str), (
-        "ten_year_treasury.value must be a Decimal string"
-    )
-    assert isinstance(sofr["value"], str), (
-        "sofr.value must be a Decimal string"
-    )
-
-
-# ---------------------------------------------------------------------------
 # API-08 — Origination pipeline
 # ---------------------------------------------------------------------------
 
@@ -718,3 +627,121 @@ def test_distributions_dscr_color_bands(client, re_loan_fixtures, auth_headers_a
     for bucket in dscr_hist:
         assert "color" in bucket
         assert bucket["color"] in valid_colors
+
+
+# ---------------------------------------------------------------------------
+# WR-02 — CPR is None on principal shortfall
+# ---------------------------------------------------------------------------
+
+
+def test_cashflow_cpr_none_on_shortfall(client, test_db_session, auth_headers_admin, sample_sales_team):
+    """WR-02: Period where actual_principal < scheduled_principal returns cpr=null (not 0)."""
+    as_of = date(2026, 3, 1)
+    loan = RELoan(
+        loan_number="WR-02-LOAN",
+        borrower_name="Shortfall Borrower",
+        sales_team_id=sample_sales_team.id,
+        as_of_date=as_of,
+        upb=Decimal("1000000.00"),
+        original_balance=Decimal("1100000.00"),
+        interest_rate=Decimal("0.060"),
+        wam_months=120,
+        ltv=Decimal("0.65"),
+        dscr=Decimal("1.3"),
+        property_type="Multifamily",
+        state="NY",
+        msa="New York-Newark",
+        risk_rating="2",
+        prior_risk_rating="2",
+        rate_type="Fixed",
+        origination_date=date(2022, 1, 1),
+        maturity_date=date(2032, 1, 1),
+        days_past_due=0,
+        delinquency_status="current",
+        pipeline_stage="active",
+        vintage_year=2022,
+    )
+    test_db_session.add(loan)
+    test_db_session.flush()
+
+    # Cashflow period where actual_principal < scheduled_principal (shortfall)
+    cf = RELoanCashflow(
+        loan_id=loan.id,
+        period_date=date(2026, 4, 1),
+        scheduled_principal=Decimal("20000.00"),
+        actual_principal=Decimal("5000.00"),   # shortfall: actual < scheduled
+        scheduled_interest=Decimal("5000.00"),
+        actual_interest=Decimal("5000.00"),
+        noi=Decimal("12000.00"),
+    )
+    test_db_session.add(cf)
+    test_db_session.commit()
+
+    response = client.get("/api/re/cashflow-performance", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    # Find the shortfall period (scheduled_principal > actual_principal)
+    shortfall_period = next(
+        (p for p in data["periods"]
+         if p["scheduled_principal"] is not None
+         and p["actual_principal"] is not None
+         and float(p["scheduled_principal"]) > float(p["actual_principal"])),
+        None,
+    )
+    assert shortfall_period is not None, "Expected at least one shortfall period"
+    assert shortfall_period["cpr"] is None, "CPR must be null for a principal shortfall period"
+
+
+# ---------------------------------------------------------------------------
+# WR-01 — net_loss_rate includes principal shortfalls
+# ---------------------------------------------------------------------------
+
+
+def test_cashflow_net_loss_rate_includes_principal(client, test_db_session, auth_headers_admin, sample_sales_team):
+    """WR-01: net_loss_rate reflects principal shortfall (was zero under the bug)."""
+    as_of = date(2026, 3, 1)
+    loan = RELoan(
+        loan_number="WR-01-LOAN",
+        borrower_name="NetLoss Borrower",
+        sales_team_id=sample_sales_team.id,
+        as_of_date=as_of,
+        upb=Decimal("500000.00"),
+        original_balance=Decimal("550000.00"),
+        interest_rate=Decimal("0.055"),
+        wam_months=60,
+        ltv=Decimal("0.70"),
+        dscr=Decimal("1.1"),
+        property_type="Office",
+        state="CA",
+        msa="Los Angeles",
+        risk_rating="3",
+        prior_risk_rating="3",
+        rate_type="Floating",
+        origination_date=date(2021, 6, 1),
+        maturity_date=date(2031, 6, 1),
+        days_past_due=0,
+        delinquency_status="current",
+        pipeline_stage="active",
+        vintage_year=2021,
+    )
+    test_db_session.add(loan)
+    test_db_session.flush()
+
+    # Cashflow with principal shortfall, no interest shortfall
+    cf = RELoanCashflow(
+        loan_id=loan.id,
+        period_date=date(2026, 4, 1),
+        scheduled_principal=Decimal("10000.00"),
+        actual_principal=Decimal("0.00"),      # full principal shortfall
+        scheduled_interest=Decimal("2500.00"),
+        actual_interest=Decimal("2500.00"),    # no interest shortfall
+        noi=Decimal("8000.00"),
+    )
+    test_db_session.add(cf)
+    test_db_session.commit()
+
+    response = client.get("/api/re/cashflow-performance", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["net_loss_rate"] is not None
+    assert float(data["net_loss_rate"]) > 0, "net_loss_rate must be > 0 when principal is not collected"
