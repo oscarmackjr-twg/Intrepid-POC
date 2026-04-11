@@ -547,7 +547,7 @@ def test_delinquency_waterfall(client, re_loan_fixtures, auth_headers_admin):
         assert "total_upb" in b
     # Verify ordering
     bucket_names = [b["bucket"] for b in buckets]
-    expected_order = ["current", "30", "60", "90", "default"]
+    expected_order = ["current", "30", "60", "default"]
     assert bucket_names == [n for n in expected_order if n in bucket_names]
     # At least current bucket has loans
     current_bucket = next((b for b in buckets if b["bucket"] == "current"), None)
@@ -745,3 +745,66 @@ def test_cashflow_net_loss_rate_includes_principal(client, test_db_session, auth
     data = response.json()
     assert data["net_loss_rate"] is not None
     assert float(data["net_loss_rate"]) > 0, "net_loss_rate must be > 0 when principal is not collected"
+
+
+# ---------------------------------------------------------------------------
+# WR-03 — 90 DPD loan lands in "default" bucket, no "90" bucket in response
+# ---------------------------------------------------------------------------
+
+
+def test_delinquency_waterfall_90dpd_is_default(client, test_db_session, auth_headers_admin, sample_sales_team):
+    """WR-03: Loan with days_past_due=90 must land in 'default', not '90' bucket."""
+    as_of = date(2026, 3, 1)
+    loan = RELoan(
+        loan_number="WR-03-LOAN",
+        borrower_name="90DPD Borrower",
+        sales_team_id=sample_sales_team.id,
+        as_of_date=as_of,
+        upb=Decimal("750000.00"),
+        original_balance=Decimal("800000.00"),
+        interest_rate=Decimal("0.065"),
+        wam_months=120,
+        ltv=Decimal("0.75"),
+        dscr=Decimal("1.0"),
+        property_type="Retail",
+        state="TX",
+        msa="Dallas",
+        risk_rating="4",
+        prior_risk_rating="3",
+        rate_type="Fixed",
+        origination_date=date(2021, 1, 1),
+        maturity_date=date(2031, 1, 1),
+        days_past_due=90,
+        delinquency_status="90dpd",
+        pipeline_stage="active",
+        vintage_year=2021,
+    )
+    test_db_session.add(loan)
+    test_db_session.commit()
+
+    response = client.get("/api/re/delinquency-waterfall", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    buckets = data["buckets"]
+    bucket_names = [b["bucket"] for b in buckets]
+
+    # No "90" bucket should appear in the response
+    assert "90" not in bucket_names, "WR-03: '90' bucket must not exist — 90+ DPD maps to default"
+
+    # The loan must appear in "default"
+    default_bucket = next((b for b in buckets if b["bucket"] == "default"), None)
+    assert default_bucket is not None, "Expected 'default' bucket in response"
+    assert default_bucket["loan_count"] >= 1, "90 DPD loan must be counted in 'default' bucket"
+
+
+# ---------------------------------------------------------------------------
+# WR-04 — page_size > 200 is clamped to 200
+# ---------------------------------------------------------------------------
+
+
+def test_loans_page_size_cap(client, re_loan_fixtures, auth_headers_admin):
+    """WR-04: Requesting page_size=9999 returns 200 with page_size clamped to <= 200."""
+    response = client.get("/api/re/loans?page_size=9999", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["page_size"] <= 200, "page_size must be clamped to MAX_PAGE_SIZE=200"

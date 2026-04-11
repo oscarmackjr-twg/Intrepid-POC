@@ -499,6 +499,13 @@ def get_loans(
     if sort_by is not None and sort_by not in ALLOWED_SORT_FIELDS:
         raise HTTPException(status_code=400, detail="Invalid sort field")
 
+    # Clamp page_size to prevent memory exhaustion (T-18-04 / WR-04)
+    MAX_PAGE_SIZE = 200
+    if page_size < 1:
+        raise HTTPException(status_code=400, detail="page_size must be >= 1")
+    if page_size > MAX_PAGE_SIZE:
+        page_size = MAX_PAGE_SIZE
+
     filters = build_re_filters(db, params, current_user)
     base_query = db.query(RELoan).filter(*filters)
 
@@ -930,8 +937,7 @@ def get_delinquency_waterfall(
         (RELoan.days_past_due == 0, "current"),
         (RELoan.days_past_due < 60, "30"),
         (RELoan.days_past_due < 90, "60"),
-        (RELoan.days_past_due < 180, "90"),
-        else_="default",
+        else_="default",  # 90+ DPD = default (industry standard)
     )
     rows = (
         db.query(
@@ -944,7 +950,7 @@ def get_delinquency_waterfall(
         .all()
     )
 
-    ORDER = {"current": 0, "30": 1, "60": 2, "90": 3, "default": 4}
+    ORDER = {"current": 0, "30": 1, "60": 2, "default": 3}
     buckets = sorted(
         [
             DelinquencyBucket(
