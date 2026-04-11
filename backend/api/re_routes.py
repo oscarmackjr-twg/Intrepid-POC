@@ -614,18 +614,40 @@ def get_cashflow_performance(
 ) -> CashflowPerformanceResponse:
     """Monthly P&I actual vs projected, NOI trend, gross yield, CPR (API-07).
 
-    Security: cashflow join applies same build_re_filters() scope — sales_team users
-    cannot see other teams' cashflow data (T-18-05).
+    Security: cashflow join applies sales-team scope from build_re_filters() — sales_team
+    users cannot see other teams' cashflow data (T-18-05).
+    as_of_date is intentionally excluded: cashflows are historical time-series data tied to
+    loan IDs from the T0 snapshot; filtering by MAX(as_of_date) would match only the T1
+    snapshot (which has no linked cashflows) and return zero rows.
     Group-by period_date prevents Cartesian product explosion (Pitfall 6).
     """
     from api.re_schemas import CashflowPeriod
 
     log_data_access(current_user, "re_cashflow_performance")
 
-    filters = build_re_filters(db, params, current_user)
+    # Cashflow scope: sales-team filter only — no as_of_date (see docstring).
+    # Use the latest snapshot UPB for yield/rate calculations.
+    snapshot_filters = build_re_filters(db, params, current_user)
 
-    # Total UPB for yield/CPR calculations — apply same scope
-    total_upb_val = db.query(func.sum(RELoan.upb)).filter(*filters).scalar()
+    # Sales-team scope only (first element when role == SALES_TEAM, else empty)
+    cashflow_filters: list = []
+    if current_user.role == UserRole.SALES_TEAM and current_user.sales_team_id:
+        cashflow_filters.append(RELoan.sales_team_id == current_user.sales_team_id)
+    if params.property_type is not None:
+        cashflow_filters.append(RELoan.property_type == params.property_type)
+    if params.state is not None:
+        cashflow_filters.append(RELoan.state == params.state)
+    if params.msa is not None:
+        cashflow_filters.append(RELoan.msa == params.msa)
+    if params.loan_size_min is not None:
+        cashflow_filters.append(RELoan.upb >= params.loan_size_min)
+    if params.loan_size_max is not None:
+        cashflow_filters.append(RELoan.upb <= params.loan_size_max)
+    if params.risk_rating is not None:
+        cashflow_filters.append(RELoan.risk_rating == params.risk_rating)
+
+    # Total UPB from the latest snapshot for yield/CPR denominators
+    total_upb_val = db.query(func.sum(RELoan.upb)).filter(*snapshot_filters).scalar()
     total_upb = Decimal(str(total_upb_val)) if total_upb_val is not None else Decimal("0")
 
     # Join cashflows to loans to apply scoping filters (T-18-05)
@@ -640,7 +662,7 @@ def get_cashflow_performance(
             func.sum(RELoanCashflow.noi),
         )
         .join(RELoan, RELoanCashflow.loan_id == RELoan.id)
-        .filter(*filters)
+        .filter(*cashflow_filters)
         .group_by(RELoanCashflow.period_date)
         .order_by(RELoanCashflow.period_date)
         .all()
