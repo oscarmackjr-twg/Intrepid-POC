@@ -669,7 +669,7 @@ def test_cashflow_cpr_none_on_shortfall(client, test_db_session, auth_headers_ad
         loan_id=loan.id,
         period_date=date(2026, 4, 1),
         scheduled_principal=Decimal("20000.00"),
-        actual_principal=Decimal("5000.00"),   # shortfall: actual < scheduled
+        actual_principal=Decimal("5000.00"),  # shortfall: actual < scheduled
         scheduled_interest=Decimal("5000.00"),
         actual_interest=Decimal("5000.00"),
         noi=Decimal("12000.00"),
@@ -682,10 +682,13 @@ def test_cashflow_cpr_none_on_shortfall(client, test_db_session, auth_headers_ad
     data = response.json()
     # Find the shortfall period (scheduled_principal > actual_principal)
     shortfall_period = next(
-        (p for p in data["periods"]
-         if p["scheduled_principal"] is not None
-         and p["actual_principal"] is not None
-         and float(p["scheduled_principal"]) > float(p["actual_principal"])),
+        (
+            p
+            for p in data["periods"]
+            if p["scheduled_principal"] is not None
+            and p["actual_principal"] is not None
+            and float(p["scheduled_principal"]) > float(p["actual_principal"])
+        ),
         None,
     )
     assert shortfall_period is not None, "Expected at least one shortfall period"
@@ -732,9 +735,9 @@ def test_cashflow_net_loss_rate_includes_principal(client, test_db_session, auth
         loan_id=loan.id,
         period_date=date(2026, 4, 1),
         scheduled_principal=Decimal("10000.00"),
-        actual_principal=Decimal("0.00"),      # full principal shortfall
+        actual_principal=Decimal("0.00"),  # full principal shortfall
         scheduled_interest=Decimal("2500.00"),
-        actual_interest=Decimal("2500.00"),    # no interest shortfall
+        actual_interest=Decimal("2500.00"),  # no interest shortfall
         noi=Decimal("8000.00"),
     )
     test_db_session.add(cf)
