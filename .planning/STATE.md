@@ -195,6 +195,7 @@ Recent decisions affecting current work:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260410-snf | Fix code review warnings WR-01 WR-02 WR-03 WR-04 in re_routes.py | 2026-04-10 | 1036553 | [260410-snf](./quick/260410-snf-fix-code-review-warnings-wr-01-wr-02-wr-/) |
+| 260410-tp5 | Force deploy cashflow fix to AWS — ECR latest tag is stale | 2026-04-11 | a023497 | [260410-tp5](./quick/260410-tp5-force-deploy-cashflow-fix-to-aws-ecr-lat/) |
 
 ## Session Continuity
 
