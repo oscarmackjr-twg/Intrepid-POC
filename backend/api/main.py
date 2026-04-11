@@ -1,6 +1,12 @@
 """FastAPI application main entry point."""
 
+from decimal import Decimal
 from pathlib import Path
+
+# Serialize Decimal as float in all JSON responses so frontend receives numbers,
+# not strings. Pydantic v2 / FastAPI default is str which breaks chart rendering.
+from fastapi.encoders import ENCODERS_BY_TYPE
+ENCODERS_BY_TYPE[Decimal] = float
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

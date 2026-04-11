@@ -12,7 +12,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": "eslint --fix",
-    "../backend/**/*.py": "ruff check --fix"
+    "../backend/**/*.py": "C:/Users/omack/AppData/Roaming/Python/Python312/Scripts/ruff.exe check --fix"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.96.2",
