@@ -274,7 +274,7 @@ Plans:
  (completed 2026-04-09)
 - [x] **Phase 21: Portfolio Composition Page** - Property type chart, geo map/bar fallback, loan size histogram, maturity profile, top-10 table, concentration limits; click-to-filter wired (completed 2026-04-09)
 - [x] **Phase 22: Credit Quality Page** - LTV/DSCR histograms, watchlist table, delinquency waterfall, migration matrix, rate sensitivity; click-to-filter wired (completed 2026-04-10)
-- [ ] **Phase 23: Cash Flow & Performance Page** - P&I line chart, NOI trend, yield analysis, CPR, loss/recovery; click-to-filter wired
+- [x] **Phase 23: Cash Flow & Performance Page** - P&I line chart, NOI trend, yield analysis, CPR, loss/recovery; click-to-filter wired (completed 2026-04-11)
 - [ ] **Phase 24: Origination Pipeline + Market Context** - Origination volume, payoffs, pipeline funnel, vintage analysis, market context stub panel; click-to-filter wired
 - [ ] **Phase 25: Loan Detail Side-Panel** - Read-only loan detail slide-in panel, closes without page navigation
 - [ ] **Phase 26: Export** - CSV download per filterable table, PDF dashboard snapshot
@@ -396,9 +396,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 23-01-PLAN.md — Backend TDD: contract tests for cashflow-performance and market-context response shapes; Decimal-as-string coercion contracts (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
-- [ ] 23-02-PLAN.md — Frontend: ReCashFlowPage with 5 panels (P&I line chart, NOI trend, CPR trend, yield analysis, loss/recovery); route wiring in App.tsx (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01)
-- [ ] 23-03-PLAN.md — Verification: full test suite + human visual verification of all 5 panels (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
+- [x] 23-01-PLAN.md — Backend TDD: contract tests for cashflow-performance and market-context response shapes; Decimal-as-string coercion contracts (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
+- [x] 23-02-PLAN.md — Frontend: ReCashFlowPage with 5 panels (P&I line chart, NOI trend, CPR trend, yield analysis, loss/recovery); route wiring in App.tsx (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01)
+- [x] 23-03-PLAN.md — Verification: full test suite + human visual verification of all 5 panels (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
 **UI hint**: yes
 
 ### Phase 24: Origination Pipeline + Market Context
@@ -476,7 +476,7 @@ Phases execute sequentially: 17 â 18 â 19 â 20 â 21 â 2
 | 20. Executive Summary Page | 1/1 | Complete   | 2026-04-09 |
 | 21. Portfolio Composition Page | 3/3 | Complete   | 2026-04-09 |
 | 22. Credit Quality Page | 3/3 | Complete   | 2026-04-10 |
-| 23. Cash Flow & Performance Page | 0/TBD | Not started | - |
+| 23. Cash Flow & Performance Page | 3/3 | Complete   | 2026-04-11 |
 | 24. Origination Pipeline + Market Context | 0/TBD | Not started | - |
 | 25. Loan Detail Side-Panel | 0/TBD | Not started | - |
 | 26. Export | 0/TBD | Not started | - |
