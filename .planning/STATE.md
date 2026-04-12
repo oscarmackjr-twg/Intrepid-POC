@@ -197,7 +197,7 @@ Recent decisions affecting current work:
 | 260410-snf | Fix code review warnings WR-01 WR-02 WR-03 WR-04 in re_routes.py | 2026-04-10 | 1036553 | [260410-snf](./quick/260410-snf-fix-code-review-warnings-wr-01-wr-02-wr-/) |
 | 260410-tp5 | Force deploy cashflow fix to AWS — ECR latest tag is stale | 2026-04-11 | a023497 | [260410-tp5](./quick/260410-tp5-force-deploy-cashflow-fix-to-aws-ecr-lat/) |
 | 260412-ke2 | Fix property type pie chart not rendering on RE portfolio page | 2026-04-12 | ce56e95 | [260412-ke2](./quick/260412-ke2-fix-property-type-pie-chart-not-renderin/) |
-| 260412-kxq | Fix pie chart — add fallback dimensions for Recharts 3 NonResponsiveDiv | 2026-04-12 | e759fbb | [260412-kxq](./quick/260412-kxq-fix-property-type-pie-chart-not-renderin/) |
+| 260412-kxq | Fix pie chart — replace broken PieChart with horizontal bar chart | 2026-04-12 | 0daa3c4 | [260412-kxq](./quick/260412-kxq-fix-property-type-pie-chart-not-renderin/) |
 
 ## Session Continuity
 
