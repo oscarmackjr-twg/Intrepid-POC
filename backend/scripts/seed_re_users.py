@@ -65,6 +65,14 @@ def run():
             db.commit()
             print(f"Created kshah (Kamal Shah) -> role=sales_team, sales_team_id={team_id}, password=twg123")
 
+        # 3. Assign all unassigned re_loans to the sales team so sales users see data
+        result = db.execute(
+            text("UPDATE re_loans SET sales_team_id = :tid WHERE sales_team_id IS NULL"),
+            {"tid": team_id},
+        )
+        db.commit()
+        print(f"Assigned {result.rowcount} unassigned re_loans -> sales_team_id={team_id}")
+
     except Exception as e:
         db.rollback()
         print(f"Error: {e}")
