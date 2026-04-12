@@ -203,6 +203,7 @@ export interface CashflowPerformanceResponse {
 export interface OriginationMonth {
   year: number
   month: number
+  property_type: string
   loan_count: number
   total_upb: number
 }
@@ -219,6 +220,7 @@ export interface VintageGroup {
   total_upb: number
   avg_ltv: number | null
   avg_dscr: number | null
+  avg_rate: number | null
 }
 
 export interface OriginationPipelineResponse {
