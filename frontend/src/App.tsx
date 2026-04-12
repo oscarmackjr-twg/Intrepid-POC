@@ -15,15 +15,12 @@ import ReExecutiveSummaryPage from './pages/ReExecutiveSummaryPage'
 import RePortfolioPage from './pages/RePortfolioPage'
 import ReCreditQualityPage from './pages/ReCreditQualityPage'
 import ReCashFlowPage from './pages/ReCashFlowPage'
+import ReOriginationPage from './pages/ReOriginationPage'
 import CashFlow from './pages/CashFlow'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 
 const queryClient = new QueryClient()
-
-function ReStubPage() {
-  return <p className="text-[#94a3b8] text-sm mt-8">Coming in a future phase.</p>
-}
 
 function App() {
   return (
@@ -54,7 +51,7 @@ function App() {
             <Route path="portfolio" element={<RePortfolioPage />} />
             <Route path="credit" element={<ReCreditQualityPage />} />
             <Route path="cashflow" element={<ReCashFlowPage />} />
-            <Route path="origination" element={<ReStubPage />} />
+            <Route path="origination" element={<ReOriginationPage />} />
           </Route>
         </Route>
       </Routes>
