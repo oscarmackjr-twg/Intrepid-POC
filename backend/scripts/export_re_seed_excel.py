@@ -177,10 +177,18 @@ def generate_t1_rows(t0_rows):
 
 def generate_cashflow_rows(t0_rows):
     period_dates = [
-        date(2024, 10, 1), date(2024, 11, 1), date(2024, 12, 1),
-        date(2025, 1, 1),  date(2025, 2, 1),  date(2025, 3, 1),
-        date(2025, 4, 1),  date(2025, 5, 1),  date(2025, 6, 1),
-        date(2025, 7, 1),  date(2025, 8, 1),  date(2025, 9, 1),
+        date(2024, 10, 1),
+        date(2024, 11, 1),
+        date(2024, 12, 1),
+        date(2025, 1, 1),
+        date(2025, 2, 1),
+        date(2025, 3, 1),
+        date(2025, 4, 1),
+        date(2025, 5, 1),
+        date(2025, 6, 1),
+        date(2025, 7, 1),
+        date(2025, 8, 1),
+        date(2025, 9, 1),
     ]
     rows = []
     for t0 in t0_rows:
@@ -231,9 +239,7 @@ def style_header_row(ws, row_idx, col_count, bg=NAVY, fg=WHITE, bold=True):
 
 def auto_width(ws, min_w=10, max_w=40):
     for col in ws.columns:
-        length = max(
-            (len(str(cell.value)) if cell.value is not None else 0) for cell in col
-        )
+        length = max((len(str(cell.value)) if cell.value is not None else 0) for cell in col)
         ws.column_dimensions[col[0].column_letter].width = min(max(length + 2, min_w), max_w)
 
 
@@ -317,13 +323,13 @@ def build_summary_sheet(ws, t0_df, t1_df, cf_df):
     write_kv(row, "Avg WAM (months)", f"{t0_df['wam_months'].mean():.0f}")
     row += 1
     delinq = t0_df[t0_df["delinquency_status"] != "current"]
-    write_kv(row, "Delinquent Loans (30+)", f"{len(delinq)} ({len(delinq)/len(t0_df):.1%})")
+    write_kv(row, "Delinquent Loans (30+)", f"{len(delinq)} ({len(delinq) / len(t0_df):.1%})")
     row += 2
 
     write_header(row, "T0 Property Type Distribution")
     row += 1
     for pt, cnt in t0_df["property_type"].value_counts().items():
-        write_kv(row, pt.title(), f"{cnt} loans ({cnt/len(t0_df):.1%})")
+        write_kv(row, pt.title(), f"{cnt} loans ({cnt / len(t0_df):.1%})")
         row += 1
     row += 1
 
@@ -331,7 +337,7 @@ def build_summary_sheet(ws, t0_df, t1_df, cf_df):
     row += 1
     for rr in RISK_RATINGS:
         cnt = (t0_df["risk_rating"] == rr).sum()
-        write_kv(row, rr, f"{cnt} loans ({cnt/len(t0_df):.1%})")
+        write_kv(row, rr, f"{cnt} loans ({cnt / len(t0_df):.1%})")
         row += 1
     row += 1
 

@@ -138,7 +138,9 @@ def require_sales_team_access():
 
     def sales_team_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in (UserRole.ADMIN, UserRole.SALES_TEAM):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="RE Dashboard access requires admin or sales_team role")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="RE Dashboard access requires admin or sales_team role"
+            )
         if current_user.role == UserRole.SALES_TEAM and current_user.sales_team_id is None:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User must be assigned to a sales team")
         return current_user

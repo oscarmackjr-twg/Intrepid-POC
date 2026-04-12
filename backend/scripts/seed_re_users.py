@@ -1,4 +1,5 @@
 """Seed RE Dashboard users: create sales team, update/create oboksner, add kshah."""
+
 import sys
 from pathlib import Path
 
@@ -47,9 +48,7 @@ def run():
             print(f"Created oboksner -> role=sales_team, sales_team_id={team_id}, password=twg123")
 
         # 2. Add kshah as sales_team
-        existing = db.query(User).filter(
-            (User.username == "kshah") | (User.email == "kshah@twgglobal")
-        ).first()
+        existing = db.query(User).filter((User.username == "kshah") | (User.email == "kshah@twgglobal")).first()
         if existing:
             print(f"User kshah already exists: {existing.username} ({existing.email}) role={existing.role.value}")
         else:

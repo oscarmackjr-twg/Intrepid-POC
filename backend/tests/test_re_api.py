@@ -467,7 +467,9 @@ def test_origination_pipeline_month_rows_split_by_property_type(client, re_loan_
     rows = data["origination_by_month"]
     # Build (year, month, property_type) tuples — each must be unique (no aggregation across types)
     keys = [(r["year"], r["month"], r["property_type"]) for r in rows]
-    assert len(keys) == len(set(keys)), "Duplicate (year, month, property_type) combinations found — rows not split by type"
+    assert len(keys) == len(set(keys)), (
+        "Duplicate (year, month, property_type) combinations found — rows not split by type"
+    )
 
 
 # ---------------------------------------------------------------------------
