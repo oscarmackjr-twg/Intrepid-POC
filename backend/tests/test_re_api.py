@@ -435,6 +435,41 @@ def test_origination_pipeline(client, re_loan_fixtures, auth_headers_admin):
     assert isinstance(data["vintage_breakdown"], list)
 
 
+def test_origination_pipeline_property_type_field(client, re_loan_fixtures, auth_headers_admin):
+    """API-08: Each origination_by_month item must contain a property_type string field."""
+    response = client.get("/api/re/origination-pipeline", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["origination_by_month"]) > 0, "Expected at least one origination month row"
+    for item in data["origination_by_month"]:
+        assert "property_type" in item, f"Missing property_type in {item}"
+        assert isinstance(item["property_type"], str), f"property_type must be str, got {type(item['property_type'])}"
+
+
+def test_origination_pipeline_vintage_avg_rate(client, re_loan_fixtures, auth_headers_admin):
+    """API-08: Each vintage_breakdown item must contain an avg_rate field (number or null)."""
+    response = client.get("/api/re/origination-pipeline", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["vintage_breakdown"]) > 0, "Expected at least one vintage breakdown row"
+    for item in data["vintage_breakdown"]:
+        assert "avg_rate" in item, f"Missing avg_rate in {item}"
+        assert item["avg_rate"] is None or isinstance(item["avg_rate"], (int, float)), (
+            f"avg_rate must be number or null, got {type(item['avg_rate'])}"
+        )
+
+
+def test_origination_pipeline_month_rows_split_by_property_type(client, re_loan_fixtures, auth_headers_admin):
+    """API-08: Rows with same year+month but different property types are separate entries."""
+    response = client.get("/api/re/origination-pipeline", headers=auth_headers_admin)
+    assert response.status_code == 200
+    data = response.json()
+    rows = data["origination_by_month"]
+    # Build (year, month, property_type) tuples — each must be unique (no aggregation across types)
+    keys = [(r["year"], r["month"], r["property_type"]) for r in rows]
+    assert len(keys) == len(set(keys)), "Duplicate (year, month, property_type) combinations found — rows not split by type"
+
+
 # ---------------------------------------------------------------------------
 # API-09 — Market context
 # ---------------------------------------------------------------------------
