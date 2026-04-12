@@ -110,7 +110,7 @@ Phases execute sequentially: 1 â 2 â 3 â 4 â 5
 | 3. AWS Infrastructure | 2/2 | Complete | 2026-03-06 |
 | 4. CI/CD Pipeline | 3/3 | Complete   | 2026-03-06 |
 | 5. Staging Deployment | 3/3 | Complete   | 2026-03-22 |
-| 6. Final Funding & Cashflow | 3/5 | In Progress|  |
+| 6. Final Funding & Cashflow | 5/5 | Complete   | 2026-03-09 |
 | 7. Application Hardening | 7/7 | Complete   | 2026-03-11 |
 | 8. Fix Staging Auth & Smoke Test | 2/2 | Complete   | 2026-03-22 |
 | 9. Write Missing Verification Records | 3/3 | Complete   | 2026-03-22 |
@@ -126,14 +126,14 @@ Phases execute sequentially: 1 â 2 â 3 â 4 â 5
 **Goal:** Replace stub Final Funding SG and CIBC scripts with real workbook implementations, add async job tracking so Ops can see RUNNING/COMPLETED/FAILED status in the UI, and bridge cashflow outputs automatically into Final Funding inputs.
 **Requirements**: FF-01, FF-02, FF-03, FF-04, FF-05, FF-06, FF-07, FF-08, FF-09
 **Depends on:** Phase 5
-**Plans:** 3/3 plans complete
+**Plans:** 5/5 plans complete
 
 Plans:
-- [ ] 06-01-PLAN.md â Test scaffolds (Wave 0): test_final_funding_jobs.py and test_final_funding_runner.py (FF-03..FF-09)
-- [ ] 06-02-PLAN.md â Real script replacement: copy and patch SG + CIBC scripts from legacy repo (FF-01, FF-02)
-- [ ] 06-03-PLAN.md â Backend job tracking: final_funding_job table, background thread runner, GET/POST API endpoints, cashflow bridge (FF-03..FF-09)
-- [ ] 06-04-PLAN.md â Frontend polling: replace alert() in ProgramRuns.tsx with job-id status display (FF-03, FF-06)
-- [ ] 06-05-PLAN.md â Full test suite verification + human smoke test checkpoint (FF-01..FF-09)
+- [x] 06-01-PLAN.md â Test scaffolds (Wave 0): test_final_funding_jobs.py and test_final_funding_runner.py (FF-03..FF-09)
+- [x] 06-02-PLAN.md â Real script replacement: copy and patch SG + CIBC scripts from legacy repo (FF-01, FF-02)
+- [x] 06-03-PLAN.md â Backend job tracking: final_funding_job table, background thread runner, GET/POST API endpoints, cashflow bridge (FF-03..FF-09)
+- [x] 06-04-PLAN.md â Frontend polling: replace alert() in ProgramRuns.tsx with job-id status display (FF-03, FF-06)
+- [x] 06-05-PLAN.md â Full test suite verification + human smoke test checkpoint (FF-01..FF-09)
 
 ### Phase 7: Application Hardening
 
@@ -273,7 +273,8 @@ Plans:
 - [x] **Phase 20: Executive Summary Page** - KPI cards populated from real seeded data; chart click-to-filter wired
  (completed 2026-04-09)
 - [x] **Phase 21: Portfolio Composition Page** - Property type chart, geo map/bar fallback, loan size histogram, maturity profile, top-10 table, concentration limits; click-to-filter wired (completed 2026-04-09)
-- [x] **Phase 22: Credit Quality Page** - LTV/DSCR histograms, watchlist table, delinquency waterfall, migration matrix, rate sensitivity; click-to-filter wired (completed 2026-04-10)
+- [x] **Phase 22: Credit Quality Page** - LTV/DSCR histograms, watchlist table, delinquency waterfall, migration matrix, rate sensitivity; click-to-filter wired
+ (completed 2026-04-10)
 - [ ] **Phase 23: Cash Flow & Performance Page** - P&I line chart, NOI trend, yield analysis, CPR, loss/recovery; click-to-filter wired
 - [ ] **Phase 24: Origination Pipeline + Market Context** - Origination volume, payoffs, pipeline funnel, vintage analysis, market context stub panel; click-to-filter wired
 - [ ] **Phase 25: Loan Detail Side-Panel** - Read-only loan detail slide-in panel, closes without page navigation
@@ -312,7 +313,7 @@ Plans:
 
 Plans:
 - [x] 18-01-PLAN.md — Foundation + aggregation endpoints: re_schemas.py, FilterParams, build_re_filters, KPIs, concentration, distributions, maturity-profile (API-01, API-02, API-03, API-04, API-11)
-- [ ] 18-02-PLAN.md — Loans + remaining endpoints: paginated loans, loan detail, cashflow-performance, origination-pipeline, market-context, sensitivity, scoping tests, Swagger verification (API-05, API-06, API-07, API-08, API-09, API-10, API-11)
+- [x] 18-02-PLAN.md — Loans + remaining endpoints: paginated loans, loan detail, cashflow-performance, origination-pipeline, market-context, sensitivity, scoping tests, Swagger verification (API-05, API-06, API-07, API-08, API-09, API-10, API-11)
 
 
 ### Phase 19: Filter Hook + TypeScript Foundation
@@ -396,9 +397,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 23-01-PLAN.md — Backend TDD: contract tests for cashflow-performance and market-context response shapes; Decimal-as-string coercion contracts (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
-- [ ] 23-02-PLAN.md — Frontend: ReCashFlowPage with 5 panels (P&I line chart, NOI trend, CPR trend, yield analysis, loss/recovery); route wiring in App.tsx (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01)
-- [ ] 23-03-PLAN.md — Verification: full test suite + human visual verification of all 5 panels (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
+- [x] 23-01-PLAN.md — Backend TDD: contract tests for cashflow-performance and market-context response shapes; Decimal-as-string coercion contracts (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
+- [x] 23-02-PLAN.md — Frontend: ReCashFlowPage with 5 panels (P&I line chart, NOI trend, CPR trend, yield analysis, loss/recovery); route wiring in App.tsx (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05, UX-01)
+- [x] 23-03-PLAN.md — Verification: full test suite + human visual verification of all 5 panels (CASHFLOW-01, CASHFLOW-02, CASHFLOW-03, CASHFLOW-04, CASHFLOW-05)
 **UI hint**: yes
 
 ### Phase 24: Origination Pipeline + Market Context
@@ -411,11 +412,11 @@ Plans:
   3. The pipeline funnel shows stage counts for underwriting, approved, closing, and funded
   4. The vintage analysis section shows performance metrics grouped by origination year
   5. The Market Context panel shows 10Y Treasury and SOFR stub values with trend shapes and cap rates/vacancy rates by property type, each clearly labeled as indicative with live-feed hook markers in the code
-**Plans**: 3 plans
+**Plans**: 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — SQLAlchemy models + Alembic migrations for re_loans and re_loan_cashflows (DATA-01, DATA-02, DATA-04)
-- [ ] 17-02-PLAN.md — Seed script + integration tests for realistic CRE portfolio data (DATA-03, DATA-04)
+- [ ] 24-01-PLAN.md — Extend origination-pipeline API with property_type per month and avg_rate per vintage (ORIGIN-01, ORIGIN-04)
+- [ ] 24-02-PLAN.md — Build ReOriginationPage with all origination panels + market context section; wire route (ORIGIN-01, ORIGIN-02, ORIGIN-03, ORIGIN-04, MARKET-01, MARKET-02, UX-01)
 **UI hint**: yes
 
 ### Phase 25: Loan Detail Side-Panel
@@ -470,13 +471,13 @@ Phases execute sequentially: 17 â 18 â 19 â 20 â 21 â 2
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Data Foundation | 0/2 | Not started | - |
-| 18. Core API Layer | 1/2 | In Progress|  |
+| 17. Data Foundation | 2/2 | Complete   | 2026-04-08 |
+| 18. Core API Layer | 2/2 | Complete   | 2026-04-08 |
 | 19. Filter Hook + TypeScript Foundation | 2/2 | Complete   | 2026-04-09 |
 | 20. Executive Summary Page | 1/1 | Complete   | 2026-04-09 |
 | 21. Portfolio Composition Page | 3/3 | Complete   | 2026-04-09 |
 | 22. Credit Quality Page | 3/3 | Complete   | 2026-04-10 |
-| 23. Cash Flow & Performance Page | 0/TBD | Not started | - |
+| 23. Cash Flow & Performance Page | 3/3 | Complete   | 2026-04-10 |
 | 24. Origination Pipeline + Market Context | 0/TBD | Not started | - |
 | 25. Loan Detail Side-Panel | 0/TBD | Not started | - |
 | 26. Export | 0/TBD | Not started | - |
