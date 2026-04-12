@@ -82,7 +82,7 @@ export default function RePortfolioPage() {
         isEmpty={!concentration.data?.property_type?.length}
       >
         <ResponsiveContainer width="100%" height={320}>
-          <PieChart>
+          <PieChart width={400} height={320}>
             <Pie
               data={concentration.data?.property_type ?? []}
               dataKey="total_upb"
