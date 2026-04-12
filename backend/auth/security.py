@@ -130,9 +130,15 @@ def require_role(allowed_roles: list[UserRole]):
 
 
 def require_sales_team_access():
-    """Dependency to ensure user can only access their sales team's data."""
+    """Dependency to ensure user can only access their sales team's data.
+
+    Allows admin and sales_team roles only.  Analysts are excluded from the
+    RE Dashboard endpoints.  Sales-team users must have a sales_team_id.
+    """
 
     def sales_team_checker(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role not in (UserRole.ADMIN, UserRole.SALES_TEAM):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="RE Dashboard access requires admin or sales_team role")
         if current_user.role == UserRole.SALES_TEAM and current_user.sales_team_id is None:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User must be assigned to a sales team")
         return current_user

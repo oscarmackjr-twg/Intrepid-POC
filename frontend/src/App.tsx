@@ -18,6 +18,7 @@ import ReCashFlowPage from './pages/ReCashFlowPage'
 import ReOriginationPage from './pages/ReOriginationPage'
 import CashFlow from './pages/CashFlow'
 import ProtectedRoute from './components/ProtectedRoute'
+import RoleGate from './components/RoleGate'
 import Layout from './components/Layout'
 
 const queryClient = new QueryClient()
@@ -46,7 +47,7 @@ function App() {
           <Route path="cashflow" element={<CashFlow />} />
           <Route path="program-runs" element={<ProgramRuns />} />
           <Route path="holidays" element={<HolidayMaintenance />} />
-          <Route path="re-dashboard" element={<ReDashboard />}>
+          <Route path="re-dashboard" element={<RoleGate allowed={['admin', 'sales_team']}><ReDashboard /></RoleGate>}>
             <Route index element={<ReExecutiveSummaryPage />} />
             <Route path="portfolio" element={<RePortfolioPage />} />
             <Route path="credit" element={<ReCreditQualityPage />} />

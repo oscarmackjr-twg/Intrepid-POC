@@ -113,17 +113,19 @@ export default function Layout() {
               File Manager
             </Link>
 
-            {/* RE Dashboard */}
-            <Link
-              to="/re-dashboard"
-              className={`px-5 py-2 text-sm flex items-center gap-2 border-l-4 ${
-                location.pathname.startsWith('/re-dashboard')
-                  ? 'border-[#1a3868] text-[#1a3868] font-semibold bg-gray-50'
-                  : 'border-transparent text-[#475569] hover:text-[#1a3868] hover:bg-gray-50'
-              }`}
-            >
-              RE Dashboard
-            </Link>
+            {/* RE Dashboard — visible to admin and sales_team only */}
+            {(user?.role === 'admin' || user?.role === 'sales_team') && (
+              <Link
+                to="/re-dashboard"
+                className={`px-5 py-2 text-sm flex items-center gap-2 border-l-4 ${
+                  location.pathname.startsWith('/re-dashboard')
+                    ? 'border-[#1a3868] text-[#1a3868] font-semibold bg-gray-50'
+                    : 'border-transparent text-[#475569] hover:text-[#1a3868] hover:bg-gray-50'
+                }`}
+              >
+                RE Dashboard
+              </Link>
+            )}
 
             {/* Admin-only items */}
             {user?.role === 'admin' && (
