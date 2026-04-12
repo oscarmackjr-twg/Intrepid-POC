@@ -81,8 +81,8 @@ export default function RePortfolioPage() {
         isLoading={concentration.isLoading}
         isEmpty={!concentration.data?.property_type?.length}
       >
-        <ResponsiveContainer width="100%" height={320}>
-          <PieChart width={400} height={320}>
+        <div style={{ width: '100%', height: 320 }}>
+          <PieChart width={500} height={320}>
             <Pie
               data={concentration.data?.property_type ?? []}
               dataKey="total_upb"
@@ -103,7 +103,7 @@ export default function RePortfolioPage() {
             <Tooltip />
             <Legend />
           </PieChart>
-        </ResponsiveContainer>
+        </div>
       </ChartCard>
 
       {/* Panel 2: Top States horizontal bar — top-right (per D-03, D-04, D-05) */}
