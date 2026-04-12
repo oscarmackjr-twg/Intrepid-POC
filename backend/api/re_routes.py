@@ -751,23 +751,24 @@ def get_origination_pipeline(
 
     filters = build_re_filters(db, params, current_user)
 
-    # 1. Origination by month — exclude NULL origination_date
+    # 1. Origination by month — exclude NULL origination_date, group by property_type
     year_col = func.extract("year", RELoan.origination_date)
     month_col = func.extract("month", RELoan.origination_date)
     orig_rows = (
-        db.query(year_col, month_col, func.count(RELoan.id), func.sum(RELoan.upb))
+        db.query(year_col, month_col, RELoan.property_type, func.count(RELoan.id), func.sum(RELoan.upb))
         .filter(*filters)
         .filter(RELoan.origination_date.isnot(None))
-        .group_by(year_col, month_col)
-        .order_by(year_col, month_col)
+        .group_by(year_col, month_col, RELoan.property_type)
+        .order_by(year_col, month_col, RELoan.property_type)
         .all()
     )
     origination_by_month = [
         OriginationMonth(
             year=int(row[0]),
             month=int(row[1]),
-            loan_count=row[2],
-            total_upb=Decimal(str(row[3])) if row[3] is not None else Decimal("0"),
+            property_type=row[2] or "Unknown",
+            loan_count=row[3],
+            total_upb=Decimal(str(row[4])) if row[4] is not None else Decimal("0"),
         )
         for row in orig_rows
     ]
@@ -799,6 +800,7 @@ def get_origination_pipeline(
             func.sum(RELoan.upb),
             func.avg(RELoan.ltv),
             func.avg(RELoan.dscr),
+            func.avg(RELoan.interest_rate),
         )
         .filter(*filters)
         .filter(RELoan.vintage_year.isnot(None))
@@ -813,6 +815,7 @@ def get_origination_pipeline(
             total_upb=Decimal(str(row[2])) if row[2] is not None else Decimal("0"),
             avg_ltv=Decimal(str(row[3])) if row[3] is not None else None,
             avg_dscr=Decimal(str(row[4])) if row[4] is not None else None,
+            avg_rate=Decimal(str(row[5])) if row[5] is not None else None,
         )
         for row in vintage_rows
     ]

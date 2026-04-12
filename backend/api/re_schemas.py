@@ -328,6 +328,7 @@ class OriginationMonth(BaseModel):
 
     year: int
     month: int
+    property_type: str
     loan_count: int
     total_upb: JsonDecimal
 
@@ -352,6 +353,7 @@ class VintageGroup(BaseModel):
     total_upb: JsonDecimal
     avg_ltv: Optional[JsonDecimal]
     avg_dscr: Optional[JsonDecimal]
+    avg_rate: Optional[JsonDecimal]
 
 
 class OriginationPipelineResponse(BaseModel):
