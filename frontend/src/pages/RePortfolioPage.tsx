@@ -1,12 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import {
-  PieChart,
-  Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -23,28 +19,6 @@ import type { ConcentrationItem, ConcentrationResponse, DistributionsResponse, M
 // TWG brand palette for pie chart slices (per D-12, D-25)
 const PIE_COLORS = ['#1a3868', '#2563eb', '#0ea5e9', '#7c3aed', '#db2777', '#d97706', '#059669', '#6366f1']
 
-/** Self-measuring wrapper that passes numeric width/height to PieChart.
- *  Recharts 3 PieChart cannot derive dimensions from ResponsiveContainer
- *  because PolarChart defaults responsive=false and NonResponsiveDiv needs
- *  explicit numeric props to render the SVG. */
-function AutoPieChart({ height, children }: { height: number; children: (w: number, h: number) => React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [width, setWidth] = useState(0)
-  const measure = useCallback(() => {
-    if (ref.current) setWidth(ref.current.offsetWidth)
-  }, [])
-  useEffect(() => {
-    measure()
-    const ro = new ResizeObserver(() => measure())
-    if (ref.current) ro.observe(ref.current)
-    return () => ro.disconnect()
-  }, [measure])
-  return (
-    <div ref={ref} style={{ width: '100%', height }}>
-      {width > 0 && children(width, height)}
-    </div>
-  )
-}
 
 export default function RePortfolioPage() {
   const { filters, setFilter } = useReLoanFilters()
@@ -99,37 +73,33 @@ export default function RePortfolioPage() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-      {/* Panel 1: Property Type donut — top-left (per D-11, D-12) */}
+      {/* Panel 1: Property Type horizontal bar — top-left (per D-11, D-12) */}
       <ChartCard
         title="Property Type"
         isLoading={concentration.isLoading}
         isEmpty={!concentration.data?.property_type?.length}
       >
-        <AutoPieChart height={320}>
-          {(w, h) => (
-            <PieChart width={w} height={h}>
-              <Pie
-                data={concentration.data?.property_type ?? []}
-                dataKey="total_upb"
-                nameKey="category"
-                cx="50%"
-                cy="45%"
-                innerRadius={60}
-                outerRadius={100}
-                fill="#1a3868"
-                isAnimationActive={false}
-                onClick={(entry) => { if (entry && 'category' in entry) setFilter('property_type', (entry as unknown as ConcentrationItem).category) }}
-                style={{ cursor: 'pointer' }}
-              >
-                {(concentration.data?.property_type ?? []).map((item, i) => (
-                  <Cell key={item.category} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          )}
-        </AutoPieChart>
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart
+            data={concentration.data?.property_type ?? []}
+            layout="vertical"
+            margin={{ left: 80 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis type="number" tickFormatter={(v: number) => `$${(v / 1e6).toFixed(1)}M`} />
+            <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={80} />
+            <Tooltip formatter={(value) => [`$${(Number(value) / 1e6).toFixed(2)}M`, 'UPB']} />
+            <Bar
+              dataKey="total_upb"
+              onClick={(entry) => { if (entry && 'category' in entry) setFilter('property_type', (entry as unknown as ConcentrationItem).category) }}
+              style={{ cursor: 'pointer' }}
+            >
+              {(concentration.data?.property_type ?? []).map((item, i) => (
+                <Cell key={item.category} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </ChartCard>
 
       {/* Panel 2: Top States horizontal bar — top-right (per D-03, D-04, D-05) */}
