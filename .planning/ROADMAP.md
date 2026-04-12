@@ -276,7 +276,7 @@ Plans:
 - [x] **Phase 22: Credit Quality Page** - LTV/DSCR histograms, watchlist table, delinquency waterfall, migration matrix, rate sensitivity; click-to-filter wired
  (completed 2026-04-10)
 - [ ] **Phase 23: Cash Flow & Performance Page** - P&I line chart, NOI trend, yield analysis, CPR, loss/recovery; click-to-filter wired
-- [ ] **Phase 24: Origination Pipeline + Market Context** - Origination volume, payoffs, pipeline funnel, vintage analysis, market context stub panel; click-to-filter wired
+- [x] **Phase 24: Origination Pipeline + Market Context** - Origination volume, payoffs, pipeline funnel, vintage analysis, market context stub panel; click-to-filter wired (completed 2026-04-12)
 - [ ] **Phase 25: Loan Detail Side-Panel** - Read-only loan detail slide-in panel, closes without page navigation
 - [ ] **Phase 26: Export** - CSV download per filterable table, PDF dashboard snapshot
 - [ ] **Phase 27: Role Scope Validation** - admin/analyst see full portfolio, sales_team sees only their book, enforced server-side
@@ -415,8 +415,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 24-01-PLAN.md — Extend origination-pipeline API with property_type per month and avg_rate per vintage (ORIGIN-01, ORIGIN-04)
-- [ ] 24-02-PLAN.md — Build ReOriginationPage with all origination panels + market context section; wire route (ORIGIN-01, ORIGIN-02, ORIGIN-03, ORIGIN-04, MARKET-01, MARKET-02, UX-01)
+- [x] 24-01-PLAN.md — Extend origination-pipeline API with property_type per month and avg_rate per vintage (ORIGIN-01, ORIGIN-04)
+- [x] 24-02-PLAN.md — Build ReOriginationPage with all origination panels + market context section; wire route (ORIGIN-01, ORIGIN-02, ORIGIN-03, ORIGIN-04, MARKET-01, MARKET-02, UX-01)
 **UI hint**: yes
 
 ### Phase 25: Loan Detail Side-Panel
@@ -478,7 +478,7 @@ Phases execute sequentially: 17 â 18 â 19 â 20 â 21 â 2
 | 21. Portfolio Composition Page | 3/3 | Complete   | 2026-04-09 |
 | 22. Credit Quality Page | 3/3 | Complete   | 2026-04-10 |
 | 23. Cash Flow & Performance Page | 3/3 | Complete   | 2026-04-10 |
-| 24. Origination Pipeline + Market Context | 0/TBD | Not started | - |
+| 24. Origination Pipeline + Market Context | 2/2 | Complete    | 2026-04-12 |
 | 25. Loan Detail Side-Panel | 0/TBD | Not started | - |
 | 26. Export | 0/TBD | Not started | - |
 | 27. Role Scope Validation | 0/TBD | Not started | - |
