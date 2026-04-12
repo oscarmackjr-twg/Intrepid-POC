@@ -91,6 +91,8 @@ export default function RePortfolioPage() {
               cy="45%"
               innerRadius={60}
               outerRadius={100}
+              fill="#1a3868"
+              isAnimationActive={false}
               onClick={(entry) => { if (entry && 'category' in entry) setFilter('property_type', (entry as unknown as ConcentrationItem).category) }}
               style={{ cursor: 'pointer' }}
             >
